@@ -1,0 +1,1 @@
+export { AnnouncementType } from '@/types';

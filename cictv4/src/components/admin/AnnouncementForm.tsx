@@ -1,0 +1,529 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Announcement,
+  AnnouncementPriority,
+  AnnouncementType,
+  ContentOwnerType,
+  ContentSection,
+  MediaAsset,
+  Organization,
+  Permission,
+} from '@/types';
+import api from '@/lib/api/axios';
+import { Loader2 } from 'lucide-react';
+import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
+import { GalleryManager } from '@/components/admin/GalleryManager';
+import { uploadsAPI } from '@/lib/api/uploads';
+import { organizationService } from '@/services/organizationService';
+import { useAuth } from '@/context/AuthContext';
+import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { toast } from 'sonner';
+import { sanitizeCoverAndGallery } from '@/lib/media';
+
+const announcementSchema = z.object({
+  title: z.string().min(3, 'Title must be at least 3 characters'),
+  bodyHtml: z.string().min(10, 'Content must be at least 10 characters'),
+  priority: z.nativeEnum(AnnouncementPriority),
+  type: z.nativeEnum(AnnouncementType),
+  targetAudience: z.string().min(1, 'Target audience is required'),
+  expiresAt: z.string().optional(),
+});
+
+type AnnouncementFormValues = z.infer<typeof announcementSchema>;
+type InputFieldProps = React.ComponentProps<typeof Input>;
+type RichTextFieldProps = { value: string; onChange: (value: string) => void };
+type SelectFieldProps = { value: string; onChange: (value: string) => void };
+
+interface AnnouncementFormProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  announcement?: Announcement | null;
+  onSuccess: () => void;
+}
+
+export function AnnouncementForm({
+  open,
+  onOpenChange,
+  announcement,
+  onSuccess,
+}: AnnouncementFormProps) {
+  const { user } = useAuth();
+  const { hasPermission, hasAnyScopedPermission } = usePermissions();
+  const [loading, setLoading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const canCreateSystemOwnedContent = hasPermission(Permission.CREATE_ANNOUNCEMENT);
+  const canCreateScopedAnnouncements = hasAnyScopedPermission(Permission.CREATE_ANNOUNCEMENT);
+  const scopedCreateOrganizationIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          (user?.organizationAssignments ?? [])
+            .filter((assignment) =>
+              assignment.permissions.includes(Permission.CREATE_ANNOUNCEMENT)
+            )
+            .map((assignment) => assignment.organizationId)
+        )
+      ),
+    [user?.organizationAssignments]
+  );
+  const [ownerType, setOwnerType] = useState<ContentOwnerType>(
+    announcement?.ownerType ??
+      (scopedCreateOrganizationIds.length > 0
+        ? ContentOwnerType.ORGANIZATION
+        : canCreateSystemOwnedContent
+          ? ContentOwnerType.SYSTEM
+          : ContentOwnerType.ORGANIZATION)
+  );
+  const [organizationId, setOrganizationId] = useState(announcement?.organizationId ?? '');
+  const [coverImage, setCoverImage] = useState<MediaAsset | undefined>(
+    announcement?.coverImage ??
+      (announcement?.imageUrl
+        ? { imageUrl: announcement.imageUrl, alt: announcement.title }
+        : undefined)
+  );
+  const [gallery, setGallery] = useState<MediaAsset[]>(announcement?.gallery ?? []);
+  const [sections, setSections] = useState<ContentSection[]>(announcement?.sections ?? []);
+
+  const form = useForm<AnnouncementFormValues>({
+    resolver: zodResolver(announcementSchema),
+    defaultValues: useMemo(
+      () => ({
+        title: announcement?.title || '',
+        bodyHtml: announcement?.bodyHtml || announcement?.content || '',
+        priority: announcement?.priority || AnnouncementPriority.MEDIUM,
+        type: announcement?.type || AnnouncementType.GENERAL,
+        targetAudience: announcement?.targetAudience?.join(', ') || 'all',
+        expiresAt: announcement?.expiresAt
+          ? new Date(announcement.expiresAt).toISOString().split('T')[0]
+          : '',
+      }),
+      [announcement]
+    ),
+  });
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const fetchOrganizations = async () => {
+      try {
+        const data = await organizationService.getAll();
+        setOrganizations(data);
+      } catch (error) {
+        console.error('Failed to fetch organizations for announcement ownership:', error);
+      }
+    };
+
+    fetchOrganizations();
+  }, [open]);
+
+  const availableOrganizations = useMemo(() => {
+    if (canCreateSystemOwnedContent) {
+      return organizations;
+    }
+
+    const allowedIds = new Set(scopedCreateOrganizationIds);
+
+    return organizations.filter((organization) => allowedIds.has(organization.id));
+  }, [canCreateSystemOwnedContent, organizations, scopedCreateOrganizationIds]);
+
+  const preferredOrganizations = useMemo(() => {
+    const scopedOrganizations = organizations.filter((organization) =>
+      scopedCreateOrganizationIds.includes(organization.id)
+    );
+
+    return scopedOrganizations.length > 0 ? scopedOrganizations : availableOrganizations;
+  }, [availableOrganizations, organizations, scopedCreateOrganizationIds]);
+
+  const selectedOrganizationName =
+    organizations.find((organization) => organization.id === organizationId)?.name ?? 'selected organization';
+
+  useEffect(() => {
+    if (announcement) {
+      setOwnerType(announcement.ownerType);
+      setOrganizationId(announcement.organizationId ?? '');
+      return;
+    }
+
+    const defaultOwnerType =
+      scopedCreateOrganizationIds.length > 0
+        ? ContentOwnerType.ORGANIZATION
+        : canCreateSystemOwnedContent
+          ? ContentOwnerType.SYSTEM
+          : ContentOwnerType.ORGANIZATION;
+
+    setOwnerType(defaultOwnerType);
+    setOrganizationId(
+      defaultOwnerType === ContentOwnerType.ORGANIZATION
+        ? preferredOrganizations[0]?.id ?? ''
+        : ''
+    );
+  }, [announcement, canCreateSystemOwnedContent, open, preferredOrganizations, scopedCreateOrganizationIds]);
+
+  useEffect(() => {
+    if (ownerType === ContentOwnerType.SYSTEM) {
+      setOrganizationId('');
+      return;
+    }
+
+    if (
+      (!organizationId || !availableOrganizations.some((organization) => organization.id === organizationId)) &&
+      preferredOrganizations.length > 0
+    ) {
+      setOrganizationId(preferredOrganizations[0].id);
+    }
+  }, [ownerType, organizationId, availableOrganizations, preferredOrganizations]);
+
+  useEffect(() => {
+    if (!coverImage || gallery.length === 0) {
+      return;
+    }
+
+    const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+      coverImage,
+      gallery
+    );
+
+    if (removedDuplicates > 0) {
+      setGallery(sanitizedGallery);
+      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+    }
+  }, [coverImage, gallery]);
+
+  const handleCoverImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setUploadingCover(true);
+    try {
+      const [uploadedImage] = await uploadsAPI.uploadImages([file]);
+      setCoverImage({
+        ...uploadedImage,
+        alt: uploadedImage.alt || announcement?.title || 'Announcement cover image',
+      });
+    } catch (error) {
+      console.error('Failed to upload cover image:', error);
+    } finally {
+      setUploadingCover(false);
+    }
+  };
+
+  const onSubmit = async (data: AnnouncementFormValues) => {
+    setLoading(true);
+    try {
+      if (ownerType === ContentOwnerType.ORGANIZATION && !organizationId) {
+        form.setError('root', {
+          message: 'Select the organization that should own this announcement.',
+        });
+        setLoading(false);
+        return;
+      }
+
+      const { gallery: sanitizedGallery, removedDuplicates } = sanitizeCoverAndGallery(
+        coverImage,
+        gallery
+      );
+      if (removedDuplicates > 0) {
+        setGallery(sanitizedGallery);
+        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+      }
+
+      const payload = {
+        title: data.title,
+        bodyHtml: data.bodyHtml,
+        content: data.bodyHtml,
+        ownerType,
+        organizationId: ownerType === ContentOwnerType.ORGANIZATION ? organizationId : null,
+        priority: data.priority,
+        type: data.type,
+        targetAudience: data.targetAudience.split(',').map((value) => value.trim()).filter(Boolean),
+        expiresAt: data.expiresAt || undefined,
+        coverImage,
+        imageUrl: coverImage?.imageUrl,
+        imageId: coverImage?.imageId,
+        gallery: sanitizedGallery,
+        sections,
+      };
+
+      if (announcement) {
+        await api.put(`/announcements/${announcement._id}`, payload);
+      } else {
+        await api.post('/announcements', payload);
+      }
+
+      onSuccess();
+      onOpenChange(false);
+      form.reset();
+      setCoverImage(undefined);
+      setGallery([]);
+      setSections([]);
+    } catch (error) {
+      console.error('Failed to save announcement:', error);
+      form.setError('root', { message: 'Failed to save announcement' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[840px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{announcement ? 'Edit Announcement' : 'Create Announcement'}</DialogTitle>
+          <DialogDescription>
+            {announcement ? 'Update the announcement body, sections, and gallery.' : 'Create a richer announcement with structured supporting details.'}
+          </DialogDescription>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }: { field: InputFieldProps }) => (
+                <FormItem>
+                  <FormLabel>Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Announcement title" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <FormLabel>Content Ownership</FormLabel>
+                <Select
+                  value={ownerType}
+                  onValueChange={(value) => setOwnerType(value as ContentOwnerType)}
+                  disabled={!canCreateSystemOwnedContent}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select ownership" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {canCreateSystemOwnedContent ? (
+                      <SelectItem value={ContentOwnerType.SYSTEM}>System-owned</SelectItem>
+                    ) : null}
+                    <SelectItem value={ContentOwnerType.ORGANIZATION}>Organization-owned</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Organization pages only surface published organization-owned announcements. Use system-owned only for college-wide notices.
+                </p>
+              </div>
+
+              {ownerType === ContentOwnerType.ORGANIZATION ? (
+                <div className="space-y-2">
+                  <FormLabel>Publish To Organization</FormLabel>
+                  <Select value={organizationId} onValueChange={setOrganizationId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select organization" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableOrganizations.map((organization) => (
+                        <SelectItem key={organization.id} value={organization.id}>
+                          {organization.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {!canCreateScopedAnnouncements && !canCreateSystemOwnedContent ? (
+                    <p className="text-xs text-destructive">
+                      You do not currently have permission to publish announcements for any organization.
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div className="rounded-xl border border-border/60 bg-muted/20 px-4 py-3 text-sm">
+              <p className="font-medium text-foreground">
+                {ownerType === ContentOwnerType.SYSTEM
+                  ? 'This announcement will appear as a system-wide CICT notice.'
+                  : `This announcement will appear under ${selectedOrganizationName} after approval and publication.`}
+              </p>
+              <p className="mt-1 text-muted-foreground">
+                Pick organization-owned content for updates that should show up on organization tabs and organization homepages.
+              </p>
+            </div>
+
+            <FormField
+              control={form.control}
+              name="bodyHtml"
+              render={({ field }: { field: RichTextFieldProps }) => (
+                <FormItem>
+                  <FormLabel>Announcement Body</FormLabel>
+                  <FormControl>
+                    <RichTextEditor
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Write the announcement content..."
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <ContentSectionsEditor sections={sections} onChange={setSections} />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }: { field: SelectFieldProps }) => (
+                  <FormItem>
+                    <FormLabel>Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={AnnouncementPriority.LOW}>Low</SelectItem>
+                        <SelectItem value={AnnouncementPriority.MEDIUM}>Medium</SelectItem>
+                        <SelectItem value={AnnouncementPriority.HIGH}>High</SelectItem>
+                        <SelectItem value={AnnouncementPriority.URGENT}>Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="type"
+                render={({ field }: { field: SelectFieldProps }) => (
+                  <FormItem>
+                    <FormLabel>Type</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value={AnnouncementType.GENERAL}>General</SelectItem>
+                        <SelectItem value={AnnouncementType.ACADEMIC}>Academic</SelectItem>
+                        <SelectItem value={AnnouncementType.EVENT}>Event</SelectItem>
+                        <SelectItem value={AnnouncementType.EMERGENCY}>Emergency</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="targetAudience"
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem>
+                    <FormLabel>Target Audience</FormLabel>
+                    <FormControl>
+                      <Input placeholder="students, faculty, all" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="expiresAt"
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem>
+                    <FormLabel>Expires At</FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="space-y-3">
+              <FormLabel>Cover Image</FormLabel>
+              <p className="text-xs text-muted-foreground">
+                The cover image is the hero image used on cards and detail pages. Do not reuse it as a gallery image.
+              </p>
+              <Input type="file" accept="image/*" onChange={handleCoverImageChange} />
+              {uploadingCover ? <p className="text-sm text-muted-foreground">Uploading cover image...</p> : null}
+              {coverImage ? (
+                <div className="overflow-hidden rounded-md border">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coverImage.imageUrl} alt={coverImage.alt} className="h-56 w-full object-cover" />
+                </div>
+              ) : null}
+            </div>
+
+            <GalleryManager
+              label="Supporting Gallery"
+              coverImage={coverImage}
+              gallery={gallery}
+              onChange={setGallery}
+              onDuplicateRemoval={() =>
+                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+              }
+            />
+            <p className="text-xs text-muted-foreground">
+              Gallery images appear below the announcement body as supporting media only. The system removes any gallery image that duplicates the cover image.
+            </p>
+
+            <FormField
+              control={form.control}
+              name="bodyHtml"
+              render={() => <FormMessage>{form.formState.errors.root?.message}</FormMessage>}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading}>
+                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {announcement ? 'Update' : 'Create'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

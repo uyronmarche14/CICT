@@ -1,0 +1,395 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { eventAPI } from '@/lib/api/event';
+import { studentEventAPI } from '@/lib/api/student';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info, ExternalLink, QrCode, XCircle, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
+import { format } from 'date-fns';
+import MeshGradientBg from '@/components/ripplebg';
+import Image from 'next/image';
+import { StructuredContent } from '@/components/StructuredContent';
+import ScrollingGallery from '@/components/ScrollingGallery';
+import { getOwnershipLabel } from '@/lib/content-ownership';
+import { useStudentAuth } from '@/context/StudentAuthContext';
+import { toast } from 'sonner';
+
+export default function EventDetailsPage() {
+  const params = useParams();
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const eventId = params.id as string;
+  const { isAuthenticated: isStudent, loading: studentLoading } = useStudentAuth();
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['event', eventId],
+    queryFn: () => eventAPI.getById(eventId),
+    enabled: !!eventId,
+    staleTime: 0,
+  });
+
+  const { data: registration } = useQuery({
+    queryKey: ['student', 'registration', eventId],
+    queryFn: () => studentEventAPI.getRegistration(eventId),
+    enabled: !!eventId && isStudent,
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: () => studentEventAPI.register(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
+      toast.success('Successfully registered for this event!');
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Registration failed');
+    },
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: () => studentEventAPI.cancelRegistration(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
+      toast.success('Registration cancelled');
+    },
+    onError: (err: unknown) => {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Cancellation failed');
+    },
+  });
+
+  const event = data?.data.event;
+  const isPast = event && new Date(event.endDate) < new Date();
+  const heroImage = event?.coverImage?.imageUrl || event?.imageUrl;
+  const bodyHtml = event?.bodyHtml || event?.description || '';
+
+  if (isLoading) {
+    return (
+      <div className="relative min-h-screen pt-24 pb-16">
+        <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
+        <div className="relative z-10 flex justify-center items-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !event) {
+    return (
+      <div className="relative min-h-screen pt-24 pb-16">
+        <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
+        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="text-center py-20">
+            <h1 className="text-2xl font-bold mb-4">Event Not Found</h1>
+            <p className="text-muted-foreground mb-8">
+              The event you&apos;re looking for doesn&apos;t exist or has been removed.
+            </p>
+            <Button onClick={() => router.push('/events')}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Events
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative min-h-screen pt-24 pb-16">
+      <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={() => router.push('/events')}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Events
+        </Button>
+
+        <Card className="overflow-hidden">
+          {heroImage && (
+            <div className="relative h-64 md:h-96 w-full">
+              <Image
+                src={heroImage}
+                alt={event.coverImage?.alt || event.title}
+                fill
+                className="object-cover"
+                priority
+              />
+            </div>
+          )}
+
+          <CardContent className="p-6 md:p-8 space-y-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
+                <p className="text-lg text-muted-foreground">{event.excerpt}</p>
+              </div>
+              <div className="flex flex-col items-end gap-2">
+                <Badge variant={event.status === 'published' ? 'default' : 'secondary'}>
+                  {event.status}
+                </Badge>
+                <Badge variant="outline">
+                  {getOwnershipLabel(event)}
+                </Badge>
+                {registration && (registration.status === 'registered' || registration.status === 'checked_in') && (
+                  <Badge className={registration.status === 'checked_in' ? 'bg-blue-600' : 'bg-green-600'}>
+                    {registration.status === 'checked_in' ? 'Checked In' : 'Registered'}
+                  </Badge>
+                )}
+                {registration?.status === 'cancelled' && (
+                  <Badge variant="secondary">Cancelled</Badge>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
+                <Calendar className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Date</p>
+                  <p className="font-medium">{format(new Date(event.startDate), 'MMMM dd, yyyy')}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
+                <Clock className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Time</p>
+                  <p className="font-medium">
+                    {format(new Date(event.startDate), 'h:mm a')} - {format(new Date(event.endDate), 'h:mm a')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
+                <MapPin className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Location</p>
+                  <p className="font-medium">{event.location}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
+                <Users className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Attendance</p>
+                  <p className="font-medium">
+                    {event.registeredCount ?? event.attendees.length}
+                    {event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} registered
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-6 border-t">
+              <h2 className="text-xl font-semibold mb-4">About This Event</h2>
+              <StructuredContent bodyHtml={bodyHtml} sections={event.sections} />
+            </div>
+
+            {event.tags && event.tags.length > 0 && (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3">Tags</h3>
+                <div className="flex flex-wrap gap-2">
+                  {event.tags.map((tag, index) => (
+                    <Badge key={index} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="pt-6 border-t">
+              <h3 className="text-lg font-semibold mb-3">Organizer</h3>
+              <p className="text-muted-foreground">
+                {event.organizer.firstName} {event.organizer.lastName}
+              </p>
+              <p className="text-sm text-muted-foreground">{event.organizer.email}</p>
+            </div>
+
+            {event.schedule && event.schedule.length > 0 ? (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Program Flow</h3>
+                <div className="space-y-3">
+                  {event.schedule.map((item, index) => (
+                    <div key={`${item.label}-${index}`} className="rounded-lg border p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-sm font-medium text-primary">{item.label}</span>
+                        <span className="font-medium">{item.title}</span>
+                      </div>
+                      {item.description ? (
+                        <p className="mt-2 text-sm text-muted-foreground">{item.description}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {event.gallery && event.gallery.length > 0 ? (
+              <div className="pt-6 border-t">
+                <ScrollingGallery
+                  images={event.gallery.map((image) => image.imageUrl)}
+                  accentColor="#2563eb"
+                />
+              </div>
+            ) : null}
+
+            <div className="pt-6 border-t">
+              <div className="rounded-xl border bg-secondary/20 p-4 text-sm">
+                <div className="flex items-center gap-2 font-medium text-foreground mb-3">
+                  <Info className="w-4 h-4 text-primary" />
+                  Event Registration
+                </div>
+                {isPast ? (
+                  <p className="text-muted-foreground">This event has ended.</p>
+                ) : studentLoading ? (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Checking registration...</span>
+                  </div>
+                ) : isStudent ? (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
+                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
+                      </Badge>
+                      {event.allowWalkIns && (
+                        <Badge variant="outline">Walk-ins Allowed</Badge>
+                      )}
+                      {event.registrationCloseAt && event.isRegistrationOpen && (
+                        <Badge variant="outline">
+                          Closes {format(new Date(event.registrationCloseAt), 'MMM dd, h:mm a')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      {event.registeredCount != null && event.maxAttendees > 0
+                        ? `${event.registeredCount} / ${event.maxAttendees} registered`
+                        : event.registeredCount != null
+                          ? `${event.registeredCount} registered`
+                          : 'Registration is open.'}
+                    </p>
+                    {!registration ? (
+                      event.isRegistrationOpen ? (
+                        <Button
+                          onClick={() => registerMutation.mutate()}
+                          disabled={registerMutation.isPending}
+                        >
+                          {registerMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                          )}
+                          Register Now
+                        </Button>
+                      ) : (
+                        <p className="text-muted-foreground">Registration is currently closed for this event.</p>
+                      )
+                    ) : registration.status === 'registered' || registration.status === 'checked_in' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <span className="font-medium text-green-600">
+                            {registration.status === 'checked_in' ? 'Checked In' : 'Registered'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" asChild>
+                            <Link href={`/student/events/${event._id}/qr`}>
+                              <QrCode className="w-4 h-4 mr-2" /> View QR Code
+                            </Link>
+                          </Button>
+                          {registration.status === 'registered' && (
+                            <Button
+                              variant="outline"
+                              className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                              onClick={() => cancelMutation.mutate()}
+                              disabled={cancelMutation.isPending}
+                            >
+                              {cancelMutation.isPending ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              ) : (
+                                <XCircle className="w-4 h-4 mr-2" />
+                              )}
+                              Cancel Registration
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ) : registration.status === 'cancelled' ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">Cancelled</Badge>
+                        </div>
+                        {event.isRegistrationOpen && (
+                          <Button
+                            onClick={() => registerMutation.mutate()}
+                            disabled={registerMutation.isPending}
+                          >
+                            {registerMutation.isPending ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <CheckCircle className="w-4 h-4 mr-2" />
+                            )}
+                            Register Again
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
+                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
+                      </Badge>
+                      {event.allowWalkIns && (
+                        <Badge variant="outline">Walk-ins Allowed</Badge>
+                      )}
+                      {event.registrationCloseAt && event.isRegistrationOpen && (
+                        <Badge variant="outline">
+                          Closes {format(new Date(event.registrationCloseAt), 'MMM dd, h:mm a')}
+                        </Badge>
+                      )}
+                    </div>
+                    <p className="text-muted-foreground">
+                      {event.registeredCount != null && event.maxAttendees > 0
+                        ? `${event.registeredCount} / ${event.maxAttendees} registered`
+                        : event.registeredCount != null
+                          ? `${event.registeredCount} registered`
+                          : 'Registration is open for students.'}
+                    </p>
+                    {(event.targetProgramIds && event.targetProgramIds.length > 0) ||
+                     (event.targetYearLevelIds && event.targetYearLevelIds.length > 0) ? (
+                      <p className="text-xs text-muted-foreground">
+                        This event has eligibility requirements. Sign in to check if you qualify.
+                      </p>
+                    ) : null}
+                    {event.isRegistrationOpen ? (
+                      <Link href={`/student/login?redirect=/events/${event._id}`}>
+                        <Button>
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Sign In to Register
+                        </Button>
+                      </Link>
+                    ) : (
+                      <p className="text-muted-foreground">Registration is currently closed for this event.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

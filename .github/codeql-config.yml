@@ -1,0 +1,15 @@
+name: "CICT CodeQL Configuration"
+
+queries:
+  - uses: security-and-quality
+
+paths:
+  - cict-backend/src
+  - cictv4/src
+
+paths-ignore:
+  - '**/node_modules'
+  - '**/dist'
+  - '**/.next'
+  - '**/*.test.ts'
+  - '**/*.test.tsx'

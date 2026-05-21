@@ -1,0 +1,143 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "deploy" to confirm production release'
+        required: true
+        default: ''
+
+concurrency:
+  group: production-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  validate:
+    name: Validate deployment
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check commit message for production tag
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if ! echo "$COMMIT_MSG" | grep -qiE '^(release|chore\(release\))'; then
+            echo "⚠️  Commit message does not start with 'release:' or 'chore(release):'"
+            echo "    Consider adding a conventional commit prefix for release tracking."
+          fi
+
+      - name: Validate production input
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "deploy" ]; then
+            echo "❌ Production deploy requires confirmation. Type 'deploy'."
+            exit 1
+          fi
+
+  deploy-backend:
+    name: Backend → Render Production
+    runs-on: ubuntu-latest
+    needs: [validate]
+
+    environment:
+      name: production
+      url: ${{ secrets.RENDER_PRODUCTION_URL }}
+
+    steps:
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_PRODUCTION_DEPLOY_HOOK }}"
+          echo "Render production deploy triggered"
+
+      - name: Wait for health check
+        run: |
+          echo "Waiting for production backend to be healthy..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${{ secrets.RENDER_PRODUCTION_URL }}/health" 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "Backend is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i: status $STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "Backend health check failed after 30 attempts"
+          exit 1
+
+  deploy-frontend:
+    name: Frontend → Vercel Production
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+
+    environment:
+      name: production
+      url: ${{ secrets.VERCEL_PRODUCTION_URL }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: ./cictv4/package-lock.json
+
+      - name: Deploy to Vercel
+        working-directory: ./cictv4
+        run: |
+          npx vercel link --project ${{ secrets.VERCEL_PROJECT_ID }} \
+            --token ${{ secrets.VERCEL_TOKEN }} --yes
+          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+
+  smoke-test:
+    name: Post-deploy smoke test
+    runs-on: ubuntu-latest
+    needs: [deploy-frontend]
+    if: always()
+
+    steps:
+      - name: Check backend health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.RENDER_PRODUCTION_URL }}/health" 2>/dev/null || echo "000")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Production backend health check failed: HTTP $STATUS"
+            exit 1
+          fi
+          echo "✅ Production backend is healthy at ${{ secrets.RENDER_PRODUCTION_URL }}"
+
+      - name: Check frontend health
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.VERCEL_PRODUCTION_URL }}" 2>/dev/null || echo "000")
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Production frontend health check failed: HTTP $STATUS"
+            exit 1
+          fi
+          echo "✅ Production frontend is healthy at ${{ secrets.VERCEL_PRODUCTION_URL }}"
+
+  tag-release:
+    name: Tag release
+    runs-on: ubuntu-latest
+    needs: [smoke-test]
+    if: success()
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create and push tag
+        run: |
+          TAG="v$(date +'%Y%m%d.%H%M')"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "Tagged release: $TAG"

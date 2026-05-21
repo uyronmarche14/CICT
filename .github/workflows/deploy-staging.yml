@@ -1,0 +1,53 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [staging]
+
+concurrency:
+  group: staging-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-backend:
+    name: Backend → Render Staging
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Trigger Render Deploy Hook
+        run: |
+          curl -X POST "${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}"
+          echo "Render staging deploy triggered"
+
+      - name: Wait for health check
+        run: |
+          echo "Waiting for staging backend to be healthy..."
+          for i in $(seq 1 30); do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+              "${{ secrets.RENDER_STAGING_URL }}/health" 2>/dev/null || echo "000")
+            if [ "$STATUS" = "200" ]; then
+              echo "✅ Backend is healthy"
+              exit 0
+            fi
+            echo "Attempt $i: status $STATUS, retrying in 10s..."
+            sleep 10
+          done
+          echo "Backend health check failed after 30 attempts"
+          exit 1
+
+  smoke-test:
+    name: Smoke test
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+    if: always()
+
+    steps:
+      - name: Verify backend is live
+        run: |
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "${{ secrets.RENDER_STAGING_URL }}/health" 2>/dev/null || echo "000")
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Staging backend unhealthy: HTTP $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Staging backend verified at ${{ secrets.RENDER_STAGING_URL }}"
