@@ -30,6 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { appToast } from '@/lib/app-toast';
 
 export default function AnnouncementsPage() {
   const {
@@ -52,6 +54,7 @@ export default function AnnouncementsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const { shouldRender } = useAdminPageAccess(canAccessAnnouncementsModule());
   const canViewAllAnnouncements = hasPermission(Permission.VIEW_ANNOUNCEMENT);
   const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
@@ -138,14 +141,18 @@ export default function AnnouncementsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this announcement?')) return;
-    
-    try {
-      await api.delete(`/announcements/${id}`);
-      fetchAnnouncements();
-    } catch (error) {
-      console.error('Failed to delete announcement:', error);
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          await api.delete(`/announcements/${id}`);
+          fetchAnnouncements();
+          appToast.success('Announcement Deleted', 'The announcement has been removed.');
+        } catch {
+          appToast.error('Deletion Failed', 'Could not delete the announcement.');
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   const handleWorkflowAction = async (
@@ -423,6 +430,14 @@ export default function AnnouncementsPage() {
         onOpenChange={setIsFormOpen} 
         announcement={selectedAnnouncement}
         onSuccess={fetchAnnouncements}
+      />
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete Announcement"
+        message="Are you sure you want to delete this announcement?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
       />
     </div>
   );

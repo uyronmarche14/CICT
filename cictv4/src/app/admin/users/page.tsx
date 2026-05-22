@@ -35,6 +35,8 @@ import { UserForm } from "@/components/admin/UserForm";
 import { UserManagementDialog } from '@/components/admin/UserManagementDialog';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { appToast } from '@/lib/app-toast';
 
 export default function UsersPage() {
   const { user: currentUser, refreshProfile } = useAuth();
@@ -58,6 +60,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const canAssignRole = hasPermission(Permission.ASSIGN_ROLE);
   const canViewRoles = hasPermission(Permission.VIEW_ROLE);
 
@@ -109,14 +112,18 @@ export default function UsersPage() {
   }, [canAssignRole, canViewRoles]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this user?')) return;
-    
-    try {
-      await usersAPI.delete(id);
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to delete user:', error);
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          await usersAPI.delete(id);
+          fetchUsers();
+          appToast.success('User Deleted', 'The user has been deleted.');
+        } catch {
+          appToast.error('Deletion Failed', 'Could not delete the user.');
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   if (!shouldRender) {
@@ -362,6 +369,14 @@ export default function UsersPage() {
         canAssignRole={canAssignRole}
         canSetStatus={canSetUserStatus()}
         onSuccess={fetchUsers}
+      />
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete User"
+        message="Are you sure you want to delete this user?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
       />
     </div>
   );

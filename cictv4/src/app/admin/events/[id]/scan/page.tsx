@@ -34,7 +34,7 @@ import {
   X,
   ScanLine,
 } from 'lucide-react';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
 
 type ScanMethod = 'camera' | 'manual';
@@ -75,13 +75,33 @@ export default function AdminScanPage() {
 
   const undoCheckInMutation = useMutation({
     mutationFn: (regId: string) => adminEventAPI.undoCheckIn(eventId, regId),
-    onSuccess: () => {
+    onSuccess: (_data, regId) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
-      toast.success('Check-in undone');
+      const cachedRegs = queryClient.getQueryData<AdminRegistration[]>(
+        ['admin', 'event', eventId, 'registrations']
+      );
+      const reg = cachedRegs?.find(r => r._id === regId);
+      appToast.success('Check-in Undone', 'The student has been reverted to Registered status.', {
+        label: 'Re-check-in',
+        onClick: () => {
+          if (reg?.studentId?.studentNumber) {
+            adminEventAPI.scanAttendance(eventId, { studentNumber: reg.studentId.studentNumber })
+              .then((result) => {
+                if (result.result === 'SUCCESS') {
+                  appToast.success('Check-in Successful', `${reg.studentId.firstName} ${reg.studentId.lastName} checked in.`);
+                  queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+                } else {
+                  appToast.info('Already Checked In', `${reg.studentId.firstName} ${reg.studentId.lastName} was already checked in.`);
+                }
+              })
+              .catch(() => appToast.error('Check-in Failed', 'Could not re-check-in the student.'));
+          }
+        },
+      });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to undo check-in');
+      appToast.error('Undo Failed', error?.response?.data?.message || 'Could not undo check-in. Please try again.');
     },
   });
 
@@ -94,15 +114,23 @@ export default function AdminScanPage() {
       const result = await adminEventAPI.scanAttendance(eventId, { qrToken: token });
       setScanResult(result);
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+      const eventTitle = event?.title ?? 'this event';
+      const studentName = result.studentName ?? 'Student';
       if (result.result === 'SUCCESS') {
-        toast.success('Check-in successful!');
+        appToast.success('Check-in Successful', `${studentName} checked in to "${eventTitle}".`, {
+          label: 'Undo',
+          onClick: () => {
+            if (result.registration?._id) undoCheckInMutation.mutate(result.registration._id);
+          },
+        });
       } else if (result.result === 'DUPLICATE') {
-        toast.info('Student was already checked in');
+        appToast.info('Already Checked In', `${studentName} was already checked in to "${eventTitle}".`);
       } else {
-        toast.error(`Scan result: ${result.result}`);
+        const label = result.result.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        appToast.error('Scan Failed', `${label} — "${eventTitle}".`);
       }
     } catch {
-      toast.error('Scan failed');
+      appToast.error('Scan Error', 'Could not process QR scan. Check connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -118,16 +146,25 @@ export default function AdminScanPage() {
       });
       setScanResult(result);
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+      const eventTitle = event?.title ?? 'this event';
+      const sn = studentNumber.trim().toUpperCase();
       if (result.result === 'SUCCESS') {
-        toast.success('Check-in successful!');
+        appToast.success('Check-in Successful', `Student ${sn} checked in to "${eventTitle}".`, {
+          label: 'Undo',
+          onClick: () => {
+            if (result.registration?._id) undoCheckInMutation.mutate(result.registration._id);
+          },
+        });
       } else if (result.result === 'DUPLICATE') {
-        toast.info('Student was already checked in');
+        appToast.info('Already Checked In', `Student ${sn} was already checked in to "${eventTitle}".`);
       } else {
-        toast.error(`Scan result: ${result.result}`);
+        const label = result.result.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        appToast.error('Check-in Failed', `${label} for ${sn} at "${eventTitle}".`);
       }
+      setStudentNumber('');
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Scan failed');
+      appToast.error('Check-in Error', error?.response?.data?.message || `Could not check in ${studentNumber}.`);
     } finally {
       setLoading(false);
     }
@@ -161,16 +198,22 @@ export default function AdminScanPage() {
       });
       setScanResult({ ...result, studentName: `${reg.studentId.firstName} ${reg.studentId.lastName}` });
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+      const studentName = `${reg.studentId.firstName} ${reg.studentId.lastName}`;
+      const eventTitle = event?.title ?? 'this event';
       if (result.result === 'SUCCESS') {
-        toast.success(`${reg.studentId.firstName} ${reg.studentId.lastName} checked in!`);
+        appToast.success('Check-in Successful', `${studentName} checked in to "${eventTitle}".`, {
+          label: 'Undo',
+          onClick: () => undoCheckInMutation.mutate(reg._id),
+        });
       } else if (result.result === 'DUPLICATE') {
-        toast.info(`${reg.studentId.firstName} ${reg.studentId.lastName} already checked in`);
+        appToast.info('Already Checked In', `${studentName} was already checked in to "${eventTitle}".`);
       } else {
-        toast.error(`Scan result: ${result.result}`);
+        const label = result.result.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        appToast.error('Check-in Failed', `${label} for ${studentName} at "${eventTitle}".`);
       }
     } catch (err: unknown) {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Check-in failed');
+      appToast.error('Check-in Error', error?.response?.data?.message || `Could not check in ${reg.studentId.firstName} ${reg.studentId.lastName}.`);
     } finally {
       setLoading(false);
     }
@@ -229,7 +272,7 @@ export default function AdminScanPage() {
           <CardContent>
             <QrCameraScanner
               onScan={handleQrScan}
-              onError={(msg) => toast.error(msg)}
+              onError={(msg) => appToast.error('Camera Error', msg, { label: 'Try Manual', onClick: () => setScanMethod('manual') })}
               scanning={loading}
             />
             {scanResult && scanResult.result === 'SUCCESS' && !loading && (

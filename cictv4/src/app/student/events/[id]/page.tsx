@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 export default function StudentEventDetailPage() {
   const params = useParams();
@@ -34,11 +34,11 @@ export default function StudentEventDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
-      toast.success('Successfully registered!');
+      appToast.success('Registered!', 'You are now registered for this event.', { label: 'Show QR Code', onClick: () => router.push(`/student/events/${eventId}/qr`) });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Registration failed');
+      appToast.error('Registration Failed', error?.response?.data?.message || 'Could not register for this event.');
     },
   });
 
@@ -47,11 +47,11 @@ export default function StudentEventDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
-      toast.success('Registration cancelled');
+      appToast.success('Registration Cancelled', 'Your registration has been cancelled.', { label: 'Re-register', onClick: () => registerMutation.mutate() });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to cancel');
+      appToast.error('Cancellation Failed', error?.response?.data?.message || 'Could not cancel registration.');
     },
   });
 

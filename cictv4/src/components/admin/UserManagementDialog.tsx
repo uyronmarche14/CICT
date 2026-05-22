@@ -13,7 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { Organization, Role, User, UserRole } from '@/types';
 import { usersAPI } from '@/lib/api/users';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissionMetadata } from '@/hooks/use-permission-metadata';
 import { permissionsMetadataAPI } from '@/lib/api/permissions';
@@ -204,12 +204,12 @@ export function UserManagementDialog({
         await refreshProfile();
       }
 
-      toast.success('User updated successfully');
+      appToast.success('User Updated', 'The user account has been updated successfully.');
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Failed to update user:', error);
-      toast.error('Failed to update user');
+      appToast.error('Update Failed', 'Could not update this user. Please try again.', { label: 'Retry', onClick: () => form.handleSubmit(onSubmit)() });
     } finally {
       setIsLoading(false);
     }

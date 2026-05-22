@@ -26,7 +26,7 @@ import {
 import { faqAPI } from '@/lib/api/faq';
 import { FAQContent } from '@/types';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import FAQSectionContent from '@/components/sections/landingpage/FAQSectionContent';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 
@@ -89,21 +89,22 @@ export default function FAQAdminPage() {
 
 
 
-  useEffect(() => {
-    const loadFAQ = async () => {
-      setLoading(true);
-      try {
-        const data = await faqAPI.get();
-        setForm(data);
-        setInitialForm(JSON.stringify({ title: data.title, subtitle: data.subtitle, topics: data.topics, questions: data.questions }));
-      } catch {
-        toast.error('Failed to load FAQ content');
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadFAQ();
+  const loadFAQ = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await faqAPI.get();
+      setForm(data);
+      setInitialForm(JSON.stringify({ title: data.title, subtitle: data.subtitle, topics: data.topics, questions: data.questions }));
+    } catch {
+      appToast.error('Load Failed', 'Could not load FAQ data.', { label: 'Retry', onClick: loadFAQ });
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadFAQ();
+  }, [loadFAQ]);
 
   const validate = useCallback((): boolean => {
     const errs: ValidationErrors = {};
@@ -171,7 +172,7 @@ export default function FAQAdminPage() {
 
   const handleSave = async () => {
     if (!validate()) {
-      toast.error('Please fix the validation errors before saving');
+      appToast.error('Validation Errors', 'Please fix the form errors before saving.');
       formRef.current?.scrollIntoView({ behavior: 'smooth' });
       return;
     }
@@ -182,9 +183,9 @@ export default function FAQAdminPage() {
       setForm(updated);
       setInitialForm(JSON.stringify({ title: updated.title, subtitle: updated.subtitle, topics: updated.topics, questions: updated.questions }));
       setErrors({});
-      toast.success('FAQ content updated');
+      appToast.success('FAQ Updated', 'FAQ content has been saved successfully.');
     } catch {
-      toast.error('Failed to update FAQ content');
+      appToast.error('Save Failed', 'Could not save FAQ content.', { label: 'Retry', onClick: handleSave });
     } finally {
       setSaving(false);
     }
@@ -248,7 +249,7 @@ export default function FAQAdminPage() {
   const addQuestion = (category: string) => {
     const catId = category || form.topics[0]?.id || '';
     if (!catId) {
-      toast.error('Create a topic first');
+      appToast.error('No Topics', 'Create at least one topic before adding questions.');
       return;
     }
     setForm((current) => ({

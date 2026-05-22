@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { logoutUser } from '@/lib/api/authAPI';
 
 // Logout
@@ -21,7 +21,7 @@ export const useLogout = () => {
     onError: (error: Error) => {
       // Handle errors, but still clear auth and redirect on logout errors
       const errorMessage = error.message || 'Logout failed';
-      toast.error(errorMessage, { position: 'top-center' });
+      appToast.error('Logout Issue', errorMessage);
       queryClient.clear();
       router.replace('/');
       // Clear browser history to prevent back navigation to protected routes

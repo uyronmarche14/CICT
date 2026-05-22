@@ -4,6 +4,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { StudentAuthProvider } from "@/context/StudentAuthContext";
 import { ReactQueryProvider } from "@/components/providers/ReactQueryProvider";
 import MainLayout from "@/components/layout/MainLayout";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,6 +27,7 @@ export default function RootLayout({
                 <MainLayout>
                   {children}
                 </MainLayout>
+                <Toaster richColors closeButton expand visibleToasts={5} />
               </ThemeProvider>
             </StudentAuthProvider>
           </AuthProvider>

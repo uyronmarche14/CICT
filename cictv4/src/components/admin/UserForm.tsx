@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import api from '@/lib/api/axios';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { Plus, Loader2, Trash2 } from 'lucide-react';
 import type { AxiosError } from 'axios';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
@@ -161,7 +161,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
         organizationAssignments: canAssignRole ? normalizedAssignments : [],
       });
       if (response.data.success) {
-        toast.success('User created successfully');
+        appToast.success('User Created', 'A new admin user has been added.');
         setOpen(false);
         form.reset({
           firstName: '',
@@ -176,7 +176,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
       }
     } catch (error) {
       const apiError = error as AxiosError<UserApiError>;
-      toast.error(apiError.response?.data?.message || 'Failed to create user');
+      appToast.error('Creation Failed', apiError.response?.data?.message || 'Could not create user. Please try again.', { label: 'Retry', onClick: () => form.handleSubmit(onSubmit)() });
     } finally {
       setIsLoading(false);
     }

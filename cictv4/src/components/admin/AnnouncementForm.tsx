@@ -48,7 +48,7 @@ import { uploadsAPI } from '@/lib/api/uploads';
 import { organizationService } from '@/services/organizationService';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 
 const announcementSchema = z.object({
@@ -218,7 +218,7 @@ export function AnnouncementForm({
 
     if (removedDuplicates > 0) {
       setGallery(sanitizedGallery);
-      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+      appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).');
     }
   }, [coverImage, gallery]);
 
@@ -257,7 +257,7 @@ export function AnnouncementForm({
       );
       if (removedDuplicates > 0) {
         setGallery(sanitizedGallery);
-        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+        appToast.info('Gallery Cleaned', 'Duplicate image(s) removed from gallery before saving.');
       }
 
       const payload = {
@@ -283,6 +283,7 @@ export function AnnouncementForm({
         await api.post('/announcements', payload);
       }
 
+      appToast.success('Announcement Saved', 'The announcement has been saved successfully.');
       onSuccess();
       onOpenChange(false);
       form.reset();
@@ -499,7 +500,7 @@ export function AnnouncementForm({
               gallery={gallery}
               onChange={setGallery}
               onDuplicateRemoval={() =>
-                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+                appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).')
               }
             />
             <p className="text-xs text-muted-foreground">

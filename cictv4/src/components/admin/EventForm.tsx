@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { eventAPI } from '@/lib/api/event';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { Plus, Loader2 } from 'lucide-react';
 import { RichTextEditor } from '@/components/ui/rich-text-editor';
 import { GalleryManager } from '@/components/admin/GalleryManager';
@@ -236,7 +236,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
 
     if (removedDuplicates > 0) {
       setGallery(sanitizedGallery);
-      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+      appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).');
     }
   }, [coverImage, gallery]);
 
@@ -258,7 +258,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
     setIsLoading(true);
     try {
       if (ownerType === ContentOwnerType.ORGANIZATION && !organizationId) {
-        toast.error('Select the organization that should own this event.');
+        appToast.error('Missing Organization', 'Select an organization before saving this event.');
         setIsLoading(false);
         return;
       }
@@ -269,7 +269,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
       );
       if (removedDuplicates > 0) {
         setGallery(sanitizedGallery);
-        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+        appToast.info('Gallery Cleaned', 'Duplicate image(s) removed from gallery before saving.');
       }
 
       await eventAPI.create({
@@ -297,7 +297,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
         targetYearLevelIds: targetYearLevelIds.length > 0 ? targetYearLevelIds : undefined,
         targetSectionIds: targetSectionIds.length > 0 ? targetSectionIds : undefined,
       });
-      toast.success('Event created successfully');
+      appToast.success('Event Created', 'The event has been created and will appear after approval.');
       setOpen(false);
       form.reset();
       setCoverImage(undefined);
@@ -320,7 +320,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
         typeof (error as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
           ? (error as { response?: { data?: { message?: string } } }).response!.data!.message!
           : 'Failed to create event';
-      toast.error(message);
+      appToast.error('Creation Failed', message);
     } finally {
       setIsLoading(false);
     }
@@ -666,7 +666,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               gallery={gallery}
               onChange={setGallery}
               onDuplicateRemoval={() =>
-                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+                appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).')
               }
             />
             <p className="text-xs text-muted-foreground">

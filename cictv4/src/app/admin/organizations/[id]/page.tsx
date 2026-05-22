@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAdminOrganization } from '@/hooks/useOrganizations';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { Loader2, ArrowLeft, Edit, AlertCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -33,6 +34,7 @@ export default function AdminOrganizationManagePage() {
     OrganizationAdminAssignment[]
   >([]);
   const [loadingAdminAssignments, setLoadingAdminAssignments] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const { organization, loading, error, refresh } = useAdminOrganization(orgId);
   const canEditOrganization = organization ? canUpdateOrganization(organization.id) : false;
   const canRemoveOrganization = organization ? canDeleteOrganization(organization.id) : false;
@@ -132,13 +134,18 @@ export default function AdminOrganizationManagePage() {
                     variant="destructive"
                     className="gap-2"
                     onClick={async () => {
-                      if (!confirm(`Delete ${organization.name}?`)) return;
-                      try {
-                        await organizationService.delete(organization.id);
-                        router.push('/admin/organizations');
-                      } catch (error) {
-                        console.error('Failed to delete organization:', error);
-                      }
+                      setDeleteConfirm({
+                        onConfirm: async () => {
+                          try {
+                            await organizationService.delete(organization.id);
+                            router.push('/admin/organizations');
+                          } catch (error) {
+                            console.error('Failed to delete organization:', error);
+                          }
+                          setDeleteConfirm(null);
+                        },
+                      });
+                      return;
                     }}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -287,7 +294,15 @@ export default function AdminOrganizationManagePage() {
           </div>
        </div>
 
-       {isEditingOrg && (
+        <ConfirmDialog
+          open={!!deleteConfirm}
+          onOpenChange={() => setDeleteConfirm(null)}
+          title="Delete Organization"
+          message={`Are you sure you want to delete ${organization?.name ?? 'this organization'}?`}
+          confirmLabel="Delete"
+          onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+        />
+        {isEditingOrg && (
           <AdminOrganizationForm 
              organization={organization}
              onClose={() => setIsEditingOrg(false)}

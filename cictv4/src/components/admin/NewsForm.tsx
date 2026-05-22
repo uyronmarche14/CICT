@@ -39,7 +39,7 @@ import { organizationService } from '@/services/organizationService';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 
 const newsSchema = z.object({
@@ -199,7 +199,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
 
     if (removedDuplicates > 0) {
       setGallery(sanitizedGallery);
-      toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.');
+      appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).');
     }
   }, [coverImage, gallery]);
 
@@ -238,7 +238,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
       );
       if (removedDuplicates > 0) {
         setGallery(sanitizedGallery);
-        toast.info('Duplicate gallery images matching the cover image were removed automatically.');
+        appToast.info('Gallery Cleaned', 'Duplicate image(s) removed from gallery before saving.');
       }
 
       const payload = {
@@ -262,6 +262,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
         await api.post('/news', payload);
       }
 
+      appToast.success('News Saved', 'The news article has been saved successfully.');
       onSuccess();
       onOpenChange(false);
       form.reset();
@@ -428,7 +429,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
               gallery={gallery}
               onChange={setGallery}
               onDuplicateRemoval={() =>
-                toast.info('Matching gallery images were removed because the cover image is reserved for the page hero.')
+                appToast.info('Gallery Cleaned', 'Duplicate gallery image(s) removed (reserved for cover image).')
               }
             />
             <p className="text-xs text-muted-foreground">

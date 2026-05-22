@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Calendar, MapPin, Users, Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 export default function StudentEventsPage() {
   const router = useRouter();
@@ -21,25 +21,25 @@ export default function StudentEventsPage() {
 
   const registerMutation = useMutation({
     mutationFn: (eventId: string) => studentEventAPI.register(eventId),
-    onSuccess: () => {
+    onSuccess: (_data, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
-      toast.success('Successfully registered for the event!');
+      appToast.success('Registered!', 'You are now registered for this event.', { label: 'Show QR Code', onClick: () => router.push(`/student/events/${eventId}/qr`) });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to register');
+      appToast.error('Registration Failed', error?.response?.data?.message || 'Could not register for this event.');
     },
   });
 
   const cancelMutation = useMutation({
     mutationFn: (eventId: string) => studentEventAPI.cancelRegistration(eventId),
-    onSuccess: () => {
+    onSuccess: (_data, eventId) => {
       queryClient.invalidateQueries({ queryKey: ['student', 'events'] });
-      toast.success('Registration cancelled');
+      appToast.success('Registration Cancelled', 'Your registration has been cancelled.', { label: 'Re-register', onClick: () => registerMutation.mutate(eventId) });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to cancel');
+      appToast.error('Cancellation Failed', error?.response?.data?.message || 'Could not cancel registration.');
     },
   });
 

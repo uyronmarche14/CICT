@@ -16,7 +16,7 @@ import { StructuredContent } from '@/components/StructuredContent';
 import ScrollingGallery from '@/components/ScrollingGallery';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useStudentAuth } from '@/context/StudentAuthContext';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 export default function EventDetailsPage() {
   const params = useParams();
@@ -42,11 +42,11 @@ export default function EventDetailsPage() {
     mutationFn: () => studentEventAPI.register(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
-      toast.success('Successfully registered for this event!');
+      appToast.success('Registered!', 'You are now registered for this event.', { label: 'Show QR Code', onClick: () => router.push(`/student/events/${eventId}/qr`) });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Registration failed');
+      appToast.error('Registration Failed', error?.response?.data?.message || 'Could not register.');
     },
   });
 
@@ -54,11 +54,11 @@ export default function EventDetailsPage() {
     mutationFn: () => studentEventAPI.cancelRegistration(eventId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'registration', eventId] });
-      toast.success('Registration cancelled');
+      appToast.success('Registration Cancelled', 'Your registration has been cancelled.', { label: 'Re-register', onClick: () => registerMutation.mutate() });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Cancellation failed');
+      appToast.error('Cancellation Failed', error?.response?.data?.message || 'Could not cancel.');
     },
   });
 

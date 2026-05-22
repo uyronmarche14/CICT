@@ -42,7 +42,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -183,11 +183,11 @@ export default function AdminEventDetailPage() {
     mutationFn: ({ regId }: { regId: string }) => adminEventAPI.cancelRegistration(eventId, regId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
-      toast.success('Registration cancelled');
+      appToast.success('Registration Cancelled', 'The student has been removed from this event.');
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to cancel');
+      appToast.error('Cancellation Failed', error?.response?.data?.message || 'Could not cancel registration.');
     },
   });
 
@@ -195,38 +195,38 @@ export default function AdminEventDetailPage() {
     mutationFn: ({ regId }: { regId: string }) => adminEventAPI.undoCheckIn(eventId, regId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
-      toast.success('Check-in undone');
+      appToast.success('Check-in Undone', 'The student has been reverted to Registered status.');
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to undo check-in');
+      appToast.error('Undo Failed', error?.response?.data?.message || 'Could not undo check-in.');
     },
   });
 
   const updateStatusMutation = useMutation({
     mutationFn: ({ regId, status }: { regId: string; status: string }) =>
       adminEventAPI.updateRegistrationStatus(eventId, regId, { status }),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
-      toast.success('Status updated');
+      appToast.success('Status Updated', `Registration status changed to ${variables.status.replace(/_/g, ' ')}.`);
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to update status');
+      appToast.error('Update Failed', error?.response?.data?.message || 'Could not update registration status.');
     },
   });
 
   const addRegistrationMutation = useMutation({
     mutationFn: (studentNumber: string) => adminEventAPI.adminCreateRegistration(eventId, { studentNumber }),
-    onSuccess: () => {
+    onSuccess: (_data, studentNumber) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
       setAddRegOpen(false);
       setAddRegStudentNo('');
-      toast.success('Registration created');
+      appToast.success('Registration Added', `Student ${studentNumber} has been registered for this event.`);
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to create registration');
+      appToast.error('Registration Failed', error?.response?.data?.message || 'Could not add registration.');
     },
   });
 
@@ -309,7 +309,7 @@ export default function AdminEventDetailPage() {
     a.download = `registrations-${eventId}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success('Registrations exported');
+    appToast.success('Export Complete', `${filteredRegistrations.length} registrations exported to CSV.`);
   }, [filteredRegistrations, eventId]);
 
   const handleExportAttendanceCsv = useCallback(async () => {
@@ -320,7 +320,7 @@ export default function AdminEventDetailPage() {
         q: logSearch || undefined,
       });
       if (!logs.length) {
-        toast.error('No records to export');
+        appToast.info('Nothing to Export', 'No attendance logs match the current filters.');
         return;
       }
       const headers = ['Student', 'Student No.', 'Type', 'Result', 'Scanned By', 'Scanned At', 'Notes'];
@@ -341,9 +341,9 @@ export default function AdminEventDetailPage() {
       a.download = `attendance-logs-${eventId}.csv`;
       a.click();
       URL.revokeObjectURL(url);
-      toast.success('Attendance logs exported');
+      appToast.success('Export Complete', 'Attendance logs exported to CSV.');
     } catch {
-      toast.error('Failed to export attendance logs');
+      appToast.error('Export Failed', 'Could not export attendance logs. Please try again.');
     }
   }, [eventId, logResultFilter, logScanType, logSearch]);
 
@@ -362,7 +362,7 @@ export default function AdminEventDetailPage() {
     a.href = url;
     a.download = `${event?.title ?? 'event'}-qr.png`;
     a.click();
-    toast.success('QR code downloaded');
+    appToast.success('QR Code Downloaded', `QR code for "${event?.title ?? 'event'}" saved as PNG.`);
   }, [event?.title]);
 
   const attendanceStats = useMemo(() => {

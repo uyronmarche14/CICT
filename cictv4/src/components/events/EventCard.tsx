@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import Link from 'next/link';
 
 interface EventCardProps {
@@ -30,11 +30,11 @@ export function EventCard({ event, registration }: EventCardProps) {
     mutationFn: () => studentEventAPI.register(event._id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'registrations'] });
-      toast.success('Successfully registered!');
+      appToast.success('Registered!', 'You joined this event.', { label: 'Show QR Code', onClick: () => router.push(`/student/events/${event._id}/qr`) });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Registration failed');
+      appToast.error('Registration Failed', error?.response?.data?.message || 'Could not register.');
     },
   });
 
@@ -42,11 +42,11 @@ export function EventCard({ event, registration }: EventCardProps) {
     mutationFn: () => studentEventAPI.cancelRegistration(event._id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student', 'registrations'] });
-      toast.success('Registration cancelled');
+      appToast.success('Registration Cancelled', 'Your spot in this event has been freed.', { label: 'Re-register', onClick: () => registerMutation.mutate() });
     },
     onError: (err: unknown) => {
       const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Cancellation failed');
+      appToast.error('Cancellation Failed', error?.response?.data?.message || 'Could not cancel.');
     },
   });
 

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { OrganizationMember } from '@/types';
 import { organizationService } from '@/services/organizationService';
 import { X, Upload, Loader2 } from 'lucide-react';
+import { appToast } from '@/lib/app-toast';
 
 interface AdminMemberFormProps {
   orgId: string;
@@ -49,7 +50,7 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
       setValue('photo', imageUrl);
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload image');
+      appToast.error('Upload Failed', 'Could not upload the image.');
     } finally {
       setUploading(false);
     }
@@ -67,7 +68,7 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
       onClose();
     } catch (error) {
       console.error('Failed to save member:', error);
-      alert('Failed to save member');
+      appToast.error('Save Failed', 'Could not save the member.');
     } finally {
       setLoading(false);
     }

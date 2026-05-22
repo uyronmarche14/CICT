@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Organization, OrganizationInput } from '@/types';
 import { organizationService } from '@/services/organizationService';
+import { appToast } from '@/lib/app-toast';
 
 type OrganizationFormValues = Omit<OrganizationInput, 'values' | 'achievements'> & {
   valuesText: string;
@@ -65,7 +66,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
       setValue(field, imageUrl);
     } catch (error) {
       console.error(`Failed to upload ${field}:`, error);
-      alert(`Failed to upload ${field}`);
+      appToast.error('Upload Failed', `Could not upload ${field}.`);
     } finally {
       if (field === 'logo') setUploadingLogo(false);
       else setUploadingBanner(false);
@@ -106,7 +107,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
       onClose();
     } catch (error) {
       console.error('Failed to save organization:', error);
-      alert('Failed to save organization');
+      appToast.error('Save Failed', 'Could not save the organization.');
     } finally {
       setLoading(false);
     }

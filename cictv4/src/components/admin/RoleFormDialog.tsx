@@ -14,7 +14,7 @@ import { Loader2 } from 'lucide-react';
 import { Permission, Role } from '@/types';
 import { usePermissionMetadata } from '@/hooks/use-permission-metadata';
 import { rolesAPI } from '@/lib/api/roles';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Role name must be at least 3 characters'),
@@ -58,17 +58,17 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: RoleForm
     try {
       if (role) {
         await rolesAPI.update(role.id, values);
-        toast.success('Role updated successfully');
+        appToast.success('Role Updated', 'The role has been updated successfully.');
       } else {
         await rolesAPI.create(values);
-        toast.success('Role created successfully');
+        appToast.success('Role Created', 'A new role has been created.');
       }
 
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error('Failed to save role:', error);
-      toast.error('Failed to save role');
+      appToast.error('Save Failed', 'Could not save the role. Please try again.', { label: 'Retry', onClick: () => form.handleSubmit(onSubmit)() });
     } finally {
       setIsLoading(false);
     }

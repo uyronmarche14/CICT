@@ -7,6 +7,8 @@ import { Edit2, Trash2, UserPlus } from 'lucide-react';
 import AdminMemberForm from './AdminMemberForm';
 import { organizationService } from '@/services/organizationService';
 import { CldImage } from 'next-cloudinary';
+import { appToast } from '@/lib/app-toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 interface AdminMemberManagerProps {
   orgId: string;
@@ -23,6 +25,7 @@ export default function AdminMemberManager({ orgId, members, onRefresh, color }:
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMember, setEditingMember] = useState<OrganizationMember | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
 
   const handleAdd = () => {
     setEditingMember(null);
@@ -35,17 +38,22 @@ export default function AdminMemberManager({ orgId, members, onRefresh, color }:
   };
 
   const handleDelete = async (memberId: string) => {
-    if (!confirm('Are you sure you want to delete this member?')) return;
-    try {
-      setDeletingId(memberId);
-      await organizationService.deleteMember(orgId, memberId);
-      onRefresh();
-    } catch (error) {
-      console.error('Failed to delete member:', error);
-      alert('Failed to delete member');
-    } finally {
-      setDeletingId(null);
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          setDeletingId(memberId);
+          await organizationService.deleteMember(orgId, memberId);
+          onRefresh();
+          appToast.success('Member Deleted', 'The member has been removed.');
+        } catch (error) {
+          console.error('Failed to delete member:', error);
+          appToast.error('Deletion Failed', 'Could not delete the member.');
+        } finally {
+          setDeletingId(null);
+          setDeleteConfirm(null);
+        }
+      },
+    });
   };
 
   return (
@@ -113,6 +121,14 @@ export default function AdminMemberManager({ orgId, members, onRefresh, color }:
         )}
       </div>
 
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete Member"
+        message="Are you sure you want to delete this member?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+      />
       {isFormOpen && (
         <AdminMemberForm
           orgId={orgId}

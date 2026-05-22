@@ -30,6 +30,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { appToast } from '@/lib/app-toast';
 
 export default function NewsPage() {
   const {
@@ -52,6 +54,7 @@ export default function NewsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const { shouldRender } = useAdminPageAccess(canAccessNewsModule());
   const canViewAllNews = hasPermission(Permission.VIEW_NEWS);
   const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
@@ -138,14 +141,18 @@ export default function NewsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this news article?')) return;
-    
-    try {
-      await api.delete(`/news/${id}`);
-      fetchNews();
-    } catch (error) {
-      console.error('Failed to delete news:', error);
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          await api.delete(`/news/${id}`);
+          fetchNews();
+          appToast.success('News Deleted', 'The news article has been removed.');
+        } catch {
+          appToast.error('Deletion Failed', 'Could not delete the news article.');
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   const handleWorkflowAction = async (
@@ -399,6 +406,14 @@ export default function NewsPage() {
         onOpenChange={setIsFormOpen} 
         news={selectedNews}
         onSuccess={fetchNews}
+      />
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete News"
+        message="Are you sure you want to delete this news article?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
       />
     </div>
   );

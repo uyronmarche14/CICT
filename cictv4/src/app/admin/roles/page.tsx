@@ -1,5 +1,6 @@
 'use client';
-
+ 
+import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { Role } from '@/types';
 import {
@@ -18,14 +19,17 @@ import { rolesAPI } from '@/lib/api/roles';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { RoleFormDialog } from '@/components/admin/RoleFormDialog';
 import { usePermissionMetadata } from '@/hooks/use-permission-metadata';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 
 export default function RolesPage() {
+  const router = useRouter();
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const { canCreateRole, canUpdateRole, canDeleteRole, canAccessRolesModule } = usePermissions();
   const { groups: permissionGroups } = usePermissionMetadata();
   const { shouldRender } = useAdminPageAccess(canAccessRolesModule());
@@ -48,18 +52,21 @@ export default function RolesPage() {
 
   const handleDelete = async (role: Role) => {
     if (!role.isDeletable) {
+      appToast.error('Cannot Delete Role', 'This role is still assigned to users. Reassign them before deleting.', { label: 'Manage Users', onClick: () => router.push('/admin/users') });
       return;
     }
-
-    if (!confirm(`Delete custom role "${role.name}"?`)) return;
-
-    try {
-      await rolesAPI.delete(role.id);
-      fetchRoles();
-    } catch (error) {
-      console.error('Failed to delete role:', error);
-      toast.error('This role is still assigned to users. Reassign those users before deleting it.');
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          await rolesAPI.delete(role.id);
+          fetchRoles();
+          appToast.success('Role Deleted', `The role "${role.name}" has been deleted.`);
+        } catch {
+          appToast.error('Deletion Failed', 'Could not delete the role.');
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   if (!shouldRender) {
@@ -200,6 +207,14 @@ export default function RolesPage() {
         onOpenChange={setIsDialogOpen}
         role={selectedRole}
         onSuccess={fetchRoles}
+      />
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete Role"
+        message="Are you sure you want to delete this role?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
       />
     </div>
   );

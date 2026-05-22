@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventAPI, Event } from '@/lib/api/event';
 import { EventForm } from '@/components/admin/EventForm';
 import { EditEventForm } from '@/components/admin/EditEventForm';
@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Trash, Edit, MapPin, Users, Eye, CheckCircle } from "lucide-react";
 import { format } from 'date-fns';
-import { toast } from 'sonner';
+import { appToast } from '@/lib/app-toast';
 import Link from 'next/link';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { ContentOwnerType, Permission } from '@/types';
@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
 export default function AdminEventsPage() {
   const {
@@ -42,6 +43,8 @@ export default function AdminEventsPage() {
     hasPermission(Permission.VIEW_EVENT) ? 'all' : ContentOwnerType.ORGANIZATION
   );
   const [organizationFilter, setOrganizationFilter] = useState('all');
+  const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
+  const queryClient = useQueryClient();
   const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
   const canViewAllEvents = hasPermission(Permission.VIEW_EVENT);
   const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
@@ -75,14 +78,18 @@ export default function AdminEventsPage() {
       hasScopedPermission(event.organizationId, permission));
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this event?')) return;
-    try {
-        await eventAPI.delete(id);
-        toast.success('Event deleted');
-        refetch();
-    } catch {
-        toast.error('Failed to delete event');
-    }
+    setDeleteConfirm({
+      onConfirm: async () => {
+        try {
+          await eventAPI.delete(id);
+          queryClient.invalidateQueries({ queryKey: ['admin', 'events'] });
+          appToast.success('Event Deleted', 'The event has been permanently deleted.');
+        } catch {
+          appToast.error('Deletion Failed', 'Could not delete the event. It may have registrations or active references.');
+        }
+        setDeleteConfirm(null);
+      },
+    });
   };
 
   const handleEdit = (event: Event) => {
@@ -123,10 +130,10 @@ export default function AdminEventsPage() {
                 : action === 'cancel'
                   ? 'cancelled'
                   : 'completed';
-      toast.success(`Event ${successLabel} successfully`);
+      appToast.success('Event Updated', `The event has been ${successLabel}.`);
       refetch();
     } catch {
-      toast.error(`Failed to ${action} event`);
+      appToast.error('Action Failed', `Could not ${action} the event. Please try again.`);
     }
   };
 
@@ -417,6 +424,14 @@ export default function AdminEventsPage() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={!!deleteConfirm}
+        onOpenChange={() => setDeleteConfirm(null)}
+        title="Delete Event"
+        message="Are you sure you want to delete this event?"
+        confirmLabel="Delete"
+        onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+      />
     </div>
   );
 }
