@@ -4,9 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
-import { adminEventAPI } from '@/lib/api/admin-events';
+import { adminEventAPI, AdminRegistration } from '@/lib/api/admin-events';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import QrCameraScanner from '@/components/admin/QrCameraScanner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -19,9 +20,24 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Loader2, ArrowLeft, QrCode, UserCheck, AlertCircle, CheckCircle, Undo2, Clock } from 'lucide-react';
+import {
+  Loader2,
+  ArrowLeft,
+  QrCode,
+  UserCheck,
+  AlertCircle,
+  CheckCircle,
+  Undo2,
+  Clock,
+  Camera,
+  Search,
+  X,
+  ScanLine,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
+
+type ScanMethod = 'camera' | 'manual';
 
 export default function AdminScanPage() {
   const params = useParams();
@@ -30,9 +46,14 @@ export default function AdminScanPage() {
   const eventId = params.id as string;
   const { canAccessEventsModule } = usePermissions();
   const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
-  const [studentNumber, setStudentNumber] = useState('');
+  const [scanMethod, setScanMethod] = useState<ScanMethod>('camera');
   const [scanResult, setScanResult] = useState<{ result: string; studentName?: string } | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const [studentNumber, setStudentNumber] = useState('');
+  const [nameQuery, setNameQuery] = useState('');
+  const [nameResults, setNameResults] = useState<AdminRegistration[]>([]);
+  const [searching, setSearching] = useState(false);
 
   const { data: eventData } = useQuery({
     queryKey: ['admin', 'event', eventId],
@@ -66,7 +87,28 @@ export default function AdminScanPage() {
 
   if (!shouldRender) return null;
 
-  const handleManualScan = async () => {
+  const handleQrScan = async (token: string) => {
+    setLoading(true);
+    setScanResult(null);
+    try {
+      const result = await adminEventAPI.scanAttendance(eventId, { qrToken: token });
+      setScanResult(result);
+      queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+      if (result.result === 'SUCCESS') {
+        toast.success('Check-in successful!');
+      } else if (result.result === 'DUPLICATE') {
+        toast.info('Student was already checked in');
+      } else {
+        toast.error(`Scan result: ${result.result}`);
+      }
+    } catch {
+      toast.error('Scan failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleManualScanByNumber = async () => {
     if (!studentNumber.trim()) return;
     setLoading(true);
     setScanResult(null);
@@ -91,6 +133,49 @@ export default function AdminScanPage() {
     }
   };
 
+  const handleNameSearch = async (q: string) => {
+    setNameQuery(q);
+    if (q.trim().length < 2) {
+      setNameResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const results = await adminEventAPI.searchRegistrations(eventId, q.trim());
+      setNameResults(results);
+    } catch {
+      setNameResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const handleNameSelect = async (reg: AdminRegistration) => {
+    setNameQuery('');
+    setNameResults([]);
+    setLoading(true);
+    setScanResult(null);
+    try {
+      const result = await adminEventAPI.scanAttendance(eventId, {
+        studentNumber: reg.studentId.studentNumber,
+      });
+      setScanResult({ ...result, studentName: `${reg.studentId.firstName} ${reg.studentId.lastName}` });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
+      if (result.result === 'SUCCESS') {
+        toast.success(`${reg.studentId.firstName} ${reg.studentId.lastName} checked in!`);
+      } else if (result.result === 'DUPLICATE') {
+        toast.info(`${reg.studentId.firstName} ${reg.studentId.lastName} already checked in`);
+      } else {
+        toast.error(`Scan result: ${result.result}`);
+      }
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Check-in failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getResultBadge = (result: string) => {
     switch (result) {
       case 'SUCCESS': return <Badge className="bg-green-600 text-lg px-4 py-2"><CheckCircle className="w-5 h-5 mr-2" /> Checked In</Badge>;
@@ -110,52 +195,144 @@ export default function AdminScanPage() {
         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Event
       </Button>
 
-      <div>
-        <h1 className="text-2xl font-bold">Scan Attendance</h1>
-        {event && <p className="text-muted-foreground">{event.title}</p>}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Scan Attendance</h1>
+          {event && <p className="text-muted-foreground">{event.title}</p>}
+        </div>
+        <div className="flex gap-1 bg-muted rounded-lg p-1">
+          <Button
+            variant={scanMethod === 'camera' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setScanMethod('camera')}
+          >
+            <Camera className="w-4 h-4 mr-1.5" /> Camera
+          </Button>
+          <Button
+            variant={scanMethod === 'manual' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setScanMethod('manual')}
+          >
+            <Search className="w-4 h-4 mr-1.5" /> Manual
+          </Button>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <QrCode className="w-5 h-5" />
-            QR Scanner
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Camera QR scanning will be available here in Phase 4. For now, use the manual lookup below.
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <UserCheck className="w-5 h-5" />
-            Manual Check-in
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-3">
-            <Input
-              placeholder="Enter student number"
-              value={studentNumber}
-              onChange={(e) => setStudentNumber(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleManualScan()}
+      {scanMethod === 'camera' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <QrCode className="w-5 h-5" />
+              QR Scanner
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QrCameraScanner
+              onScan={handleQrScan}
+              onError={(msg) => toast.error(msg)}
+              scanning={loading}
             />
-            <Button onClick={handleManualScan} disabled={loading || !studentNumber.trim()}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Check In'}
-            </Button>
-          </div>
+            {scanResult && scanResult.result === 'SUCCESS' && !loading && (
+              <div className="flex justify-center mt-4">
+                {getResultBadge(scanResult.result)}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-          {scanResult && (
-            <div className="flex justify-center py-4">
-              {getResultBadge(scanResult.result)}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {scanMethod === 'manual' && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScanLine className="w-5 h-5" />
+                Check-in by Student Number
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex gap-3">
+                <Input
+                  placeholder="Enter student number"
+                  value={studentNumber}
+                  onChange={(e) => setStudentNumber(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleManualScanByNumber()}
+                />
+                <Button onClick={handleManualScanByNumber} disabled={loading || !studentNumber.trim()}>
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Check In'}
+                </Button>
+              </div>
+
+              {scanResult && (
+                <div className="flex justify-center py-2">
+                  {getResultBadge(scanResult.result)}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Search className="w-5 h-5" />
+                Search by Name
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Type a student name to search..."
+                  value={nameQuery}
+                  onChange={(e) => handleNameSearch(e.target.value)}
+                  className="pl-8"
+                />
+                {nameQuery && (
+                  <button
+                    onClick={() => { setNameQuery(''); setNameResults([]); }}
+                    className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+
+              {searching && (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                </div>
+              )}
+
+              {!searching && nameResults.length > 0 && (
+                <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+                  {nameResults.map((reg) => (
+                    <button
+                      key={reg._id}
+                      onClick={() => handleNameSelect(reg)}
+                      disabled={loading}
+                      className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors disabled:opacity-50"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">
+                          {reg.studentId.firstName} {reg.studentId.lastName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{reg.studentId.studentNumber}</p>
+                      </div>
+                      <Badge variant={reg.status === 'checked_in' ? 'secondary' : 'outline'} className="text-[10px]">
+                        {reg.status === 'checked_in' ? 'Checked In' : reg.status}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {!searching && nameQuery.length >= 2 && nameResults.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">No matching registrations found.</p>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <Card>
         <CardHeader>

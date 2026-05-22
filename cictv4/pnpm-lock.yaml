@@ -95,6 +95,9 @@ importers:
       framer-motion:
         specifier: ^12.23.12
         version: 12.23.12(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      html5-qrcode:
+        specifier: ^2.3.8
+        version: 2.3.8
       js-cookie:
         specifier: ^3.0.5
         version: 3.0.5
@@ -2966,6 +2969,9 @@ packages:
 
   html-escaper@2.0.2:
     resolution: {integrity: sha512-H2iMtd0I4Mt5eYiapRdIDjp+XzelXQ0tFE4JS7YFwFevXXMmOp9myNrUvCg0D6ws8iqkRPBfKHgbwig1SmlLfg==}
+
+  html5-qrcode@2.3.8:
+    resolution: {integrity: sha512-jsr4vafJhwoLVEDW3n1KvPnCCXWaQfRng0/EEYk1vNcQGcG/htAdhJX0be8YyqMoSz7+hZvOZSTAepsabiuhiQ==}
 
   htmled@1.0.1:
     resolution: {integrity: sha512-GfE2GsFY8rpmwdn5PQutIDwel5yeTBdlvKn6mQRSBWzyAgx946UT5K/qD9Fq8Ei5Cw4rqES8TRfSFYbxq+/CDw==}
@@ -7451,6 +7457,8 @@ snapshots:
   html-entities@1.4.0: {}
 
   html-escaper@2.0.2: {}
+
+  html5-qrcode@2.3.8: {}
 
   htmled@1.0.1: {}
 

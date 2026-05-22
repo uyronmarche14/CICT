@@ -423,6 +423,196 @@ export const getEventRegistrationsForAdmin = async (
   });
 };
 
+export const searchEventRegistrations = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const event = await Event.findById(req.params.id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  await ensureCanManageOwnedContent(
+    req.user,
+    Permission.VIEW_EVENT_REGISTRATIONS,
+    event.ownerType,
+    event.organizationId ?? null
+  );
+
+  const q = (req.query.q as string || '').trim();
+  if (!q || q.length < 2) {
+    res.status(200).json({ success: true, data: { registrations: [] } });
+    return;
+  }
+
+  const students = await Student.find({
+    $or: [
+      { firstName: { $regex: q, $options: 'i' } },
+      { lastName: { $regex: q, $options: 'i' } },
+      { studentNumber: { $regex: q, $options: 'i' } },
+    ],
+  }).select('_id');
+
+  const studentIds = students.map((s) => s._id);
+
+  const registrations = await EventRegistration.find({
+    eventId: event._id,
+    studentId: { $in: studentIds },
+  })
+    .populate('studentId', 'studentNumber firstName lastName email status')
+    .sort({ createdAt: -1 })
+    .limit(20);
+
+  res.status(200).json({
+    success: true,
+    data: { registrations },
+  });
+};
+
+export const getEventAttendanceLogs = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const event = await Event.findById(req.params.id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  await ensureCanManageOwnedContent(
+    req.user,
+    Permission.VIEW_EVENT_REGISTRATIONS,
+    event.ownerType,
+    event.organizationId ?? null
+  );
+
+  const page = Math.max(1, parseInt(req.query.page as string) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 50));
+  const skip = (page - 1) * limit;
+
+  const filter: Record<string, unknown> = { eventId: event._id };
+
+  const resultFilter = req.query.result as string;
+  if (resultFilter && resultFilter !== 'all') {
+    filter.result = resultFilter;
+  }
+
+  const scanType = req.query.scanType as string;
+  if (scanType && scanType !== 'all') {
+    filter.scanType = scanType;
+  }
+
+  const q = (req.query.q as string || '').trim();
+  let studentIds: string[] | undefined;
+
+  if (q.length >= 2) {
+    const students = await Student.find({
+      $or: [
+        { firstName: { $regex: q, $options: 'i' } },
+        { lastName: { $regex: q, $options: 'i' } },
+      ],
+    }).select('_id');
+    studentIds = students.map((s) => String(s._id));
+    if (studentIds.length === 0) {
+      res.status(200).json({
+        success: true,
+        data: { logs: [], total: 0, page, totalPages: 0 },
+      });
+      return;
+    }
+    filter.studentId = { $in: studentIds };
+  }
+
+  const [logs, total, byResult, byScanType] = await Promise.all([
+    EventAttendanceLog.find(filter)
+      .populate('studentId', 'studentNumber firstName lastName')
+      .populate('scannedByAdminId', 'firstName lastName')
+      .sort({ scannedAt: -1 })
+      .skip(skip)
+      .limit(limit),
+    EventAttendanceLog.countDocuments(filter),
+    EventAttendanceLog.aggregate([
+      { $match: { eventId: event._id } },
+      { $group: { _id: '$result', count: { $sum: 1 } } },
+    ]),
+    EventAttendanceLog.aggregate([
+      { $match: { eventId: event._id } },
+      { $group: { _id: '$scanType', count: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const summary = {
+    byResult: Object.fromEntries(byResult.map((r: { _id: string; count: number }) => [r._id, r.count])),
+    byScanType: Object.fromEntries(byScanType.map((r: { _id: string; count: number }) => [r._id, r.count])),
+  };
+
+  res.status(200).json({
+    success: true,
+    data: {
+      logs,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      summary,
+    },
+  });
+};
+
+export const exportEventAttendanceLogs = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  const event = await Event.findById(req.params.id);
+  if (!event) {
+    throw new AppError('Event not found', 404);
+  }
+
+  await ensureCanManageOwnedContent(
+    req.user,
+    Permission.VIEW_EVENT_REGISTRATIONS,
+    event.ownerType,
+    event.organizationId ?? null
+  );
+
+  const filter: Record<string, unknown> = { eventId: event._id };
+
+  const resultFilter = req.query.result as string;
+  if (resultFilter && resultFilter !== 'all') {
+    filter.result = resultFilter;
+  }
+
+  const scanType = req.query.scanType as string;
+  if (scanType && scanType !== 'all') {
+    filter.scanType = scanType;
+  }
+
+  const q = (req.query.q as string || '').trim();
+  if (q.length >= 2) {
+    const students = await Student.find({
+      $or: [
+        { firstName: { $regex: q, $options: 'i' } },
+        { lastName: { $regex: q, $options: 'i' } },
+      ],
+    }).select('_id');
+    const studentIds = students.map((s) => String(s._id));
+    if (studentIds.length === 0) {
+      res.status(200).json({ success: true, data: { logs: [] } });
+      return;
+    }
+    filter.studentId = { $in: studentIds };
+  }
+
+  const logs = await EventAttendanceLog.find(filter)
+    .populate('studentId', 'studentNumber firstName lastName')
+    .populate('scannedByAdminId', 'firstName lastName')
+    .sort({ scannedAt: -1 })
+    .limit(10000);
+
+  res.status(200).json({
+    success: true,
+    data: { logs },
+  });
+};
+
 export const scanEventAttendance = async (
   req: AuthRequest,
   res: Response
