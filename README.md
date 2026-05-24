@@ -2,12 +2,16 @@
 
 Full-stack web platform for the CICT department. Public-facing website + admin CMS.
 
+The repository is now a pnpm workspace monorepo with backend, web, mobile, and shared API contracts.
+
 ## Tech Stack
 
 | Layer | Technology |
 |---|---|
 | Backend | Express 5 + TypeScript + MongoDB (Mongoose) |
-| Frontend | Next.js 15 + React 19 + Tailwind CSS 4 |
+| Web | Next.js 15 + React 19 + Tailwind CSS 4 |
+| Mobile | Expo + React Native + TypeScript |
+| Shared | `@cict/contracts`, `@cict/tsconfig`, `@cict/eslint-config` |
 | Auth | JWT (HTTP-only cookies) |
 | Media | Cloudinary CDN |
 | UI | shadcn/ui + Framer Motion |
@@ -16,6 +20,7 @@ Full-stack web platform for the CICT department. Public-facing website + admin C
 
 ### Prerequisites
 - Node.js 20+
+- pnpm 10+
 - Docker (for local MongoDB)
 
 ### Setup
@@ -25,42 +30,29 @@ Full-stack web platform for the CICT department. Public-facing website + admin C
 git clone git@github.com:uyronmarche14/CICT.git
 cd CICT
 
-# Install backend dependencies
-cd cict-backend
-npm install
-cd ..
-
-# Install frontend dependencies
-cd cictv4
-npm install --legacy-peer-deps
-cd ..
+# Install all workspace dependencies
+corepack enable
+pnpm install
 ```
 
 ### Run Locally
 
 **Terminal 1 — MongoDB + Backend:**
 ```bash
-cd cict-backend
-
-# Start MongoDB (Docker)
-npm run docker:mongo:up
-
-# Start backend dev server
-npm run dev
+pnpm run backend:mongo:up
+pnpm run backend:dev
 ```
 
 **Terminal 2 — Frontend:**
 ```bash
-cd cictv4
-npm run dev
+pnpm run web:dev
 ```
 
 Open http://localhost:3000 — API at http://localhost:5000/api
 
 ### Seed Database
 ```bash
-cd cict-backend
-npm run seed
+pnpm run backend:seed
 ```
 
 ## Available Scripts
@@ -68,31 +60,43 @@ npm run seed
 ### Backend
 | Command | Description |
 |---|---|
-| `npm run dev` | Start dev server with nodemon |
-| `npm run build` | Compile TypeScript |
-| `npm run lint` | ESLint check |
-| `npm run typecheck` | TypeScript type check |
-| `npm test` | Run tests |
-| `npm run seed` | Seed database |
+| `pnpm run backend:dev` | Start dev server with nodemon |
+| `pnpm run backend:build` | Compile TypeScript |
+| `pnpm run backend:lint` | ESLint check |
+| `pnpm run backend:typecheck` | TypeScript type check |
+| `pnpm run backend:test` | Run tests |
+| `pnpm run backend:seed` | Seed database |
 
 ### Frontend
 | Command | Description |
 |---|---|
-| `npm run dev` | Next.js dev server (turbopack) |
-| `npm run build` | Production build |
-| `npm run lint` | ESLint check |
-| `npm run typecheck` | TypeScript type check |
-| `npm test` | Run tests |
+| `pnpm run web:dev` | Next.js dev server (turbopack) |
+| `pnpm run web:build` | Production build |
+| `pnpm run web:lint` | ESLint check |
+| `pnpm run web:typecheck` | TypeScript type check |
+| `pnpm run web:test` | Run tests |
+
+### Mobile
+| Command | Description |
+|---|---|
+| `pnpm run mobile:dev` | Start Expo dev server from the repo root |
+| `pnpm run mobile:android` | Run the Expo app on Android |
+| `pnpm run mobile:ios` | Run the Expo app on iOS |
+| `pnpm run mobile:web` | Run the Expo app on the web |
+| `pnpm run backend:tunnel` | Expose the backend through a temporary public tunnel for phone testing |
 
 ## Environment Setup
 
 1. Copy env examples:
 ```bash
-cp cict-backend/.env.example cict-backend/.env
-cp cictv4/.env.example cictv4/.env.local
+cp apps/backend/.env.example apps/backend/.env
+cp apps/web/.env.example apps/web/.env.local
+cp apps/mobile/.env.example apps/mobile/.env
 ```
 
 2. Add your own values (MongoDB URI, JWT secrets, Cloudinary keys)
+
+For phone testing from WSL, prefer a tunnel-backed mobile API URL instead of `localhost`.
 
 ## Branch Strategy
 

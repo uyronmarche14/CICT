@@ -40,10 +40,10 @@
 
 | Task | Status | Notes |
 |---|---|---|
-| Create staging Render Blueprint | ✅ Done | `cict-backend/render.staging.yaml` |
+| Create staging Render Blueprint | ✅ Done | `apps/backend/render.staging.yaml` |
 | Create Render staging backend service | 🔴 Manual | Via Render dashboard → staging branch |
 | Set up staging MongoDB Atlas DB | 🔴 Manual | Create `cict-crm-staging` |
-| Frontend staging | 🔴 Manual | Separate repo (cictv4 staging branch → Render) |
+| Frontend staging | 🔴 Manual | Configure web deployment from `apps/web` if staging web is needed |
 
 ## Phase 4: Staging Deployment
 
@@ -60,7 +60,7 @@
 |---|---|---|
 | Workflow file | ✅ Done | Push to `main` → deploys everything |
 | Backend → Render production | ✅ Configured | POST to `RENDER_PRODUCTION_DEPLOY_HOOK` |
-| Frontend → Vercel production | ✅ Configured | `vercel --prod` from `cictv4/` |
+| Frontend → Vercel production | ✅ Configured | `vercel --prod` from `apps/web/` |
 | Manual dispatch with confirmation | ✅ Configured | |
 | Post-deploy smoke test | ✅ Configured | Both backend + frontend |
 | Release tagging | ✅ Configured | Auto-tags `v{date}.{time}` |

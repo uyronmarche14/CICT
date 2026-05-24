@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "CICT Mobile",
+    "slug": "cict-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "cictmobile",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EXPO_PROJECT_ID"
+      }
+    },
+    "android": {
+      "package": "com.cict.mobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.cict.mobile"
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

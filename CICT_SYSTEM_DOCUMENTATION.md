@@ -1,7 +1,7 @@
 # CICT System Documentation
 
-Last updated: 2026-05-16
-Source of truth: current codebase inspection of `/home/ronmarche14/projects/CICT/cict-backend` and `/home/ronmarche14/projects/CICT/cictv4`
+Last updated: 2026-05-24
+Source of truth: current codebase inspection of `/home/ronmarche14/projects/CICT/apps/backend`, `/home/ronmarche14/projects/CICT/apps/web`, `/home/ronmarche14/projects/CICT/apps/mobile`, and `/home/ronmarche14/projects/CICT/packages`
 
 ## 1. Document Purpose
 
@@ -27,10 +27,14 @@ Important note:
 
 ## 2. System Overview
 
-The CICT project is a full-stack web system composed of:
+The CICT project is a pnpm workspace monorepo composed of:
 
-- `cictv4`: a Next.js frontend for the public website and admin panel
-- `cict-backend`: an Express + TypeScript backend API
+- `apps/web`: a Next.js frontend for the public website and admin panel
+- `apps/backend`: an Express + TypeScript backend API
+- `apps/mobile`: an Expo student mobile app
+- `packages/contracts`: shared TypeScript and Zod API contracts
+- `packages/tsconfig`: shared TypeScript compiler defaults
+- `packages/eslint-config`: shared ESLint flat configs
 - MongoDB: the primary database
 - Cloudinary: image hosting for uploaded media
 - JWT cookie authentication: for admin login and protected API access

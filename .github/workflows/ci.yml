@@ -1,4 +1,4 @@
-name: CI — Quality Gates
+name: CI - Quality Gates
 
 on:
   pull_request:
@@ -8,14 +8,12 @@ on:
 
 env:
   NODE_VERSION: '20'
+  PNPM_VERSION: '10.18.3'
 
 jobs:
-  backend-checks:
-    name: Backend — Lint, TypeCheck & Test
+  contracts-checks:
+    name: Contracts - TypeCheck, Test & Build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./cict-backend
 
     steps:
       - uses: actions/checkout@v4
@@ -23,54 +21,128 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ./cict-backend/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
-        run: npm run typecheck
+        run: pnpm --filter @cict/contracts typecheck
 
       - name: Run tests
-        run: npm test
-
-  frontend-checks:
-    name: Frontend — Lint, TypeCheck, Test & Build
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./cictv4
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ./cictv4/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Run tests
-        run: npm test
+        run: pnpm --filter @cict/contracts test
 
       - name: Build
-        run: npm run build
+        run: pnpm --filter @cict/contracts build
+
+  backend-checks:
+    name: Backend - Lint, TypeCheck, Test & Build
+    runs-on: ubuntu-latest
+    needs: [contracts-checks]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build contracts
+        run: pnpm --filter @cict/contracts build
+
+      - name: Lint
+        run: pnpm --filter @cict/backend lint
+
+      - name: Type check
+        run: pnpm --filter @cict/backend typecheck
+
+      - name: Run tests
+        run: pnpm --filter @cict/backend test
+
+      - name: Build
+        run: pnpm --filter @cict/backend build
+
+  frontend-checks:
+    name: Web - Lint, TypeCheck, Test & Build
+    runs-on: ubuntu-latest
+    needs: [contracts-checks]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build contracts
+        run: pnpm --filter @cict/contracts build
+
+      - name: Lint
+        run: pnpm --filter @cict/web lint
+
+      - name: Type check
+        run: pnpm --filter @cict/web typecheck
+
+      - name: Run tests
+        run: pnpm --filter @cict/web test
+
+      - name: Build
+        run: pnpm --filter @cict/web build
+
+  mobile-checks:
+    name: Mobile - Lint, TypeCheck & Test
+    runs-on: ubuntu-latest
+    needs: [contracts-checks]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build contracts
+        run: pnpm --filter @cict/contracts build
+
+      - name: Lint
+        run: pnpm --filter @cict/mobile lint
+
+      - name: Type check
+        run: pnpm --filter @cict/mobile typecheck
+
+      - name: Run tests
+        run: pnpm --filter @cict/mobile test
 
   security-audit:
-    name: Security — Dep Audit & CodeQL
+    name: Security - Dependency Audit & CodeQL
     runs-on: ubuntu-latest
     permissions:
       security-events: write
@@ -79,27 +151,33 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: javascript-typescript
           config-file: .github/codeql-config.yml
 
-      - name: Backend audit
-        working-directory: ./cict-backend
-        run: npm audit --audit-level=high
-        continue-on-error: true
-
-      - name: Frontend audit
-        working-directory: ./cictv4
-        run: npm audit --audit-level=high
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
         continue-on-error: true
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3
 
   secret-scan:
-    name: Security — Secret Leakage Scan
+    name: Security - Secret Leakage Scan
     runs-on: ubuntu-latest
 
     steps:
@@ -112,7 +190,7 @@ jobs:
         continue-on-error: true
 
   dependency-review:
-    name: Security — Dependency Review
+    name: Security - Dependency Review
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
 

@@ -16,6 +16,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
+  PNPM_VERSION: '10.18.3'
 
 jobs:
   validate:
@@ -87,15 +88,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: ./cictv4/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Enable pnpm
+        run: corepack enable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace
+        run: |
+          pnpm --filter @cict/contracts build
+          pnpm --filter @cict/web build
 
       - name: Deploy to Vercel
-        working-directory: ./cictv4
         run: |
-          npx vercel link --project ${{ secrets.VERCEL_PROJECT_ID }} \
+          pnpm dlx vercel link --cwd apps/web --project ${{ secrets.VERCEL_PROJECT_ID }} \
             --token ${{ secrets.VERCEL_TOKEN }} --yes
-          npx vercel --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+          pnpm dlx vercel --cwd apps/web --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
 
   smoke-test:
     name: Post-deploy smoke test

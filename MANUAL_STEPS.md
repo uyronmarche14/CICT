@@ -45,14 +45,14 @@ The `.gitignore` already excludes `.env*` files, so new commits won't leak them.
 
 ## Step 4: Reconnect Vercel to Monorepo
 
-Current: Vercel reads from `uyronmarche14/cictv4` (standalone repo)
+Current: Vercel may still read from the old standalone web repo.
 
-1. Go to https://vercel.com → your `cictv4` project → **Settings** → **Git**
+1. Go to https://vercel.com → your web project → **Settings** → **Git**
 2. Click **Disconnect** the current repo
 3. Click **Connect Git Repository** → select `uyronmarche14/CICT`
-4. Set **Root Directory** to `cictv4`
+4. Set **Root Directory** to `apps/web`
 5. Set **Production Branch** to `main`
-6. Save — Vercel will auto-deploy `cictv4/` from the monorepo
+6. Save — Vercel will auto-deploy `apps/web/` from the monorepo
 
 Zero downtime — your live site keeps serving during the switch.
 
@@ -63,11 +63,11 @@ Zero downtime — your live site keeps serving during the switch.
 1. Go to https://dashboard.render.com → **New** → **Web Service**
 2. Connect `uyronmarche14/CICT` repo
 3. Branch: `staging`
-4. **Root Directory:** `cict-backend`
+4. **Root Directory:** repository root
 5. **Name:** `cict-backend-staging`
 6. **Runtime:** Node
-7. **Build Command:** `npm install && npm run build`
-8. **Start Command:** `npm start`
+7. **Build Command:** `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @cict/contracts build && pnpm --filter @cict/backend build`
+8. **Start Command:** `pnpm --filter @cict/backend start`
 9. **Health Check Path:** `/health`
 
 ### Environment Variables

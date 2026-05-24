@@ -32,45 +32,58 @@ feature/* ──PR──→ staging ──push──→ Staging (Render backend 
 
 ## Available Scripts
 
-### Backend (`cict-backend/`)
+### Backend (`apps/backend/`)
 | Script | Command |
 |---|---|
-| `npm run dev` | Start dev server with nodemon |
-| `npm run build` | Compile TypeScript |
-| `npm run lint` | ESLint check |
-| `npm run lint:fix` | ESLint auto-fix |
-| `npm run typecheck` | TypeScript type check (no emit) |
-| `npm test` | Run vitest tests |
+| `pnpm run backend:dev` | Start dev server with nodemon |
+| `pnpm run backend:build` | Compile TypeScript |
+| `pnpm run backend:lint` | ESLint check |
+| `pnpm --filter @cict/backend lint:fix` | ESLint auto-fix |
+| `pnpm run backend:typecheck` | TypeScript type check (no emit) |
+| `pnpm run backend:test` | Run vitest tests |
 
-### Frontend (`cictv4/`)
+### Web (`apps/web/`)
 | Script | Command |
 |---|---|
-| `npm run dev` | Next.js dev server (turbopack) |
-| `npm run build` | Next.js production build |
-| `npm run lint` | ESLint check |
-| `npm run typecheck` | TypeScript type check (no emit) |
-| `npm test` | Run vitest tests |
+| `pnpm run web:dev` | Next.js dev server (turbopack) |
+| `pnpm run web:build` | Next.js production build |
+| `pnpm run web:lint` | ESLint check |
+| `pnpm run web:typecheck` | TypeScript type check (no emit) |
+| `pnpm run web:test` | Run vitest tests |
+
+### Mobile (`apps/mobile/`)
+| Script | Command |
+|---|---|
+| `pnpm run mobile:dev` | Start Expo dev server |
+| `pnpm run mobile:android` | Run on Android |
+| `pnpm run mobile:ios` | Run on iOS |
+| `pnpm run mobile:web` | Run in web mode |
+| `pnpm run mobile:lint` | Run Expo lint |
+| `pnpm run mobile:typecheck` | TypeScript type check |
+| `pnpm run mobile:test` | Run Jest tests |
 
 ## Full Stack Local Dev
 
 ```bash
 # Start MongoDB
-cd cict-backend && npm run docker:mongo:up
+pnpm run backend:mongo:up
 
 # Start backend (terminal 1)
-cd cict-backend && npm run dev
+pnpm run backend:dev
 
 # Start frontend (terminal 2)
-cd cictv4 && npm run dev
+pnpm run web:dev
 ```
 
 Open http://localhost:3000 (frontend) — API at http://localhost:5000 (backend)
+
+To run mobile locally, start the backend first, then run Expo with `pnpm run mobile:dev`.
 
 ## Setting Up Staging Environment
 
 1. **Render Staging Backend:**
    - Create new Web Service in Render dashboard
-   - Use `cict-backend/render.staging.yaml` as Blueprint
+   - Use `apps/backend/render.staging.yaml` as Blueprint
    - Branch: `staging`
    - Set `MONGODB_URI` to a separate Atlas DB (e.g. `cict-crm-staging`)
    - Copy CLOUDINARY vars from production or use separate cloud
@@ -92,4 +105,4 @@ Configure in GitHub Settings → Branches:
 | `main` | Require PR, require CI checks, require up-to-date, no direct push |
 | `staging` | Require PR, require CI checks, require up-to-date, no direct push |
 
-Required checks: `backend-checks`, `frontend-checks`, `security-audit`, `dependency-review`
+Required checks: `contracts-checks`, `backend-checks`, `frontend-checks`, `mobile-checks`, `security-audit`, `dependency-review`

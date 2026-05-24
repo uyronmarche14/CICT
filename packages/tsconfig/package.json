@@ -1,0 +1,14 @@
+{
+  "name": "@cict/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "*.json"
+  ],
+  "exports": {
+    "./base.json": "./base.json",
+    "./node.json": "./node.json",
+    "./next.json": "./next.json",
+    "./expo.json": "./expo.json"
+  }
+}
