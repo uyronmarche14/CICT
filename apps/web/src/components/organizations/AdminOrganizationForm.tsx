@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { X, Upload, Loader2 } from 'lucide-react';
@@ -153,7 +152,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
               <label className="text-sm font-medium">Logo</label>
               <div className="flex items-center gap-4">
                 {logoUrl && (
-                  <img src={logoUrl} alt="Logo" className="w-16 h-16 object-contain border rounded" />
+                  <Image src={logoUrl} alt="Logo" width={64} height={64} className="object-contain border rounded" />
                 )}
                 <div className="relative">
                   <input
@@ -178,7 +177,13 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
               <label className="text-sm font-medium">Banner</label>
               <div className="flex flex-col gap-2">
                 {bannerUrl && (
-                  <img src={bannerUrl} alt="Banner" className="w-full h-24 object-cover border rounded" />
+                  <Image
+                    src={bannerUrl}
+                    alt="Banner"
+                    width={600}
+                    height={96}
+                    className="w-full object-cover border rounded"
+                  />
                 )}
                 <div className="relative">
                   <input

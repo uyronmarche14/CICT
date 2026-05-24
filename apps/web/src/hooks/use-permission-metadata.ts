@@ -1,42 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { permissionsMetadataAPI } from '@/lib/api/permissions';
-import { PermissionMetadataGroup } from '@/types';
+import { queryKeys } from '@/lib/query-keys';
 
 export const usePermissionMetadata = () => {
-  const [groups, setGroups] = useState<PermissionMetadataGroup[]>(
-    permissionsMetadataAPI.getFallback()
-  );
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const fetchMetadata = async () => {
-      try {
-        const data = await permissionsMetadataAPI.getAll();
-        if (!cancelled) {
-          setGroups(data);
-        }
-      } catch (error) {
-        console.error('Failed to fetch permission metadata:', error);
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchMetadata();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { data: groups, isLoading } = useQuery({
+    queryKey: queryKeys.permissionsMetadata.all,
+    queryFn: () => permissionsMetadataAPI.getAll(),
+    staleTime: Infinity,
+  });
 
   return {
-    groups,
+    groups: groups ?? permissionsMetadataAPI.getFallback(),
     isLoading,
   };
 };

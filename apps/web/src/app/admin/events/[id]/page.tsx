@@ -1,14 +1,12 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { QRCodeCanvas } from 'qrcode.react';
 import { eventAPI } from '@/lib/api/event';
 import { adminEventAPI } from '@/lib/api/admin-events';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -20,13 +18,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Calendar,
-  MapPin,
-  Users,
   Loader2,
   ArrowLeft,
   Clock,
-  QrCode,
   Search,
   X,
   UserPlus,
@@ -39,6 +33,7 @@ import {
   UserCheck,
   ListX,
   ListChecks,
+  Users,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
@@ -54,11 +49,10 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import {
   DropdownMenu,
@@ -77,70 +71,18 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Permission } from '@/types';
+import { EventOverview, EventQrDialog } from '@/components/admin/EventDetail';
+import {
+  PAGE_SIZE,
+  STATUS_OPTIONS,
+  SCAN_RESULT_OPTIONS,
+  SCAN_TYPE_OPTIONS,
+  getStatusBadge,
+  getScanResultBadge,
+  getPageNumbers,
+} from '@/components/admin/EventDetail';
 
 type Tab = 'details' | 'registrations' | 'attendance';
-
-const PAGE_SIZE = 15;
-
-const STATUS_OPTIONS = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'registered', label: 'Registered' },
-  { value: 'checked_in', label: 'Checked In' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'reserved', label: 'Reserved' },
-];
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'registered': return <Badge className="bg-green-600">Registered</Badge>;
-    case 'checked_in': return <Badge className="bg-blue-600">Checked In</Badge>;
-    case 'cancelled': return <Badge variant="secondary">Cancelled</Badge>;
-    case 'reserved': return <Badge variant="outline">Reserved</Badge>;
-    default: return <Badge variant="outline">{status}</Badge>;
-  }
-};
-
-function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
-  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-  const pages: (number | 'ellipsis')[] = [1];
-  if (current > 3) pages.push('ellipsis');
-  const start = Math.max(2, current - 1);
-  const end = Math.min(total - 1, current + 1);
-  for (let i = start; i <= end; i++) pages.push(i);
-  if (current < total - 2) pages.push('ellipsis');
-  pages.push(total);
-  return pages;
-}
-
-const SCAN_RESULT_OPTIONS = [
-  { value: 'all', label: 'All Results' },
-  { value: 'success', label: 'Success' },
-  { value: 'duplicate', label: 'Duplicate' },
-  { value: 'not_registered', label: 'Not Registered' },
-  { value: 'not_eligible', label: 'Not Eligible' },
-  { value: 'invalid_qr', label: 'Invalid QR' },
-  { value: 'event_full', label: 'Event Full' },
-  { value: 'registration_closed', label: 'Registration Closed' },
-];
-
-const SCAN_TYPE_OPTIONS = [
-  { value: 'all', label: 'All Types' },
-  { value: 'entry', label: 'QR Scan' },
-  { value: 'manual', label: 'Manual' },
-];
-
-const getScanResultBadge = (result: string) => {
-  switch (result) {
-    case 'success': return <Badge className="bg-green-600">Success</Badge>;
-    case 'duplicate': return <Badge className="bg-blue-600">Duplicate</Badge>;
-    case 'not_registered': return <Badge variant="secondary">Not Registered</Badge>;
-    case 'not_eligible': return <Badge className="bg-orange-600">Not Eligible</Badge>;
-    case 'invalid_qr': return <Badge className="bg-red-600">Invalid QR</Badge>;
-    case 'event_full': return <Badge className="bg-red-600">Event Full</Badge>;
-    case 'registration_closed': return <Badge className="bg-red-600">Closed</Badge>;
-    default: return <Badge variant="outline">{result}</Badge>;
-  }
-};
 
 export default function AdminEventDetailPage() {
   const params = useParams();
@@ -158,7 +100,6 @@ export default function AdminEventDetailPage() {
   const [addRegOpen, setAddRegOpen] = useState(false);
   const [addRegStudentNo, setAddRegStudentNo] = useState('');
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
-  const qrRef = useRef<HTMLCanvasElement>(null);
   const [logPage, setLogPage] = useState(1);
   const [logResultFilter, setLogResultFilter] = useState('all');
   const [logScanType, setLogScanType] = useState('all');
@@ -354,17 +295,6 @@ export default function AdminEventDetailPage() {
 
   const event = eventData?.data?.event;
 
-  const handleDownloadQr = useCallback(() => {
-    const canvas = qrRef.current;
-    if (!canvas) return;
-    const url = canvas.toDataURL('image/png');
-    const a = window.document.createElement('a');
-    a.href = url;
-    a.download = `${event?.title ?? 'event'}-qr.png`;
-    a.click();
-    appToast.success('QR Code Downloaded', `QR code for "${event?.title ?? 'event'}" saved as PNG.`);
-  }, [event?.title]);
-
   const attendanceStats = useMemo(() => {
     if (!registrations) return null;
     const total = registrations.length;
@@ -437,7 +367,6 @@ export default function AdminEventDetailPage() {
     paginatedRegistrations.every((r) => selectedIds.has(r._id));
 
   return (
-    <>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={() => router.push('/admin/events')}>
@@ -462,81 +391,7 @@ export default function AdminEventDetailPage() {
       </div>
 
       {tab === 'details' && (
-        <Card>
-          <CardContent className="p-6 space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold">{event.title}</h1>
-              <p className="text-muted-foreground mt-1">{event.excerpt}</p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg">
-                <Calendar className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-sm">
-                  <p className="text-xs text-muted-foreground">Date</p>
-                  <p className="font-medium">{format(new Date(event.startDate), 'MMM dd, yyyy')}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg">
-                <Clock className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-sm">
-                  <p className="text-xs text-muted-foreground">Time</p>
-                  <p className="font-medium">
-                    {format(new Date(event.startDate), 'h:mm a')} - {format(new Date(event.endDate), 'h:mm a')}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg">
-                <MapPin className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-sm">
-                  <p className="text-xs text-muted-foreground">Location</p>
-                  <p className="font-medium">{event.location}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg">
-                <Users className="w-4 h-4 text-primary shrink-0" />
-                <div className="text-sm">
-                  <p className="text-xs text-muted-foreground">Attendance</p>
-                  <p className="font-medium">
-                    {event.registeredCount ?? 0}{event.maxAttendees > 0 ? ` / ${event.maxAttendees}` : ''} registered
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-4 text-sm">
-              <div>
-                <span className="text-muted-foreground">Status: </span>
-                <Badge>{event.status}</Badge>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Registration: </span>
-                <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
-                  {event.isRegistrationOpen ? 'Open' : 'Closed'}
-                </Badge>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Allow Walk-ins: </span>
-                <Badge variant="outline">{event.allowWalkIns ? 'Yes' : 'No'}</Badge>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Checked in: </span>
-                <span className="font-medium">{event.checkedInCount ?? 0}</span>
-              </div>
-            </div>
-
-            <div className="flex gap-3 flex-wrap">
-              <Button variant="default" asChild>
-                <Link href={`/admin/events/${eventId}/scan`}>
-                  <QrCode className="w-4 h-4 mr-2" /> Scan Attendance
-                </Link>
-              </Button>
-              <Button variant="outline" onClick={() => setQrDialogOpen(true)}>
-                <Download className="w-4 h-4 mr-2" /> Event QR Code
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EventOverview event={event} eventId={eventId} onOpenQr={() => setQrDialogOpen(true)} />
       )}
 
       {tab === 'registrations' && (
@@ -630,29 +485,14 @@ export default function AdminEventDetailPage() {
                 <div className="flex items-center gap-2 px-3 py-2 bg-muted rounded-lg text-sm">
                   <span className="text-muted-foreground">{selectedIds.size} selected</span>
                   <div className="flex gap-1 ml-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleBulkCancel}
-                      disabled={cancelMutation.isPending}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleBulkCancel} disabled={cancelMutation.isPending}>
                       <Ban className="w-3.5 h-3.5 mr-1" /> Cancel Selected
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleBulkCheckIn}
-                      disabled={updateStatusMutation.isPending}
-                    >
+                    <Button variant="outline" size="sm" onClick={handleBulkCheckIn} disabled={updateStatusMutation.isPending}>
                       <CheckCheck className="w-3.5 h-3.5 mr-1" /> Check In Selected
                     </Button>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedIds(new Set())}
-                    className="ml-auto"
-                  >
+                  <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())} className="ml-auto">
                     Clear
                   </Button>
                 </div>
@@ -1120,39 +960,13 @@ export default function AdminEventDetailPage() {
           )}
         </div>
       )}
-    </div>
 
-      <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>Event QR Code</DialogTitle>
-          <DialogDescription>
-            Students can scan this QR code to open the event page and register.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="flex flex-col items-center gap-4 py-4">
-          {eventUrl && (
-            <QRCodeCanvas
-              ref={qrRef}
-              value={eventUrl}
-              size={240}
-              level="H"
-              includeMargin
-              className="rounded-lg border p-2"
-            />
-          )}
-          <p className="text-sm text-muted-foreground text-center break-all max-w-full">
-            {eventUrl}
-          </p>
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setQrDialogOpen(false)}>Close</Button>
-          <Button onClick={handleDownloadQr}>
-            <Download className="w-4 h-4 mr-2" /> Download PNG
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-    </>
+      <EventQrDialog
+        open={qrDialogOpen}
+        onOpenChange={setQrDialogOpen}
+        eventUrl={eventUrl}
+        eventTitle={event?.title}
+      />
+    </div>
   );
 }

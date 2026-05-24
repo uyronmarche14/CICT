@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { studentEventAPI } from '@/lib/api/student';
@@ -79,8 +80,13 @@ export default function StudentEventDetailPage() {
       <Card className="overflow-hidden">
         {event.coverImage?.imageUrl && (
           <div className="relative h-48 w-full bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={event.coverImage.imageUrl} alt={event.title} className="w-full h-full object-cover" />
+              <Image
+              src={event.coverImage.imageUrl}
+              alt={event.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 50vw"
+            />
           </div>
         )}
         <CardContent className="p-6 space-y-6">

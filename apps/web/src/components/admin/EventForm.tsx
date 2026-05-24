@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -25,7 +26,7 @@ import { Input } from '@/components/ui/input';
 import { eventAPI } from '@/lib/api/event';
 import { appToast } from '@/lib/app-toast';
 import { Plus, Loader2 } from 'lucide-react';
-import { RichTextEditor } from '@/components/ui/rich-text-editor';
+import { RichTextEditor } from '@/components/admin/DynamicRichTextEditor';
 import { GalleryManager } from '@/components/admin/GalleryManager';
 import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
 import { EventScheduleEditor } from '@/components/admin/EventScheduleEditor';
@@ -654,8 +655,13 @@ export function EventForm({ onSuccess }: EventFormProps) {
               {uploadingCover ? <p className="text-sm text-muted-foreground">Uploading cover image...</p> : null}
               {coverImage ? (
                 <div className="overflow-hidden rounded-md border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={coverImage.imageUrl} alt={coverImage.alt} className="h-56 w-full object-cover" />
+                  <Image
+                    src={coverImage.imageUrl}
+                    alt={coverImage.alt ?? ''}
+                    width={800}
+                    height={224}
+                    className="h-56 w-full object-cover"
+                  />
                 </div>
               ) : null}
             </div>

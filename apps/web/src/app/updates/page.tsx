@@ -4,6 +4,8 @@ import { Loader2 } from 'lucide-react';
 
 import UpdatesHubClient from '@/components/updates/UpdatesHubClient';
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: 'Updates Hub | CICT',
   description:

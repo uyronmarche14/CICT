@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { MediaAsset } from '@/types';
 import { uploadsAPI } from '@/lib/api/uploads';
 import { Button } from '@/components/ui/button';
@@ -91,9 +92,14 @@ export function GalleryManager({
           {gallery.map((image, index) => (
             <div key={`${image.imageId || image.imageUrl}-${index}`} className="rounded-lg border p-3">
               <div className="grid gap-4 md:grid-cols-[120px_1fr_auto]">
-                <div className="overflow-hidden rounded-md border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={image.imageUrl} alt={image.alt} className="h-28 w-full object-cover" />
+                <div className="relative overflow-hidden rounded-md border" style={{ height: '112px' }}>
+                  <Image
+                    src={image.imageUrl}
+                    alt={image.alt ?? ''}
+                    fill
+                    className="object-cover"
+                    sizes="120px"
+                  />
                 </div>
                 <div className="space-y-3">
                   <div className="space-y-1">

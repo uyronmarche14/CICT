@@ -1,7 +1,6 @@
-/* eslint-disable @next/next/no-img-element */
-
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -93,10 +92,12 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
             <Label>Profile Photo</Label>
             <div className="flex items-center gap-4">
               {photoUrl && (
-                <img 
-                  src={photoUrl} 
-                  alt="Preview" 
-                  className="w-20 h-20 rounded-full object-cover border-2 border-primary" 
+                <Image
+                  src={photoUrl}
+                  alt="Preview"
+                  width={80}
+                  height={80}
+                  className="rounded-full object-cover border-2 border-primary"
                 />
               )}
               <div className="relative">

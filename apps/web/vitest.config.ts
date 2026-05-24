@@ -11,6 +11,18 @@ export default defineConfig({
   },
   test: {
     environment: 'jsdom',
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    setupFiles: ['./src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov', 'html'],
+      include: [
+        'src/hooks/**/*.ts',
+        'src/hooks/**/*.tsx',
+        'src/context/**/*.tsx',
+        'src/lib/api/**/*.ts',
+        'src/lib/store/**/*.ts',
+      ],
+    },
   },
 });
