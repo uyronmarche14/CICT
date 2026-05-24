@@ -1,6 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
 
+interface MongoServerError extends Error {
+  code: number;
+  keyPattern?: Record<string, unknown>;
+  keyValue?: Record<string, unknown>;
+}
+
+function isMongoServerError(err: Error): err is MongoServerError {
+  return err.name === 'MongoServerError';
+}
+
 /**
  * Custom error class
  */
@@ -35,6 +45,19 @@ export const errorHandler = (
     message = err.message;
   }
   
+  // Handle Multer file upload errors
+  if (err.name === 'MulterError') {
+    statusCode = 400;
+    const multerErr = err as { code?: string; field?: string };
+    if (multerErr.code === 'LIMIT_FILE_SIZE') {
+      message = 'File is too large. Maximum size is 10MB.';
+    } else if (multerErr.code === 'LIMIT_UNEXPECTED_FILE') {
+      message = `Unexpected file field: ${multerErr.field}`;
+    } else {
+      message = err.message;
+    }
+  }
+  
   // Handle Mongoose validation errors
   if (err.name === 'ValidationError') {
     statusCode = 400;
@@ -42,7 +65,7 @@ export const errorHandler = (
   }
   
   // Handle Mongoose duplicate key errors
-  if (err.name === 'MongoServerError' && (err as any).code === 11000) {
+  if (isMongoServerError(err) && err.code === 11000) {
     statusCode = 409;
     message = 'Duplicate entry. Resource already exists.';
   }

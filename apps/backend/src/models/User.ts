@@ -10,7 +10,7 @@ const userSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+      match: [/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/, 'Please provide a valid email address'],
     },
     password: {
       type: String,
@@ -51,7 +51,7 @@ const userSchema = new Schema<IUser>(
 );
 
 // Hash password before saving
-userSchema.pre('save', async function (this: any) {
+userSchema.pre('save', async function () {
   if (!this.isModified('password')) {return;}
   
   const rounds = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);

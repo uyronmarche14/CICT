@@ -1,4 +1,5 @@
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 import fs from 'fs';
 
@@ -15,12 +16,18 @@ if (!isProduction || logToFiles) {
   }
 
   transports.push(
-    new winston.transports.File({
-      filename: path.join(logsDir, 'error.log'),
+    new DailyRotateFile({
+      filename: path.join(logsDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
       level: 'error',
+      maxFiles: '14d',
+      zippedArchive: true,
     }),
-    new winston.transports.File({
-      filename: path.join(logsDir, 'combined.log'),
+    new DailyRotateFile({
+      filename: path.join(logsDir, 'combined-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '14d',
+      zippedArchive: true,
     })
   );
 }

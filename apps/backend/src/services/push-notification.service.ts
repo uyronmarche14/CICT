@@ -7,15 +7,27 @@ interface PushPayload {
   data?: Record<string, unknown>;
 }
 
-let expoClient: {
-  send: (messages: { to: string; sound?: string; title: string; body: string; data: Record<string, unknown>; priority: string }[]) => Promise<void>;
+type ExpoClient = {
+  send: (messages: ExpoPushPayload[]) => Promise<void>;
   isValidToken: (token: string) => boolean;
-} | null | undefined = undefined;
+};
+
+type ExpoPushPayload = {
+  to: string;
+  sound?: string;
+  title: string;
+  body: string;
+  data: Record<string, unknown>;
+  priority: 'default' | 'high' | 'normal';
+};
+
+let expoClient: ExpoClient | null | undefined = undefined;
 
 async function getExpoClient() {
   if (expoClient === undefined) {
     try {
-      const ExpoSdk = await (import('expo-server-sdk') as any);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const ExpoSdk: any = await import('expo-server-sdk');
       const expo = new ExpoSdk.Expo();
       expoClient = {
         send: async (messages) => {
@@ -46,14 +58,7 @@ async function sendToStudent(studentId: string, payload: PushPayload): Promise<v
       return;
     }
 
-    const messages: {
-      to: string;
-      sound?: string;
-      title: string;
-      body: string;
-      data: Record<string, unknown>;
-      priority: string;
-    }[] = [];
+    const messages: ExpoPushPayload[] = [];
 
     for (const { token, platform } of tokens) {
       if (!expo.isValidToken(token)) {

@@ -4,7 +4,7 @@ import { EventStatus, IApprovalSummary, IAuthenticatedUser, NewsStatus, Permissi
 import { hasGlobalPermission } from './rbac';
 
 export type ApprovalContentType = 'news' | 'announcement' | 'event';
-type WorkflowStatus = NewsStatus | EventStatus;
+export type WorkflowStatus = NewsStatus | EventStatus;
 
 const RESETTABLE_APPROVAL_STATUSES = new Set<string>([
   NewsStatus.PENDING_APPROVAL,

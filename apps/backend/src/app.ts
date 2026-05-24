@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import cookieParser from "cookie-parser";
 
 // Import routes
 import authRoutes from "./routes/auth.routes";
@@ -86,6 +87,9 @@ app.use(
 
 // Rate limiting
 app.use("/api", createGeneralApiRateLimiter());
+
+// Cookie parser middleware
+app.use(cookieParser());
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));

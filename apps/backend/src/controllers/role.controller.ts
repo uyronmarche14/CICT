@@ -82,57 +82,49 @@ const findSystemRoleById = (id: string) =>
  * Create new role
  */
 export const createRole = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('User not authenticated', 401);
-    }
-    
-    const { name, description, permissions } = req.body;
-    const requestedPermissions = Array.isArray(permissions) ? permissions : [];
-    ensureRolePermissionsWithinActorScope(req.user.permissions, requestedPermissions);
-    
-    const role = await Role.create({
-      name,
-      description,
-      permissions: requestedPermissions,
-      createdBy: req.user.userId,
-    });
-    
-    logger.info(`Role created: ${role._id} by user ${req.user.userId}`);
-    const serializedRole = await serializeCustomRole(role);
-    
-    res.status(201).json({
-      success: true,
-      message: 'Role created successfully',
-      data: { role: serializedRole },
-    });
-  } catch (error) {
-    throw error;
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+  
+  const { name, description, permissions } = req.body;
+  const requestedPermissions = Array.isArray(permissions) ? permissions : [];
+  ensureRolePermissionsWithinActorScope(req.user.permissions, requestedPermissions);
+  
+  const role = await Role.create({
+    name,
+    description,
+    permissions: requestedPermissions,
+    createdBy: req.user.userId,
+  });
+  
+  logger.info(`Role created: ${role._id} by user ${req.user.userId}`);
+  const serializedRole = await serializeCustomRole(role);
+  
+  res.status(201).json({
+    success: true,
+    message: 'Role created successfully',
+    data: { role: serializedRole },
+  });
 };
 
 /**
  * Get all roles
  */
 export const getAllRoles = async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const customRoles = await Role.find({ isSystemRole: false })
-      .populate('createdBy', 'firstName lastName email')
-      .sort({ createdAt: -1 });
+  const customRoles = await Role.find({ isSystemRole: false })
+    .populate('createdBy', 'firstName lastName email')
+    .sort({ createdAt: -1 });
 
-    const [systemRoles, serializedCustomRoles] = await Promise.all([
-      Promise.all(getSystemRoleCatalog().map((role) => serializeSystemRole(role))),
-      Promise.all(customRoles.map((role) => serializeCustomRole(role))),
-    ]);
-    const roles = [...systemRoles, ...serializedCustomRoles];
-    
-    res.status(200).json({
-      success: true,
-      data: { roles },
-    });
-  } catch (error) {
-    throw error;
-  }
+  const [systemRoles, serializedCustomRoles] = await Promise.all([
+    Promise.all(getSystemRoleCatalog().map((role) => serializeSystemRole(role))),
+    Promise.all(customRoles.map((role) => serializeCustomRole(role))),
+  ]);
+  const roles = [...systemRoles, ...serializedCustomRoles];
+  
+  res.status(200).json({
+    success: true,
+    data: { roles },
+  });
 };
 
 /**
@@ -142,123 +134,111 @@ export const getRoleById = async (
   req: Request<Record<string, string>>,
   res: Response
 ): Promise<void> => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    if (isSystemRoleIdentifier(id) || findSystemRoleById(id)) {
-      const systemRole = findSystemRoleById(id);
+  if (isSystemRoleIdentifier(id) || findSystemRoleById(id)) {
+    const systemRole = findSystemRoleById(id);
 
-      if (!systemRole) {
-        throw new AppError('Role not found', 404);
-      }
-
-      res.status(200).json({
-        success: true,
-        data: { role: await serializeSystemRole(systemRole) },
-      });
-      return;
-    }
-    
-    const role = await Role.findById(id).populate('createdBy', 'firstName lastName email');
-    
-    if (!role) {
+    if (!systemRole) {
       throw new AppError('Role not found', 404);
     }
-    
+
     res.status(200).json({
       success: true,
-      data: { role: await serializeCustomRole(role) },
+      data: { role: await serializeSystemRole(systemRole) },
     });
-  } catch (error) {
-    throw error;
+    return;
   }
+  
+  const role = await Role.findById(id).populate('createdBy', 'firstName lastName email');
+  
+  if (!role) {
+    throw new AppError('Role not found', 404);
+  }
+  
+  res.status(200).json({
+    success: true,
+    data: { role: await serializeCustomRole(role) },
+  });
 };
 
 /**
  * Update role
  */
 export const updateRole = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { name, description, permissions } = req.body;
-    
-    const role = await Role.findById(id);
-    
-    if (!role) {
-      throw new AppError('Role not found', 404);
-    }
-    
-    // Prevent updating system roles
-    if (role.isSystemRole) {
-      throw new AppError('Cannot update system roles', 403);
-    }
-    
-    const requestedPermissions = Array.isArray(permissions)
-      ? permissions
-      : role.permissions ?? [];
-    ensureRolePermissionsWithinActorScope(req.user?.permissions ?? [], requestedPermissions);
-    
-    const updates: any = {};
-    if (name) {updates.name = name;}
-    if (description) {updates.description = description;}
-    if (permissions) {updates.permissions = requestedPermissions;}
-    
-    const updatedRole = await Role.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    ).populate('createdBy', 'firstName lastName email');
-    
-    logger.info(`Role updated: ${id} by user ${req.user?.userId}`);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Role updated successfully',
-      data: { role: updatedRole ? await serializeCustomRole(updatedRole) : null },
-    });
-  } catch (error) {
-    throw error;
+  const { id } = req.params;
+  const { name, description, permissions } = req.body;
+  
+  const role = await Role.findById(id);
+  
+  if (!role) {
+    throw new AppError('Role not found', 404);
   }
+  
+  // Prevent updating system roles
+  if (role.isSystemRole) {
+    throw new AppError('Cannot update system roles', 403);
+  }
+  
+  const requestedPermissions = Array.isArray(permissions)
+    ? permissions
+    : role.permissions ?? [];
+  ensureRolePermissionsWithinActorScope(req.user?.permissions ?? [], requestedPermissions);
+  
+  const updates: any = {};
+  if (name) {updates.name = name;}
+  if (description) {updates.description = description;}
+  if (permissions) {updates.permissions = requestedPermissions;}
+  
+  const updatedRole = await Role.findByIdAndUpdate(
+    id,
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).populate('createdBy', 'firstName lastName email');
+  
+  logger.info(`Role updated: ${id} by user ${req.user?.userId}`);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Role updated successfully',
+    data: { role: updatedRole ? await serializeCustomRole(updatedRole) : null },
+  });
 };
 
 /**
  * Delete role
  */
 export const deleteRole = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    
-    const role = await Role.findById(id);
-    
-    if (!role) {
-      throw new AppError('Role not found', 404);
-    }
-    
-    // Prevent deleting system roles
-    if (role.isSystemRole) {
-      throw new AppError('Cannot delete system roles', 403);
-    }
-
-    const [assignedUserCount, assignedOrgCount] = await Promise.all([
-      User.countDocuments({ customRole: role._id }),
-      OrganizationAssignment.countDocuments({ role: role._id }),
-    ]);
-    if (assignedUserCount > 0 || assignedOrgCount > 0) {
-      throw new AppError(
-        'Cannot delete a custom role that is still assigned to users or organization scopes. Reassign or remove it first.',
-        409
-      );
-    }
-    
-    await role.deleteOne();
-    
-    logger.info(`Role deleted: ${id} by user ${req.user?.userId}`);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Role deleted successfully',
-    });
-  } catch (error) {
-    throw error;
+  const { id } = req.params;
+  
+  const role = await Role.findById(id);
+  
+  if (!role) {
+    throw new AppError('Role not found', 404);
   }
+  
+  // Prevent deleting system roles
+  if (role.isSystemRole) {
+    throw new AppError('Cannot delete system roles', 403);
+  }
+
+  const [assignedUserCount, assignedOrgCount] = await Promise.all([
+    User.countDocuments({ customRole: role._id }),
+    OrganizationAssignment.countDocuments({ role: role._id }),
+  ]);
+  if (assignedUserCount > 0 || assignedOrgCount > 0) {
+    throw new AppError(
+      'Cannot delete a custom role that is still assigned to users or organization scopes. Reassign or remove it first.',
+      409
+    );
+  }
+  
+  await role.deleteOne();
+  
+  logger.info(`Role deleted: ${id} by user ${req.user?.userId}`);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Role deleted successfully',
+  });
 };

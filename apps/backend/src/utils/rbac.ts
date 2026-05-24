@@ -45,6 +45,10 @@ export interface SerializedAuthUser {
   isActive: boolean;
 }
 
+import { getCachedUser, setCachedUser, invalidateCachedUser } from './userCache';
+
+export const invalidateUserCache = invalidateCachedUser;
+
 export const SYSTEM_ROLE_DEFINITIONS: SystemRoleDefinition[] = [
   {
     systemRoleKey: UserRole.FULL_ADMIN,
@@ -402,8 +406,18 @@ const resolveSerializedCustomRole = async (
 };
 
 export const buildAuthenticatedUser = async (
-  user: IUser
+  user: IUser,
+  skipCache?: boolean
 ): Promise<IAuthenticatedUser> => {
+  const userId = String(user._id);
+
+  if (!skipCache) {
+    const cached = getCachedUser(userId);
+    if (cached) {
+      return cached;
+    }
+  }
+
   const customRoleId =
     (user.customRole as { toString?: () => string } | undefined)?.toString?.() ?? null;
   const customRole = customRoleId
@@ -425,7 +439,7 @@ export const buildAuthenticatedUser = async (
   const scopedAdminModulesByOrganization =
     deriveScopedAdminModulesByOrganization(organizationAssignments);
 
-  return {
+  const result: IAuthenticatedUser = {
     userId: String(user._id),
     email: user.email,
     firstName: user.firstName,
@@ -444,6 +458,9 @@ export const buildAuthenticatedUser = async (
     organizationAssignments,
     isActive: user.isActive,
   };
+
+  setCachedUser(userId, result);
+  return result;
 };
 
 export const serializeAuthUser = async (

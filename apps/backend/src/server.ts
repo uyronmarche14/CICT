@@ -28,4 +28,11 @@ process.on('SIGTERM', () => {
   });
 });
 
+process.on('SIGINT', () => {
+  logger.info('SIGINT signal received: closing HTTP server');
+  server.close(() => {
+    logger.info('HTTP server closed');
+  });
+});
+
 export default server;

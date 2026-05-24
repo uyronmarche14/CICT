@@ -1,33 +1,36 @@
 import { body, param } from 'express-validator';
-import { AnnouncementPriority, AnnouncementType, ContentOwnerType } from '../types';
+import { AnnouncementPriority, AnnouncementType } from '../types';
+import {
+  validateBodyHtml,
+  validateBodyHtmlRequired,
+  validateBodyHtmlContentOr,
+  validateContent,
+  validateContentRequired,
+  validateCoverImage,
+  validateGallery,
+  validateImageUrl,
+  validateOrganizationId,
+  validateOrganizationIdNullable,
+  validateOwnerType,
+  validateOwnerTypeAndOrgId,
+  validateSections,
+  validateTitle,
+  validateTitleOptional,
+  approvalSummaryNotEditable,
+  processInstanceNotEditable,
+  publishedAtNotEditable,
+  archivedAtNotEditable,
+  statusNotEditable,
+} from './shared';
 
 export const createAnnouncementValidator = [
-  body('title')
-    .trim()
-    .notEmpty()
-    .withMessage('Title is required')
-    .isLength({ max: 200 })
-    .withMessage('Title cannot exceed 200 characters'),
+  validateTitle(200),
 
-  body('bodyHtml')
-    .optional()
-    .trim(),
+  validateBodyHtml(),
 
-  body('content')
-    .optional()
-    .trim(),
+  validateContent(),
 
-  body()
-    .custom((value) => {
-      const bodyHtml = typeof value.bodyHtml === 'string' ? value.bodyHtml.trim() : '';
-      const content = typeof value.content === 'string' ? value.content.trim() : '';
-
-      if (!bodyHtml && !content) {
-        throw new Error('Body content is required');
-      }
-
-      return true;
-    }),
+  validateBodyHtmlContentOr('content', 'Body content'),
 
   body('priority')
     .optional()
@@ -50,70 +53,25 @@ export const createAnnouncementValidator = [
     .isISO8601()
     .withMessage('expiresAt must be a valid ISO date'),
 
-  body('imageUrl')
-    .optional({ checkFalsy: true })
-    .isURL()
-    .withMessage('Image URL must be a valid URL'),
+  validateImageUrl(),
 
-  body('coverImage')
-    .optional()
-    .isObject()
-    .withMessage('Cover image must be an object'),
+  validateCoverImage(),
 
-  body('gallery')
-    .optional()
-    .isArray()
-    .withMessage('Gallery must be an array'),
+  validateGallery(),
 
-  body('sections')
-    .optional()
-    .isArray()
-    .withMessage('Sections must be an array'),
+  validateSections(),
 
-  body('ownerType')
-    .optional()
-    .isIn(Object.values(ContentOwnerType))
-    .withMessage('ownerType must be system or organization'),
+  validateOwnerType(),
 
-  body('organizationId')
-    .optional({ nullable: true })
-    .isString()
-    .withMessage('organizationId must be a string'),
+  validateOrganizationId(),
 
-  body()
-    .custom((value) => {
-      const ownerType =
-        value.ownerType === ContentOwnerType.ORGANIZATION
-          ? ContentOwnerType.ORGANIZATION
-          : ContentOwnerType.SYSTEM;
-      const organizationId =
-        typeof value.organizationId === 'string' ? value.organizationId.trim() : '';
+  validateOwnerTypeAndOrgId(),
 
-      if (ownerType === ContentOwnerType.SYSTEM && organizationId) {
-        throw new Error('System-owned content cannot include organizationId');
-      }
+  statusNotEditable(),
 
-      if (ownerType === ContentOwnerType.ORGANIZATION && !organizationId) {
-        throw new Error('organizationId is required for organization-owned content');
-      }
+  approvalSummaryNotEditable(),
 
-      return true;
-    }),
-
-  body('status')
-    .not()
-    .exists()
-    .withMessage('Use the publish/archive workflow endpoints to change status'),
-
-  body('approvalSummary')
-    .not()
-    .exists()
-    .withMessage('approvalSummary is managed by workflow endpoints'),
-
-  body('processInstanceId')
-    .not()
-    .exists()
-    .withMessage('processInstanceId is managed by workflow endpoints'),
+  processInstanceNotEditable(),
 ];
 
 export const updateAnnouncementValidator = [
@@ -121,23 +79,11 @@ export const updateAnnouncementValidator = [
     .isMongoId()
     .withMessage('Invalid announcement ID'),
 
-  body('title')
-    .optional()
-    .trim()
-    .isLength({ max: 200 })
-    .withMessage('Title cannot exceed 200 characters'),
+  validateTitleOptional(200),
 
-  body('bodyHtml')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Body content cannot be empty'),
+  validateBodyHtmlRequired(),
 
-  body('content')
-    .optional()
-    .trim()
-    .notEmpty()
-    .withMessage('Content cannot be empty'),
+  validateContentRequired(),
 
   body('priority')
     .optional()
@@ -160,65 +106,27 @@ export const updateAnnouncementValidator = [
     .isISO8601()
     .withMessage('expiresAt must be a valid ISO date'),
 
-  body('imageUrl')
-    .optional({ checkFalsy: true })
-    .isURL()
-    .withMessage('Image URL must be a valid URL'),
+  validateImageUrl(),
 
-  body('coverImage')
-    .optional()
-    .isObject()
-    .withMessage('Cover image must be an object'),
+  validateCoverImage(),
 
-  body('gallery')
-    .optional()
-    .isArray()
-    .withMessage('Gallery must be an array'),
+  validateGallery(),
 
-  body('sections')
-    .optional()
-    .isArray()
-    .withMessage('Sections must be an array'),
+  validateSections(),
 
-  body('ownerType')
-    .optional()
-    .isIn(Object.values(ContentOwnerType))
-    .withMessage('ownerType must be system or organization'),
+  validateOwnerType(),
 
-  body('organizationId')
-    .optional({ nullable: true })
-    .custom((value) => value === null || typeof value === 'string')
-    .withMessage('organizationId must be a string or null'),
+  validateOrganizationIdNullable(),
 
-  body('status')
-    .not()
-    .exists()
-    .withMessage('Use the publish/archive workflow endpoints to change status'),
+  statusNotEditable(),
 
-  body('publishedAt')
-    .not()
-    .exists()
-    .withMessage('publishedAt is managed by workflow endpoints'),
+  publishedAtNotEditable(),
 
-  body('archivedAt')
-    .not()
-    .exists()
-    .withMessage('archivedAt is managed by workflow endpoints'),
+  archivedAtNotEditable(),
 
-  body('isActive')
-    .not()
-    .exists()
-    .withMessage('isActive is managed by workflow endpoints'),
+  approvalSummaryNotEditable(),
 
-  body('approvalSummary')
-    .not()
-    .exists()
-    .withMessage('approvalSummary is managed by workflow endpoints'),
-
-  body('processInstanceId')
-    .not()
-    .exists()
-    .withMessage('processInstanceId is managed by workflow endpoints'),
+  processInstanceNotEditable(),
 ];
 
 export const announcementIdValidator = [

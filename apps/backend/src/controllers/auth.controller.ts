@@ -35,64 +35,60 @@ const generateToken = (payload: IJWTPayload): string => {
  * Login user
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { email, password } = req.body;
-    
-    // Find user and include password field
-    const user = await User.findOne({ email }).select('+password');
-    
-    if (!user) {
-      throw new AppError('Invalid email or password', 401);
-    }
-    
-    // Check if user is active
-    if (!user.isActive) {
-      throw new AppError('Your account has been deactivated', 403);
-    }
-    
-    // Verify password
-    const isPasswordValid = await user.comparePassword(password);
-    
-    if (!isPasswordValid) {
-      throw new AppError('Invalid email or password', 401);
-    }
-    
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-    
-    // Generate token
-    const tokenPayload: IJWTPayload = {
-      userId: user._id as unknown as string, // Cast to string for payload
-      email: user.email,
-      role: user.role,
-      customRole: user.customRole as unknown as string, // Cast to string for payload
-    };
-    
-    const token = generateToken(tokenPayload);
-    const authenticatedUser = await buildAuthenticatedUser(user);
-    const serializedUser = await serializeAuthUser(authenticatedUser);
-
-    res.cookie('token', token, getAuthCookieOptions());
-    
-    logger.info(`User logged in: ${user.email}`);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Login successful',
-      data: {
-        user: serializedUser,
-        permissions: authenticatedUser.permissions,
-        canAccessAdmin: authenticatedUser.canAccessAdmin,
-        adminScopes: authenticatedUser.adminScopes,
-        visibleAdminModules: authenticatedUser.visibleAdminModules,
-        scopedAdminModulesByOrganization:
-          authenticatedUser.scopedAdminModulesByOrganization,
-      },
-    });
-  } catch (error) {
-    throw error;
+  const { email, password } = req.body;
+  
+  // Find user and include password field
+  const user = await User.findOne({ email }).select('+password');
+  
+  if (!user) {
+    throw new AppError('Invalid email or password', 401);
   }
+  
+  // Check if user is active
+  if (!user.isActive) {
+    throw new AppError('Your account has been deactivated', 403);
+  }
+  
+  // Verify password
+  const isPasswordValid = await user.comparePassword(password);
+  
+  if (!isPasswordValid) {
+    throw new AppError('Invalid email or password', 401);
+  }
+  
+  // Update last login
+  user.lastLogin = new Date();
+  await user.save();
+  
+  // Generate token
+  const tokenPayload: IJWTPayload = {
+    userId: user._id.toString(),
+    email: user.email,
+    role: user.role,
+    customRole: user.customRole?.toString(),
+  };
+  
+  const token = generateToken(tokenPayload);
+  const authenticatedUser = await buildAuthenticatedUser(user, true);
+  const serializedUser = await serializeAuthUser(authenticatedUser);
+
+  res.cookie('token', token, getAuthCookieOptions());
+  
+  logger.info(`User logged in: ${user.email}`);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    data: {
+      user: serializedUser,
+      permissions: authenticatedUser.permissions,
+      canAccessAdmin: authenticatedUser.canAccessAdmin,
+      adminScopes: authenticatedUser.adminScopes,
+      visibleAdminModules: authenticatedUser.visibleAdminModules,
+      scopedAdminModulesByOrganization:
+        authenticatedUser.scopedAdminModulesByOrganization,
+    },
+  });
 };
 
 /**
@@ -114,26 +110,22 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
  * Get current user profile
  */
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('User not authenticated', 401);
-    }
-    const serializedUser = await serializeAuthUser(req.user);
-    
-    res.status(200).json({
-      success: true,
-      data: {
-        user: serializedUser,
-        permissions: req.user.permissions,
-        canAccessAdmin: req.user.canAccessAdmin,
-        adminScopes: req.user.adminScopes,
-        visibleAdminModules: req.user.visibleAdminModules,
-        scopedAdminModulesByOrganization: req.user.scopedAdminModulesByOrganization,
-      },
-    });
-  } catch (error) {
-    throw error;
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+  const serializedUser = await serializeAuthUser(req.user);
+  
+  res.status(200).json({
+    success: true,
+    data: {
+      user: serializedUser,
+      permissions: req.user.permissions,
+      canAccessAdmin: req.user.canAccessAdmin,
+      adminScopes: req.user.adminScopes,
+      visibleAdminModules: req.user.visibleAdminModules,
+      scopedAdminModulesByOrganization: req.user.scopedAdminModulesByOrganization,
+    },
+  });
 };
 
 export const getPermissionMetadata = async (_req: Request, res: Response): Promise<void> => {
@@ -149,37 +141,33 @@ export const getPermissionMetadata = async (_req: Request, res: Response): Promi
  * Update password
  */
 export const updatePassword = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      throw new AppError('User not authenticated', 401);
-    }
-    
-    const { currentPassword, newPassword } = req.body;
-    
-    const user = await User.findById(req.user.userId).select('+password');
-    
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-    
-    // Verify current password
-    const isPasswordValid = await user.comparePassword(currentPassword);
-    
-    if (!isPasswordValid) {
-      throw new AppError('Current password is incorrect', 401);
-    }
-    
-    // Update password
-    user.password = newPassword;
-    await user.save();
-    
-    logger.info(`Password updated for user: ${user.email}`);
-    
-    res.status(200).json({
-      success: true,
-      message: 'Password updated successfully',
-    });
-  } catch (error) {
-    throw error;
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+  
+  const { currentPassword, newPassword } = req.body;
+  
+  const user = await User.findById(req.user.userId).select('+password');
+  
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+  
+  // Verify current password
+  const isPasswordValid = await user.comparePassword(currentPassword);
+  
+  if (!isPasswordValid) {
+    throw new AppError('Current password is incorrect', 401);
+  }
+  
+  // Update password
+  user.password = newPassword;
+  await user.save();
+  
+  logger.info(`Password updated for user: ${user.email}`);
+  
+  res.status(200).json({
+    success: true,
+    message: 'Password updated successfully',
+  });
 };

@@ -292,11 +292,6 @@ export interface IAuthenticatedUser {
   isActive: boolean;
 }
 
-// Request with User
-export interface IAuthRequest extends Request {
-  user?: IJWTPayload;
-}
-
 // Organization Member Interface
 export interface IOrganizationMember {
   id: string;

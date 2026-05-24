@@ -114,10 +114,10 @@ const seedDatabase = async () => {
     for (const roleData of systemRoles) {
       const existingRole = await Role.findOne({ name: roleData.name });
       if (!existingRole) {
-        const role: any = await Role.create({
+        const role = await Role.create({
           ...roleData,
-          createdBy: admin._id,
-        } as any);
+          createdBy: admin._id.toString(),
+        });
         logger.info(`✅ System role created: ${role.name}`);
       } else {
         logger.info(`System role already exists: ${roleData.name}`);

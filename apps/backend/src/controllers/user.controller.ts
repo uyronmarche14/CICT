@@ -26,6 +26,7 @@ import {
   hasGlobalPermission,
 } from '../utils/rbac';
 import { getResolvedOrganizationAssignmentsForUser } from '../utils/organizationScope';
+import { invalidateUserCache } from '../utils/rbac';
 
 const PROTECTED_USER_FIELDS = ['role', 'customRole', 'customRoleId', 'isActive'];
 
@@ -264,437 +265,398 @@ const validateOrganizationAssignments = async (
  * Create a new admin CMS user
  */
 export const createUser = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { email, password, firstName, lastName } = req.body;
-    const role = req.body.role as UserRole | undefined;
-    const customRoleId = req.body.customRoleId as string | null | undefined;
-    const organizationAssignments = req.body.organizationAssignments as
-      | OrganizationAssignmentInput[]
-      | undefined;
+  const { email, password, firstName, lastName } = req.body;
+  const role = req.body.role as UserRole | undefined;
+  const customRoleId = req.body.customRoleId as string | null | undefined;
+  const organizationAssignments = req.body.organizationAssignments as
+    | OrganizationAssignmentInput[]
+    | undefined;
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new AppError('User with this email already exists', 409);
-    }
-
-    const assignment = await validateAssignableRole(req, role, customRoleId);
-    const validatedOrganizationAssignments = await validateOrganizationAssignments(
-      organizationAssignments,
-      req
-    );
-
-    const user = await User.create({
-      email,
-      password,
-      firstName,
-      lastName,
-      role: assignment.role || UserRole.SUPPORT,
-      customRole: assignment.customRoleId || undefined,
-      isActive: true,
-    });
-
-    if (validatedOrganizationAssignments.length > 0) {
-      await OrganizationAssignment.insertMany(
-        validatedOrganizationAssignments.map((scopedAssignment) => ({
-          user: user._id,
-          organizationId: scopedAssignment.organizationId,
-          role: scopedAssignment.roleId,
-        }))
-      );
-    }
-
-    const populatedUser = await User.findById(user._id)
-      .select('-password')
-      .populate('customRole', 'name description permissions');
-
-    logger.info(`User created: ${user.email} by user ${req.user?.userId}`);
-
-    res.status(201).json({
-      success: true,
-      message: 'User created successfully',
-      data: {
-        user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(user),
-      },
-    });
-  } catch (error) {
-    throw error;
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    throw new AppError('User with this email already exists', 409);
   }
+
+  const assignment = await validateAssignableRole(req, role, customRoleId);
+  const validatedOrganizationAssignments = await validateOrganizationAssignments(
+    organizationAssignments,
+    req
+  );
+
+  const user = await User.create({
+    email,
+    password,
+    firstName,
+    lastName,
+    role: assignment.role || UserRole.SUPPORT,
+    customRole: assignment.customRoleId || undefined,
+    isActive: true,
+  });
+
+  if (validatedOrganizationAssignments.length > 0) {
+    await OrganizationAssignment.insertMany(
+      validatedOrganizationAssignments.map((scopedAssignment) => ({
+        user: user._id,
+        organizationId: scopedAssignment.organizationId,
+        role: scopedAssignment.roleId,
+      }))
+    );
+  }
+
+  const populatedUser = await User.findById(user._id)
+    .select('-password')
+    .populate('customRole', 'name description permissions');
+
+  logger.info(`User created: ${user.email} by user ${req.user?.userId}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'User created successfully',
+    data: {
+      user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(user),
+    },
+  });
 };
 
 /**
  * Get all users
  */
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { page = 1, limit = 10, search, role, isActive, customRoleId } = req.query;
+  const { page = 1, limit = 10, search, role, isActive, customRoleId } = req.query;
 
-    const query: any = {};
-    const normalizedRole =
-      typeof role === 'string' && role.trim().length > 0 ? role.trim() : null;
-    const normalizedIsActive =
-      isActive === 'true' || isActive === 'false' ? isActive : null;
-    const normalizedCustomRoleId =
-      typeof customRoleId === 'string' && customRoleId.trim().length > 0
-        ? customRoleId.trim()
-        : null;
+  const query: any = {};
+  const normalizedRole =
+    typeof role === 'string' && role.trim().length > 0 ? role.trim() : null;
+  const normalizedIsActive =
+    isActive === 'true' || isActive === 'false' ? isActive : null;
+  const normalizedCustomRoleId =
+    typeof customRoleId === 'string' && customRoleId.trim().length > 0
+      ? customRoleId.trim()
+      : null;
 
-    if (search) {
-      query.$or = [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
-      ];
-    }
-
-    if (normalizedRole) {
-      query.role = normalizedRole;
-    }
-
-    if (normalizedIsActive) {
-      query.isActive = normalizedIsActive === 'true';
-    }
-
-    if (normalizedCustomRoleId) {
-      query.customRole = normalizedCustomRoleId;
-    }
-
-    const skip = (Number(page) - 1) * Number(limit);
-
-    const [users, total] = await Promise.all([
-      User.find(query)
-        .select('-password')
-        .populate('customRole', 'name description permissions')
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit)),
-      User.countDocuments(query),
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        users: await Promise.all(users.map((user) => serializeUser(user))),
-        pagination: {
-          page: Number(page),
-          limit: Number(limit),
-          total,
-          pages: Math.ceil(total / Number(limit)),
-        },
-      },
-    });
-  } catch (error) {
-    throw error;
+  if (search) {
+    query.$or = [
+      { firstName: { $regex: search, $options: 'i' } },
+      { lastName: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+    ];
   }
+
+  if (normalizedRole) {
+    query.role = normalizedRole;
+  }
+
+  if (normalizedIsActive) {
+    query.isActive = normalizedIsActive === 'true';
+  }
+
+  if (normalizedCustomRoleId) {
+    query.customRole = normalizedCustomRoleId;
+  }
+
+  const skip = (Number(page) - 1) * Number(limit);
+
+  const [users, total] = await Promise.all([
+    User.find(query)
+      .select('-password')
+      .populate('customRole', 'name description permissions')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(Number(limit)),
+    User.countDocuments(query),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      users: await Promise.all(users.map((user) => serializeUser(user))),
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        pages: Math.ceil(total / Number(limit)),
+      },
+    },
+  });
 };
 
 /**
  * Get user by ID
  */
 export const getUserById = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const user = await User.findById(id)
-      .select('-password')
-      .populate('customRole', 'name description permissions');
+  const user = await User.findById(id)
+    .select('-password')
+    .populate('customRole', 'name description permissions');
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    res.status(200).json({
-      success: true,
-      data: { user: await serializeUser(user) },
-    });
-  } catch (error) {
-    throw error;
+  if (!user) {
+    throw new AppError('User not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    data: { user: await serializeUser(user) },
+  });
 };
 
 /**
  * Update non-privileged user account fields
  */
 export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    ensureProtectedFieldsAbsent(req.body);
+  const { id } = req.params;
+  ensureProtectedFieldsAbsent(req.body);
 
-    const updates: Record<string, string> = {};
-    if (typeof req.body.firstName === 'string') {
-      updates.firstName = req.body.firstName;
-    }
-    if (typeof req.body.lastName === 'string') {
-      updates.lastName = req.body.lastName;
-    }
-
-    const user = await User.findByIdAndUpdate(
-      id,
-      { $set: updates },
-      { new: true, runValidators: true }
-    )
-      .select('-password')
-      .populate('customRole', 'name description permissions');
-
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    logger.info(`User updated: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'User updated successfully',
-      data: { user: await serializeUser(user) },
-    });
-  } catch (error) {
-    throw error;
+  const updates: Record<string, string> = {};
+  if (typeof req.body.firstName === 'string') {
+    updates.firstName = req.body.firstName;
   }
+  if (typeof req.body.lastName === 'string') {
+    updates.lastName = req.body.lastName;
+  }
+
+  const user = await User.findByIdAndUpdate(
+    id,
+    { $set: updates },
+    { new: true, runValidators: true }
+  )
+    .select('-password')
+    .populate('customRole', 'name description permissions');
+
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  logger.info(`User updated: ${id} by user ${req.user?.userId}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'User updated successfully',
+    data: { user: await serializeUser(user) },
+  });
 };
 
 /**
  * Update a user's system role/custom role
  */
 export const updateUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const role = req.body.role as UserRole | undefined;
-    const customRoleId = req.body.customRoleId as string | null | undefined;
+  const { id } = req.params;
+  const role = req.body.role as UserRole | undefined;
+  const customRoleId = req.body.customRoleId as string | null | undefined;
 
-    if (role === undefined && customRoleId === undefined) {
-      throw new AppError('At least one of role or customRoleId must be provided', 400);
-    }
-
-    const targetUser = await User.findById(id);
-    if (!targetUser) {
-      throw new AppError('User not found', 404);
-    }
-
-    const assignment = await validateAssignableRole(req, role, customRoleId);
-
-    if (role !== undefined && role !== targetUser.role) {
-      await ensureCanRevokeFullAdmin(targetUser);
-      targetUser.role = role;
-    }
-
-    if (customRoleId !== undefined) {
-      targetUser.customRole = assignment.customRoleId
-        ? new Types.ObjectId(assignment.customRoleId)
-        : undefined;
-    }
-
-    await targetUser.save();
-
-    const populatedUser = await User.findById(id)
-      .select('-password')
-      .populate('customRole', 'name description permissions');
-
-    logger.info(`Role updated for user: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'User role updated successfully',
-      data: {
-        user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(targetUser),
-      },
-    });
-  } catch (error) {
-    throw error;
+  if (role === undefined && customRoleId === undefined) {
+    throw new AppError('At least one of role or customRoleId must be provided', 400);
   }
+
+  const targetUser = await User.findById(id);
+  if (!targetUser) {
+    throw new AppError('User not found', 404);
+  }
+
+  const assignment = await validateAssignableRole(req, role, customRoleId);
+
+  if (role !== undefined && role !== targetUser.role) {
+    await ensureCanRevokeFullAdmin(targetUser);
+    targetUser.role = role;
+  }
+
+  if (customRoleId !== undefined) {
+    targetUser.customRole = assignment.customRoleId
+      ? new Types.ObjectId(assignment.customRoleId)
+      : undefined;
+  }
+
+  await targetUser.save();
+
+  const populatedUser = await User.findById(id)
+    .select('-password')
+    .populate('customRole', 'name description permissions');
+
+  invalidateUserCache(id);
+  logger.info(`Role updated for user: ${id} by user ${req.user?.userId}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'User role updated successfully',
+    data: {
+      user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(targetUser),
+    },
+  });
 };
 
 /**
  * Activate/deactivate a user
  */
 export const updateUserStatus = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const { isActive } = req.body as { isActive: boolean };
+  const { id } = req.params;
+  const { isActive } = req.body as { isActive: boolean };
 
-    if (req.user?.userId === id && isActive === false) {
-      throw new AppError('You cannot deactivate your own account', 400);
-    }
-
-    const user = await User.findById(id);
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    if (user.role === UserRole.FULL_ADMIN && user.isActive && isActive === false) {
-      await ensureCanRevokeFullAdmin(user);
-    }
-
-    user.isActive = isActive;
-    await user.save();
-
-    const populatedUser = await User.findById(id)
-      .select('-password')
-      .populate('customRole', 'name description permissions');
-
-    logger.info(`User status updated: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
-      data: { user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(user) },
-    });
-  } catch (error) {
-    throw error;
+  if (req.user?.userId === id && isActive === false) {
+    throw new AppError('You cannot deactivate your own account', 400);
   }
+
+  const user = await User.findById(id);
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  if (user.role === UserRole.FULL_ADMIN && user.isActive && isActive === false) {
+    await ensureCanRevokeFullAdmin(user);
+  }
+
+  user.isActive = isActive;
+  await user.save();
+  invalidateUserCache(id);
+
+  const populatedUser = await User.findById(id)
+    .select('-password')
+    .populate('customRole', 'name description permissions');
+
+  logger.info(`User status updated: ${id} by user ${req.user?.userId}`);
+
+  res.status(200).json({
+    success: true,
+    message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+    data: { user: populatedUser ? await serializeUser(populatedUser) : await serializeUser(user) },
+  });
 };
 
 /**
  * Delete user
  */
 export const deleteUser = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    if (req.user?.userId === id) {
-      throw new AppError('You cannot delete your own account', 400);
-    }
-
-    const user = await User.findById(id);
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    await ensureCanRevokeFullAdmin(user);
-    await user.deleteOne();
-    await OrganizationAssignment.deleteMany({ user: id });
-
-    logger.info(`User deleted: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'User deleted successfully',
-    });
-  } catch (error) {
-    throw error;
+  if (req.user?.userId === id) {
+    throw new AppError('You cannot delete your own account', 400);
   }
+
+  const user = await User.findById(id);
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
+
+  await ensureCanRevokeFullAdmin(user);
+  await user.deleteOne();
+  await OrganizationAssignment.deleteMany({ user: id });
+
+  logger.info(`User deleted: ${id} by user ${req.user?.userId}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'User deleted successfully',
+  });
 };
 
 export const getUserOrgAssignments = async (
   req: Request<Record<string, string>>,
   res: Response
 ): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).select('_id');
+  const { id } = req.params;
+  const user = await User.findById(id).select('_id');
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
-
-    const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-
-    res.status(200).json({
-      success: true,
-      data: { assignments },
-    });
-  } catch (error) {
-    throw error;
+  if (!user) {
+    throw new AppError('User not found', 404);
   }
+
+  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
+
+  res.status(200).json({
+    success: true,
+    data: { assignments },
+  });
 };
 
 export const createUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).select('_id');
+  const { id } = req.params;
+  const user = await User.findById(id).select('_id');
 
-    if (!user) {
-      throw new AppError('User not found', 404);
-    }
+  if (!user) {
+    throw new AppError('User not found', 404);
+  }
 
-    const [assignment] = await validateOrganizationAssignments([req.body], req);
+  const [assignment] = await validateOrganizationAssignments([req.body], req);
 
+  const existingAssignment = await OrganizationAssignment.findOne({
+    user: id,
+    organizationId: assignment.organizationId,
+  });
+  if (existingAssignment) {
+    throw new AppError('This user already has an assignment for that organization', 409);
+  }
+
+  const createdAssignment = await OrganizationAssignment.create({
+    user: id,
+    organizationId: assignment.organizationId,
+    role: assignment.roleId,
+  });
+
+  invalidateUserCache(id);
+  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
+  const created = assignments.find((item) => item.id === String(createdAssignment._id));
+
+  logger.info(`Organization assignment created for user: ${id} by user ${req.user?.userId}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'Organization assignment created successfully',
+    data: { assignment: created ?? null, assignments },
+  });
+};
+
+export const updateUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id, assignmentId } = req.params;
+  const assignment = await OrganizationAssignment.findOne({ _id: assignmentId, user: id });
+
+  if (!assignment) {
+    throw new AppError('Organization assignment not found', 404);
+  }
+
+  const [validatedAssignment] = await validateOrganizationAssignments([req.body], req);
+
+  if (validatedAssignment.organizationId !== assignment.organizationId) {
     const existingAssignment = await OrganizationAssignment.findOne({
       user: id,
-      organizationId: assignment.organizationId,
+      organizationId: validatedAssignment.organizationId,
     });
     if (existingAssignment) {
       throw new AppError('This user already has an assignment for that organization', 409);
     }
-
-    const createdAssignment = await OrganizationAssignment.create({
-      user: id,
-      organizationId: assignment.organizationId,
-      role: assignment.roleId,
-    });
-
-    const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-    const created = assignments.find((item) => item.id === String(createdAssignment._id));
-
-    logger.info(`Organization assignment created for user: ${id} by user ${req.user?.userId}`);
-
-    res.status(201).json({
-      success: true,
-      message: 'Organization assignment created successfully',
-      data: { assignment: created ?? null, assignments },
-    });
-  } catch (error) {
-    throw error;
   }
-};
 
-export const updateUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id, assignmentId } = req.params;
-    const assignment = await OrganizationAssignment.findOne({ _id: assignmentId, user: id });
+  assignment.organizationId = validatedAssignment.organizationId;
+  assignment.role = validatedAssignment.roleId;
+  await assignment.save();
+  invalidateUserCache(id);
 
-    if (!assignment) {
-      throw new AppError('Organization assignment not found', 404);
-    }
+  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
+  const updated = assignments.find((item) => item.id === assignmentId);
 
-    const [validatedAssignment] = await validateOrganizationAssignments([req.body], req);
+  logger.info(`Organization assignment updated for user: ${id} by user ${req.user?.userId}`);
 
-    if (validatedAssignment.organizationId !== assignment.organizationId) {
-      const existingAssignment = await OrganizationAssignment.findOne({
-        user: id,
-        organizationId: validatedAssignment.organizationId,
-      });
-      if (existingAssignment) {
-        throw new AppError('This user already has an assignment for that organization', 409);
-      }
-    }
-
-    assignment.organizationId = validatedAssignment.organizationId;
-    assignment.role = validatedAssignment.roleId as any;
-    await assignment.save();
-
-    const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-    const updated = assignments.find((item) => item.id === assignmentId);
-
-    logger.info(`Organization assignment updated for user: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Organization assignment updated successfully',
-      data: { assignment: updated ?? null, assignments },
-    });
-  } catch (error) {
-    throw error;
-  }
+  res.status(200).json({
+    success: true,
+    message: 'Organization assignment updated successfully',
+    data: { assignment: updated ?? null, assignments },
+  });
 };
 
 export const deleteUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    const { id, assignmentId } = req.params;
-    const assignment = await OrganizationAssignment.findOneAndDelete({ _id: assignmentId, user: id });
+  const { id, assignmentId } = req.params;
+  const assignment = await OrganizationAssignment.findOneAndDelete({ _id: assignmentId, user: id });
 
-    if (!assignment) {
-      throw new AppError('Organization assignment not found', 404);
-    }
-
-    const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-
-    logger.info(`Organization assignment deleted for user: ${id} by user ${req.user?.userId}`);
-
-    res.status(200).json({
-      success: true,
-      message: 'Organization assignment deleted successfully',
-      data: { assignments },
-    });
-  } catch (error) {
-    throw error;
+  if (!assignment) {
+    throw new AppError('Organization assignment not found', 404);
   }
+
+  invalidateUserCache(id);
+  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
+
+  logger.info(`Organization assignment deleted for user: ${id} by user ${req.user?.userId}`);
+
+  res.status(200).json({
+    success: true,
+    message: 'Organization assignment deleted successfully',
+    data: { assignments },
+  });
 };

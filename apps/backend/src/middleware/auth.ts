@@ -10,31 +10,14 @@ export interface AuthRequest extends Request<Record<string, string>> {
   user?: IAuthenticatedUser;
 }
 
-const readTokenFromCookies = (cookieHeader?: string): string | null => {
-  if (!cookieHeader) {
-    return null;
-  }
-
-  const tokenCookie = cookieHeader
-    .split(';')
-    .map((cookie) => cookie.trim())
-    .find((cookie) => cookie.startsWith('token='));
-
-  if (!tokenCookie) {
-    return null;
-  }
-
-  const [, rawToken = ''] = tokenCookie.split('=');
-  return decodeURIComponent(rawToken);
-};
-
 const getTokenFromRequest = (req: Request): string | null => {
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
     return authHeader.substring(7);
   }
 
-  return readTokenFromCookies(req.headers.cookie);
+  const token = req.cookies?.token;
+  return typeof token === 'string' ? token : null;
 };
 
 /**
@@ -129,11 +112,9 @@ export const authenticate = async (
  */
 export const optionalAuthenticate = async (
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): Promise<void> => {
-  // Prevent unused variable error
-  void res;
   
   try {
     const token = getTokenFromRequest(req);
