@@ -90,6 +90,23 @@ export default function AdminMemberManager({ orgId, members, onRefresh, color }:
             <div className="flex-1 min-w-0">
               <p className="font-semibold truncate">{member.name}</p>
               <p className="text-sm text-muted-foreground truncate">{member.position}</p>
+              <div className="flex gap-1 mt-0.5">
+                {member.memberType && (
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                    {member.memberType}
+                  </span>
+                )}
+                {member.status && member.status !== 'active' && (
+                  <span className="text-[10px] uppercase tracking-wider text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                    {member.status}
+                  </span>
+                )}
+                {member.batch && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {member.batch}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">

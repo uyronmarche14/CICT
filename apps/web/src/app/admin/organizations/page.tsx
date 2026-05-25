@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Permission } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowRight, Plus } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
@@ -12,8 +13,18 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { useAdminOrganizations } from '@/hooks/useOrganizations';
 
+const orgTypeOptions = [
+  { value: '', label: 'All Types' },
+  { value: 'academic', label: 'Academic' },
+  { value: 'cultural', label: 'Cultural' },
+  { value: 'sports', label: 'Sports' },
+  { value: 'special_interest', label: 'Special Interest' },
+  { value: 'other', label: 'Other' },
+];
+
 export default function AdminOrganizationsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [orgTypeFilter, setOrgTypeFilter] = useState('');
   const {
     canAccessOrganizationsModule,
     canCreateOrganization,
@@ -26,11 +37,14 @@ export default function AdminOrganizationsPage() {
   const scopedOrganizationIds = getScopedOrganizationIds();
 
   const visibleOrganizations = useMemo(
-    () =>
-      canViewAllOrganizations
+    () => {
+      const filtered = canViewAllOrganizations
         ? organizations
-        : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id)),
-    [canViewAllOrganizations, organizations, scopedOrganizationIds]
+        : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
+      if (!orgTypeFilter) return filtered;
+      return filtered.filter((org) => org.organizationType === orgTypeFilter);
+    },
+    [canViewAllOrganizations, organizations, scopedOrganizationIds, orgTypeFilter]
   );
 
   if (loading) {
@@ -65,6 +79,19 @@ export default function AdminOrganizationsPage() {
          ) : null}
       </div>
 
+      <div className="flex items-center gap-4">
+        <label className="text-sm font-medium">Type:</label>
+        <select
+          value={orgTypeFilter}
+          onChange={(e) => setOrgTypeFilter(e.target.value)}
+          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+        >
+          {orgTypeOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {visibleOrganizations.map((org) => (
            <Card key={org.id} className="overflow-hidden hover:shadow-lg transition-shadow">
@@ -96,6 +123,18 @@ export default function AdminOrganizationsPage() {
                   </div>
               </CardHeader>
               <CardContent>
+                 <div className="flex flex-wrap items-center gap-2 mb-3">
+                   {org.organizationType && (
+                     <Badge variant="secondary" className="capitalize text-xs">
+                       {org.organizationType.replace(/_/g, ' ')}
+                     </Badge>
+                   )}
+                   {org.isActive !== undefined && (
+                     <Badge variant={org.isActive ? 'default' : 'destructive'} className="text-xs">
+                       {org.isActive ? 'Active' : 'Inactive'}
+                     </Badge>
+                   )}
+                 </div>
                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
                     {org.description}
                  </p>

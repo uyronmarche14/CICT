@@ -357,7 +357,9 @@ export type AdminModule =
   | 'roles'
   | 'faq'
   | 'logs'
-  | 'processes';
+  | 'processes'
+  | 'approvals'
+  | 'settings';
 
 export type IScopedAdminModulesByOrganization = Record<string, AdminModule[]>;
 
@@ -417,6 +419,53 @@ export interface IOrganizationMember {
     github?: string;
     email?: string;
   };
+  phone?: string;
+  personalEmail?: string;
+  program?: string;
+  yearLevel?: string;
+  startDate?: string;
+  endDate?: string;
+  memberType?: string;
+  status?: string;
+  sortOrder?: number;
+  batch?: string;
+}
+
+export interface IMembershipHistoryEntry {
+  field: string;
+  oldValue?: string;
+  newValue?: string;
+  changedBy?: string;
+  changedAt: string;
+}
+
+export interface IMembershipContribution {
+  type: string;
+  description: string;
+  hours?: number;
+  date: string;
+}
+
+export interface IOrganizationMembership extends Document {
+  studentId: Types.ObjectId | IStudent;
+  organizationId: string;
+  position: string;
+  memberType: 'officer' | 'general' | 'alumni' | 'honorary' | 'advisor';
+  status: 'applied' | 'invited' | 'active' | 'inactive' | 'alumni' | 'rejected' | 'resigned';
+  appliedAt?: Date;
+  invitedAt?: Date;
+  approvedAt?: Date;
+  rejectedAt?: Date;
+  resignedAt?: Date;
+  startDate?: Date;
+  endDate?: Date;
+  academicYear?: string;
+  semester?: string;
+  notes?: string;
+  history: IMembershipHistoryEntry[];
+  contributions?: IMembershipContribution[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 // Organization Interface
@@ -439,6 +488,26 @@ export interface IOrganization extends Document {
     secondary: string;
     accent: string;
   };
+  email?: string;
+  phone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  building?: string;
+  room?: string;
+  campus?: string;
+  advisorName?: string;
+  advisorEmail?: string;
+  moderatorName?: string;
+  moderatorEmail?: string;
+  organizationType?: string;
+  tags?: string[];
+  gallery?: IMediaAsset[];
+  seoDescription?: string;
+  isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -486,6 +555,25 @@ export interface IStudent extends Document {
   isActive: boolean;
   lastLoginAt?: Date;
   qrVersion: number;
+  profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  birthDate?: string;
+  aboutMe?: string;
+  enrollmentDate?: string;
+  expectedGraduationYear?: number;
+  previousSchool?: string;
+  guardianName?: string;
+  guardianContact?: string;
+  guardianRelationship?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -646,4 +734,11 @@ export interface IAuthenticatedStudent {
   programId: string;
   yearLevelId: string;
   sectionId: string;
+}
+
+export interface ISystemConfig extends Document {
+  group: string;
+  value: Record<string, unknown>;
+  createdAt: Date;
+  updatedAt: Date;
 }

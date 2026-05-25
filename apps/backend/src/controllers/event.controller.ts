@@ -1,5 +1,7 @@
 import { Response } from 'express';
 import Event from '../models/Event';
+import News from '../models/News';
+import Announcement from '../models/Announcement';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { ContentOwnerType, EventStatus, Permission } from '../types';
@@ -327,9 +329,26 @@ export const getEventById = async (req: AuthRequest, res: Response): Promise<voi
 
   const serializedEvent = await attachOrganizationName(event);
 
+  const [relatedNews, relatedAnnouncements] = await Promise.all([
+    News.find({ associatedEventId: id, status: 'published' })
+      .select('title excerpt publishedAt coverImage slug')
+      .sort({ publishedAt: -1 })
+      .limit(3)
+      .lean(),
+    Announcement.find({ relatedEventId: id, status: 'published', isActive: true })
+      .select('title content publishedAt subtype')
+      .sort({ publishedAt: -1 })
+      .limit(3)
+      .lean(),
+  ]);
+
   res.status(200).json({
     success: true,
-    data: { event: serializedEvent },
+    data: {
+      event: serializedEvent,
+      relatedNews,
+      relatedAnnouncements,
+    },
   });
 };
 

@@ -33,6 +33,25 @@ export type StudentMutationPayload = {
   sectionId: string;
   status?: StudentStatus;
   isActive?: boolean;
+  profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  birthDate?: string;
+  aboutMe?: string;
+  enrollmentDate?: string;
+  expectedGraduationYear?: number;
+  previousSchool?: string;
+  guardianName?: string;
+  guardianContact?: string;
+  guardianRelationship?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
 };
 
 export const studentsAPI = {

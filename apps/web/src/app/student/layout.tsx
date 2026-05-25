@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { StudentAuthProvider, useStudentAuth } from '@/context/StudentAuthContext';
-import { Loader2, CalendarDays, Ticket, Clock, LogOut, User } from 'lucide-react';
+import { Loader2, CalendarDays, Ticket, Clock, LogOut, User, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
@@ -38,6 +38,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
 
   const navItems = [
     { href: '/student/events', label: 'Events', icon: CalendarDays },
+    { href: '/student/organizations', label: 'Organizations', icon: Building2 },
     { href: '/student/registrations', label: 'Registrations', icon: Ticket },
     { href: '/student/attendance', label: 'Attendance', icon: Clock },
   ];

@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CldImage } from 'next-cloudinary';
 import AdminMemberManager from '@/components/organizations/AdminMemberManager';
 import AdminOrganizationForm from '@/components/organizations/AdminOrganizationForm';
+import OrganizationMembershipsTab from '@/components/organizations/OrganizationMembershipsTab';
 import OrganizationContentPreview from '@/components/organizations/OrganizationContentPreview';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { organizationService } from '@/services/organizationService';
@@ -82,6 +83,7 @@ export default function AdminOrganizationManagePage() {
     () =>
       [
         canManageMembers ? { value: 'members', label: 'Members' } : null,
+        canViewScopedAdmins ? { value: 'memberships', label: 'Memberships' } : null,
         canViewScopedAdmins ? { value: 'admins', label: 'Scoped Admins' } : null,
         { value: 'content', label: 'Public Content' },
         { value: 'mission', label: 'Mission & Vision' },
@@ -182,23 +184,127 @@ export default function AdminOrganizationManagePage() {
                  </div>
              </div>
 
-             <div className="rounded-lg border bg-card p-4 text-card-foreground">
-                 <h3 className="font-semibold mb-2">Overview</h3>
-                 <dl className="space-y-4 text-sm">
-                    <div>
-                        <dt className="text-muted-foreground">Full Name</dt>
-                        <dd className="font-medium">{organization.fullName}</dd>
-                    </div>
-                    <div>
-                        <dt className="text-muted-foreground">Established</dt>
-                        <dd className="font-medium">{organization.established}</dd>
-                    </div>
-                    <div>
-                       <dt className="text-muted-foreground">Description</dt>
-                       <dd className="mt-1 line-clamp-4">{organization.description}</dd>
-                    </div>
-                 </dl>
-             </div>
+              <div className="rounded-lg border bg-card p-4 text-card-foreground">
+                  <h3 className="font-semibold mb-2">Overview</h3>
+                  <dl className="space-y-4 text-sm">
+                     <div>
+                         <dt className="text-muted-foreground">Full Name</dt>
+                         <dd className="font-medium">{organization.fullName}</dd>
+                     </div>
+                     <div>
+                         <dt className="text-muted-foreground">Established</dt>
+                         <dd className="font-medium">{organization.established}</dd>
+                     </div>
+                     <div>
+                        <dt className="text-muted-foreground">Description</dt>
+                        <dd className="mt-1 line-clamp-4">{organization.description}</dd>
+                     </div>
+                     {organization.organizationType && (
+                       <div>
+                         <dt className="text-muted-foreground">Type</dt>
+                         <dd className="mt-1">
+                           <span className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium capitalize">
+                             {organization.organizationType.replace(/_/g, ' ')}
+                           </span>
+                         </dd>
+                       </div>
+                     )}
+                     {organization.isActive !== undefined && (
+                       <div>
+                         <dt className="text-muted-foreground">Status</dt>
+                         <dd className="mt-1">
+                           <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${organization.isActive ? 'bg-green-50 text-green-700 border-green-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                             {organization.isActive ? 'Active' : 'Inactive'}
+                           </span>
+                         </dd>
+                       </div>
+                     )}
+                     {(organization.email || organization.phone || organization.website) && (
+                       <div>
+                         <dt className="text-muted-foreground">Contact</dt>
+                         <dd className="mt-1 space-y-1">
+                           {organization.email && (
+                             <a href={`mailto:${organization.email}`} className="block text-primary hover:underline truncate">{organization.email}</a>
+                           )}
+                           {organization.phone && (
+                             <span className="block truncate">{organization.phone}</span>
+                           )}
+                           {organization.website && (
+                             <a href={organization.website} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">{organization.website}</a>
+                           )}
+                         </dd>
+                       </div>
+                     )}
+                     {(organization.facebookUrl || organization.twitterUrl || organization.instagramUrl || organization.tiktokUrl || organization.linkedinUrl) && (
+                       <div>
+                         <dt className="text-muted-foreground">Social Media</dt>
+                         <dd className="mt-1 space-y-1">
+                           {organization.facebookUrl && (
+                             <a href={organization.facebookUrl} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">Facebook</a>
+                           )}
+                           {organization.twitterUrl && (
+                             <a href={organization.twitterUrl} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">Twitter</a>
+                           )}
+                           {organization.instagramUrl && (
+                             <a href={organization.instagramUrl} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">Instagram</a>
+                           )}
+                           {organization.tiktokUrl && (
+                             <a href={organization.tiktokUrl} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">TikTok</a>
+                           )}
+                           {organization.linkedinUrl && (
+                             <a href={organization.linkedinUrl} target="_blank" rel="noopener noreferrer" className="block text-primary hover:underline truncate">LinkedIn</a>
+                           )}
+                         </dd>
+                       </div>
+                     )}
+                     {(organization.building || organization.room || organization.campus) && (
+                       <div>
+                         <dt className="text-muted-foreground">Location</dt>
+                         <dd className="mt-1 font-medium">
+                           {[organization.building, organization.room, organization.campus].filter(Boolean).join(', ')}
+                         </dd>
+                       </div>
+                     )}
+                     {(organization.advisorName || organization.advisorEmail) && (
+                       <div>
+                         <dt className="text-muted-foreground">Advisor</dt>
+                         <dd className="mt-1 font-medium">{organization.advisorName}
+                           {organization.advisorEmail && (
+                             <a href={`mailto:${organization.advisorEmail}`} className="block text-primary hover:underline text-xs truncate">{organization.advisorEmail}</a>
+                           )}
+                         </dd>
+                       </div>
+                     )}
+                     {(organization.moderatorName || organization.moderatorEmail) && (
+                       <div>
+                         <dt className="text-muted-foreground">Moderator</dt>
+                         <dd className="mt-1 font-medium">{organization.moderatorName}
+                           {organization.moderatorEmail && (
+                             <a href={`mailto:${organization.moderatorEmail}`} className="block text-primary hover:underline text-xs truncate">{organization.moderatorEmail}</a>
+                           )}
+                         </dd>
+                       </div>
+                     )}
+                     {organization.tags && organization.tags.length > 0 && (
+                       <div>
+                         <dt className="text-muted-foreground">Tags</dt>
+                         <dd className="mt-1 flex flex-wrap gap-1">
+                           {organization.tags.map((tag) => (
+                             <span key={tag} className="inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium bg-muted">
+                               {tag}
+                             </span>
+                           ))}
+                         </dd>
+                       </div>
+                     )}
+                     {organization.seoDescription && (
+                       <div>
+                         <dt className="text-muted-foreground">SEO Description</dt>
+                         <dd className="mt-1 line-clamp-3 text-muted-foreground">{organization.seoDescription}</dd>
+                       </div>
+                     )}
+                  </dl>
+              </div>
           </div>
 
           {/* Main Content Area */}
@@ -221,6 +327,14 @@ export default function AdminOrganizationManagePage() {
                            onRefresh={refresh}
                            color={organization.color}
                         />
+                     </div>
+                  </TabsContent>
+                ) : null}
+
+                {canViewScopedAdmins ? (
+                  <TabsContent value="memberships" className="mt-6">
+                     <div className="rounded-xl border bg-card p-6">
+                        <OrganizationMembershipsTab orgId={organization.id} />
                      </div>
                   </TabsContent>
                 ) : null}

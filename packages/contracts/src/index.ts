@@ -144,6 +144,12 @@ export const AttendanceScanResult = {
 export type AttendanceScanResult =
   (typeof AttendanceScanResult)[keyof typeof AttendanceScanResult];
 
+export const NotificationChannel = {
+  EMAIL: 'email',
+  PUSH: 'push',
+  SMS: 'sms',
+} as const;
+
 export type AdminModuleKey =
   | 'dashboard'
   | 'organizations'
@@ -156,7 +162,8 @@ export type AdminModuleKey =
   | 'faq'
   | 'logs'
   | 'processes'
-  | 'approvals';
+  | 'approvals'
+  | 'settings';
 
 export type AdminScopes = {
   global: boolean;
@@ -170,6 +177,159 @@ export type OrganizationAssignment = {
   roleId: string;
   roleName: string;
   permissions: Permission[];
+};
+
+export const OrganizationStatus = {
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ARCHIVED: 'archived',
+} as const;
+export type OrganizationStatus = (typeof OrganizationStatus)[keyof typeof OrganizationStatus];
+
+export const OrganizationType = {
+  ACADEMIC: 'academic',
+  CULTURAL: 'cultural',
+  SPORTS: 'sports',
+  SPECIAL_INTEREST: 'special_interest',
+  OTHER: 'other',
+} as const;
+export type OrganizationType = (typeof OrganizationType)[keyof typeof OrganizationType];
+
+export const MembershipStatus = {
+  APPLIED: 'applied',
+  INVITED: 'invited',
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  ALUMNI: 'alumni',
+  REJECTED: 'rejected',
+  RESIGNED: 'resigned',
+} as const;
+export type MembershipStatus = (typeof MembershipStatus)[keyof typeof MembershipStatus];
+
+export const MemberType = {
+  OFFICER: 'officer',
+  GENERAL: 'general',
+  ALUMNI: 'alumni',
+  HONORARY: 'honorary',
+  ADVISOR: 'advisor',
+} as const;
+export type MemberType = (typeof MemberType)[keyof typeof MemberType];
+
+export type Organization = {
+  _id: string;
+  id: string;
+  name: string;
+  fullName: string;
+  description: string;
+  longDescription: string;
+  logo: string;
+  banner: string;
+  established: string;
+  mission: string;
+  vision: string;
+  values: string[];
+  achievements: string[];
+  color: {
+    primary: string;
+    secondary: string;
+    accent: string;
+  };
+  members: OrganizationMember[];
+  email?: string;
+  phone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  building?: string;
+  room?: string;
+  campus?: string;
+  advisorName?: string;
+  advisorEmail?: string;
+  moderatorName?: string;
+  moderatorEmail?: string;
+  organizationType?: OrganizationType | string;
+  tags?: string[];
+  gallery?: MediaAsset[];
+  seoDescription?: string;
+  isActive?: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type OrganizationMember = {
+  id: string;
+  name: string;
+  position: string;
+  photo: string;
+  bio: string;
+  joinedDate?: string;
+  achievements?: string[];
+  responsibilities?: string[];
+  skills?: string[];
+  timeline?: {
+    year: string;
+    title: string;
+    description: string;
+    category: 'achievement' | 'project' | 'milestone' | 'award' | 'education';
+    details?: string[];
+  }[];
+  gallery?: string[];
+  social?: {
+    linkedin?: string;
+    github?: string;
+    email?: string;
+  };
+  phone?: string;
+  personalEmail?: string;
+  program?: string;
+  yearLevel?: string;
+  startDate?: string;
+  endDate?: string;
+  memberType?: 'officer' | 'general' | 'alumni' | 'honorary' | 'advisor';
+  status?: 'active' | 'inactive' | 'alumni';
+  sortOrder?: number;
+  batch?: string;
+};
+
+export type OrganizationMembership = {
+  _id: string;
+  studentId: string;
+  organizationId: string;
+  position: string;
+  memberType: MemberType;
+  status: MembershipStatus;
+  appliedAt?: string;
+  invitedAt?: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  resignedAt?: string;
+  startDate?: string;
+  endDate?: string;
+  academicYear?: string;
+  semester?: string;
+  notes?: string;
+  history: MembershipHistoryEntry[];
+  contributions?: MembershipContribution[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type MembershipHistoryEntry = {
+  field: string;
+  oldValue?: string;
+  newValue?: string;
+  changedBy?: string;
+  changedAt: string;
+};
+
+export type MembershipContribution = {
+  type: string;
+  description: string;
+  hours?: number;
+  date: string;
 };
 
 export type User = {
@@ -503,6 +663,11 @@ export type StudentIdentity = {
   firstName: string;
   lastName: string;
   middleName?: string;
+  profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  birthDate?: string;
+  aboutMe?: string;
 };
 
 export type StudentProfile = StudentIdentity & {
@@ -531,6 +696,20 @@ export type StudentProfile = StudentIdentity & {
         name?: string;
         displayName?: string;
       };
+  enrollmentDate?: string;
+  expectedGraduationYear?: number;
+  previousSchool?: string;
+  guardianName?: string;
+  guardianContact?: string;
+  guardianRelationship?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
 };
 
 export type StudentRegistration = {
@@ -733,12 +912,31 @@ export const studentProfileSchema: z.ZodType<StudentProfile> = z.object({
   firstName: z.string(),
   lastName: z.string(),
   middleName: z.string().optional(),
+  profilePhoto: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+  birthDate: z.string().optional(),
+  aboutMe: z.string().optional(),
   status: z.union([studentStatusSchema, z.string()]).optional(),
   isActive: z.boolean().optional(),
   qrVersion: z.number().optional(),
   programId: z.union([z.string(), z.record(z.unknown())]).optional(),
   yearLevelId: z.union([z.string(), z.record(z.unknown())]).optional(),
   sectionId: z.union([z.string(), z.record(z.unknown())]).optional(),
+  enrollmentDate: z.string().optional(),
+  expectedGraduationYear: z.number().optional(),
+  previousSchool: z.string().optional(),
+  guardianName: z.string().optional(),
+  guardianContact: z.string().optional(),
+  guardianRelationship: z.string().optional(),
+  emergencyContactName: z.string().optional(),
+  emergencyContactPhone: z.string().optional(),
+  emergencyContactRelationship: z.string().optional(),
+  notificationPreferences: z.object({
+    email: z.boolean(),
+    push: z.boolean(),
+    sms: z.boolean(),
+  }).optional(),
 });
 
 export const studentRegistrationSchema: z.ZodType<StudentRegistration> = z.object({
@@ -1021,6 +1219,128 @@ export const pushTokenUnregistrationRequestSchema: z.ZodType<PushTokenUnregistra
   z.object({
     token: z.string().min(1),
   });
+
+export const organizationStatusSchema = z.nativeEnum(OrganizationStatus);
+export const organizationTypeSchema = z.nativeEnum(OrganizationType);
+export const membershipStatusSchema = z.nativeEnum(MembershipStatus);
+export const memberTypeSchema = z.nativeEnum(MemberType);
+
+export const organizationMemberSchema: z.ZodType<OrganizationMember> = z.object({
+  id: z.string(),
+  name: z.string(),
+  position: z.string(),
+  photo: z.string(),
+  bio: z.string(),
+  joinedDate: z.string().optional(),
+  achievements: z.array(z.string()).optional(),
+  responsibilities: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
+  timeline: z.array(z.object({
+    year: z.string(),
+    title: z.string(),
+    description: z.string(),
+    category: z.enum(['achievement', 'project', 'milestone', 'award', 'education']),
+    details: z.array(z.string()).optional(),
+  })).optional(),
+  gallery: z.array(z.string()).optional(),
+  social: z.object({
+    linkedin: z.string().optional(),
+    github: z.string().optional(),
+    email: z.string().optional(),
+  }).optional(),
+  phone: z.string().optional(),
+  personalEmail: z.string().optional(),
+  program: z.string().optional(),
+  yearLevel: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  memberType: z.enum(['officer', 'general', 'alumni', 'honorary', 'advisor']).optional(),
+  status: z.enum(['active', 'inactive', 'alumni']).optional(),
+  sortOrder: z.number().optional(),
+  batch: z.string().optional(),
+});
+
+export const organizationSchema: z.ZodType<Organization> = z.object({
+  _id: z.string(),
+  id: z.string(),
+  name: z.string(),
+  fullName: z.string(),
+  description: z.string(),
+  longDescription: z.string(),
+  logo: z.string(),
+  banner: z.string(),
+  established: z.string(),
+  mission: z.string(),
+  vision: z.string(),
+  values: z.array(z.string()),
+  achievements: z.array(z.string()),
+  color: z.object({
+    primary: z.string(),
+    secondary: z.string(),
+    accent: z.string(),
+  }),
+  members: z.array(organizationMemberSchema),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  website: z.string().optional(),
+  facebookUrl: z.string().optional(),
+  twitterUrl: z.string().optional(),
+  instagramUrl: z.string().optional(),
+  tiktokUrl: z.string().optional(),
+  linkedinUrl: z.string().optional(),
+  building: z.string().optional(),
+  room: z.string().optional(),
+  campus: z.string().optional(),
+  advisorName: z.string().optional(),
+  advisorEmail: z.string().optional(),
+  moderatorName: z.string().optional(),
+  moderatorEmail: z.string().optional(),
+  organizationType: z.union([organizationTypeSchema, z.string()]).optional(),
+  tags: z.array(z.string()).optional(),
+  gallery: z.array(mediaAssetSchema).optional(),
+  seoDescription: z.string().optional(),
+  isActive: z.boolean().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const membershipHistoryEntrySchema: z.ZodType<MembershipHistoryEntry> = z.object({
+  field: z.string(),
+  oldValue: z.string().optional(),
+  newValue: z.string().optional(),
+  changedBy: z.string().optional(),
+  changedAt: z.string(),
+});
+
+export const membershipContributionSchema: z.ZodType<MembershipContribution> = z.object({
+  type: z.string(),
+  description: z.string(),
+  hours: z.number().optional(),
+  date: z.string(),
+});
+
+export const organizationMembershipSchema: z.ZodType<OrganizationMembership> = z.object({
+  _id: z.string(),
+  studentId: z.string(),
+  organizationId: z.string(),
+  position: z.string(),
+  memberType: memberTypeSchema,
+  status: membershipStatusSchema,
+  appliedAt: z.string().optional(),
+  invitedAt: z.string().optional(),
+  approvedAt: z.string().optional(),
+  rejectedAt: z.string().optional(),
+  resignedAt: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  academicYear: z.string().optional(),
+  semester: z.string().optional(),
+  notes: z.string().optional(),
+  history: z.array(membershipHistoryEntrySchema),
+  contributions: z.array(membershipContributionSchema).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
 
 export const apiSuccessResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
   z.object({

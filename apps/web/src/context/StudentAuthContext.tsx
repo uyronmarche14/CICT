@@ -10,6 +10,10 @@ interface StudentUser {
   firstName: string;
   lastName: string;
   email?: string;
+  phone?: string;
+  address?: string;
+  programId?: string | { _id?: string; code?: string; name?: string };
+  yearLevelId?: string | { _id?: string; code?: string; label?: string; numericLevel?: number };
 }
 
 interface StudentAuthContextType {
@@ -52,6 +56,10 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
       firstName: data.student.firstName,
       lastName: data.student.lastName,
       email: data.student.email,
+      phone: data.student.phone,
+      address: data.student.address,
+      programId: data.student.programId,
+      yearLevelId: data.student.yearLevelId,
     });
     router.push(redirectTo || '/student/events');
   }, [router]);

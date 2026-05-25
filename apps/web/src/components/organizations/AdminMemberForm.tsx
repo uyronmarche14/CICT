@@ -33,7 +33,17 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
         linkedin: '',
         github: '',
         email: ''
-      }
+      },
+      phone: '',
+      personalEmail: '',
+      program: '',
+      yearLevel: '',
+      startDate: '',
+      endDate: '',
+      memberType: 'general',
+      status: 'active',
+      sortOrder: 0,
+      batch: '',
     }
   });
 
@@ -156,6 +166,66 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
             </div>
           </div>
           
+          <div className="space-y-2">
+            <Label>Contact</Label>
+            <Input {...register('phone')} placeholder="Phone number" />
+            <Input {...register('personalEmail')} placeholder="Personal email" type="email" />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Program / Course</Label>
+              <Input {...register('program')} placeholder="e.g. BSIT" />
+            </div>
+            <div className="space-y-2">
+              <Label>Year Level</Label>
+              <Input {...register('yearLevel')} placeholder="e.g. 3rd Year" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Member Type</Label>
+              <select {...register('memberType')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="general">General Member</option>
+                <option value="officer">Officer</option>
+                <option value="alumni">Alumni</option>
+                <option value="honorary">Honorary Member</option>
+                <option value="advisor">Advisor</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <select {...register('status')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="alumni">Alumni</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Position Start Date</Label>
+              <Input {...register('startDate')} type="date" />
+            </div>
+            <div className="space-y-2">
+              <Label>Position End Date</Label>
+              <Input {...register('endDate')} type="date" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Sort Order</Label>
+              <Input {...register('sortOrder')} type="number" placeholder="0" />
+            </div>
+            <div className="space-y-2">
+              <Label>Batch / Academic Year</Label>
+              <Input {...register('batch')} placeholder="e.g. 2025" />
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Joined Year</Label>
             <Input {...register('joinedDate')} placeholder="e.g. 2024" />

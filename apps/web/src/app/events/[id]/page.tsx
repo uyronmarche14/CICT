@@ -239,6 +239,58 @@ export default function EventDetailsPage() {
               </div>
             )}
 
+            {/* Related Coverage */}
+            {(data?.data?.relatedNews?.length ?? 0) > 0 || (data?.data?.relatedAnnouncements?.length ?? 0) > 0 ? (
+              <div className="pt-6 border-t space-y-6">
+                {(data?.data?.relatedNews?.length ?? 0) > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Related News</h3>
+                    <div className="space-y-3">
+                      {data?.data?.relatedNews?.map((article: { _id: string; title: string; excerpt?: string; publishedAt?: string }) => (
+                        <Link key={article._id} href={`/news/${article._id}`}
+                          className="block p-4 rounded-lg border hover:bg-secondary/20 transition-colors">
+                          <p className="font-medium text-primary hover:underline">{article.title}</p>
+                          {article.excerpt && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{article.excerpt}</p>}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(data?.data?.relatedAnnouncements?.length ?? 0) > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Related Announcements</h3>
+                    <div className="space-y-3">
+                      {data?.data?.relatedAnnouncements?.map((ann: { _id: string; title: string; subtype?: string }) => (
+                        <Link key={ann._id} href={`/announcements/${ann._id}`}
+                          className="block p-4 rounded-lg border hover:bg-secondary/20 transition-colors">
+                          <p className="font-medium text-primary hover:underline">{ann.title}</p>
+                          {ann.subtype && <Badge variant="outline" className="mt-1">{ann.subtype}</Badge>}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : null}
+
+            {/* Eligibility */}
+            {(event.targetProgramIds?.length ?? 0) > 0 || (event.targetYearLevelIds?.length ?? 0) > 0 || (event.targetSectionIds?.length ?? 0) > 0 ? (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3">Eligibility</h3>
+                <div className="text-sm text-muted-foreground space-y-1">
+                  {(event.targetProgramIds?.length ?? 0) > 0 && (
+                    <p>Programs: <span className="font-medium">{event.targetProgramIds?.join(', ')}</span></p>
+                  )}
+                  {(event.targetYearLevelIds?.length ?? 0) > 0 && (
+                    <p>Year Levels: <span className="font-medium">{event.targetYearLevelIds?.join(', ')}</span></p>
+                  )}
+                  {(event.targetSectionIds?.length ?? 0) > 0 && (
+                    <p>Sections: <span className="font-medium">{event.targetSectionIds?.join(', ')}</span></p>
+                  )}
+                </div>
+              </div>
+            ) : null}
+
             {(event.contactName || event.contactEmail || event.contactPhone) && (
               <div className="pt-6 border-t">
                 <h3 className="text-lg font-semibold mb-3">Contact</h3>

@@ -204,6 +204,13 @@ const ADMIN_MODULE_PERMISSION_MAP: Record<Exclude<AdminModule, 'dashboard'>, Per
     Permission.COMMENT_PROCESS,
     Permission.APPROVE_PROCESS_STEP,
   ],
+  approvals: [
+    Permission.APPROVE_CONTENT,
+    Permission.REJECT_CONTENT,
+    Permission.MANAGE_MEMBER_ROLES,
+    Permission.VIEW_MEMBER,
+  ],
+  settings: [Permission.MANAGE_SETTINGS],
 };
 
 type ScopedAdminModule = Extract<

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
@@ -45,11 +45,13 @@ import {
   Calendar,
   AlertCircle,
   RefreshCw,
+  Users,
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { appToast } from '@/lib/app-toast';
 import { eventAPI } from '@/lib/api/event';
+import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-membership';
 import api from '@/lib/api/axios';
 import { Permission } from '@/types';
 
@@ -107,6 +109,66 @@ export default function AdminApprovalsPage() {
 
   const canApprove = hasPermission(Permission.APPROVE_CONTENT) || hasAnyScopedPermission(Permission.APPROVE_CONTENT);
   const canReject = hasPermission(Permission.REJECT_CONTENT) || hasAnyScopedPermission(Permission.REJECT_CONTENT);
+
+  const [pendingMemberships, setPendingMemberships] = useState<OrganizationMembership[]>([]);
+  const [loadingMemberships, setLoadingMemberships] = useState(false);
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [rejectingId, setRejectingId] = useState<string | null>(null);
+
+  const canManageMemberships = hasPermission(Permission.MANAGE_MEMBER_ROLES) || hasAnyScopedPermission(Permission.MANAGE_MEMBER_ROLES);
+
+  const fetchPendingMemberships = useCallback(async () => {
+    setLoadingMemberships(true);
+    try {
+      const memberships = await membershipAPI.getPending();
+      setPendingMemberships(memberships);
+    } catch (err) {
+      console.error('Failed to load pending memberships:', err);
+    } finally {
+      setLoadingMemberships(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (canManageMemberships) {
+      fetchPendingMemberships();
+    }
+  }, [canManageMemberships, fetchPendingMemberships]);
+
+  const handleApproveMembership = async (orgId: string, membershipId: string) => {
+    setApprovingId(membershipId);
+    try {
+      await membershipAPI.approve(orgId, membershipId);
+      appToast.success('Approved', 'Membership application approved.');
+      fetchPendingMemberships();
+    } catch {
+      appToast.error('Failed', 'Could not approve membership.');
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  const getStudentInfo = (m: OrganizationMembership) => {
+    const student = typeof m.studentId === 'object' ? m.studentId : null;
+    return {
+      name: student ? `${student.firstName} ${student.lastName}` : 'Unknown',
+      initials: student ? student.firstName.charAt(0) : '?',
+      number: student?.studentNumber || '—',
+    };
+  };
+
+  const handleRejectMembership = async (orgId: string, membershipId: string) => {
+    setRejectingId(membershipId);
+    try {
+      await membershipAPI.reject(orgId, membershipId);
+      appToast.success('Rejected', 'Membership application rejected.');
+      fetchPendingMemberships();
+    } catch {
+      appToast.error('Failed', 'Could not reject membership.');
+    } finally {
+      setRejectingId(null);
+    }
+  };
 
   const approveMutation = useMutation({
     mutationFn: async ({ id, contentType }: { id: string; contentType: string }) => {
@@ -340,6 +402,65 @@ export default function AdminApprovalsPage() {
           )}
         </CardContent>
       </Card>
+
+      {canManageMemberships && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Membership Applications
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => fetchPendingMemberships()} disabled={loadingMemberships}>
+                {loadingMemberships ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {pendingMemberships.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8">No pending membership applications.</p>
+            ) : (
+              <div className="space-y-4">
+                {pendingMemberships.map((m) => {
+                  const info = getStudentInfo(m);
+                  return (
+                  <div key={m._id} className="flex items-center justify-between p-4 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+                        {info.initials}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{info.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {info.number} &middot; {m.organization?.name || m.organizationId}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Applied {m.appliedAt ? formatDistanceToNow(new Date(m.appliedAt), { addSuffix: true }) : ''}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="text-green-600"
+                        onClick={() => handleApproveMembership(m.organizationId, m._id)}
+                        disabled={approvingId === m._id}>
+                        {approvingId === m._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                        Approve
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-600"
+                        onClick={() => handleRejectMembership(m.organizationId, m._id)}
+                        disabled={rejectingId === m._id}>
+                        {rejectingId === m._id ? <Loader2 className="w-3 h-3 animate-spin" /> : <XCircle className="w-3 h-3" />}
+                        Reject
+                      </Button>
+                    </div>
+                  </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <RejectionReasonDialog
         open={rejectDialogOpen}

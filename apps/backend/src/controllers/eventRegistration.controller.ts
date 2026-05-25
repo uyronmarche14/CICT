@@ -8,6 +8,7 @@ import Student from '../models/Student';
 import ActivityLog from '../models/ActivityLog';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { isFeatureEnabled } from '../utils/features';
 import { StudentAuthRequest } from '../middleware/studentAuth';
 import {
   AttendanceScanResult,
@@ -178,6 +179,11 @@ export const registerForEvent = async (
 ): Promise<void> => {
   if (!req.student) {
     throw new AppError('Student not authenticated', 401);
+  }
+
+  const registrationEnabled = await isFeatureEnabled('selfRegistration');
+  if (!registrationEnabled) {
+    throw new AppError('Student self-registration is currently disabled', 403);
   }
 
   const event = await Event.findById(req.params.id);

@@ -11,9 +11,10 @@ import { Organization, OrganizationInput } from '@/types';
 import { organizationService } from '@/services/organizationService';
 import { appToast } from '@/lib/app-toast';
 
-type OrganizationFormValues = Omit<OrganizationInput, 'values' | 'achievements'> & {
+type OrganizationFormValues = Omit<OrganizationInput, 'values' | 'achievements' | 'tags'> & {
   valuesText: string;
   achievementsText: string;
+  tagsText: string;
 };
 
 interface AdminOrganizationFormProps {
@@ -38,8 +39,8 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
       mission: organization?.mission ?? '',
       vision: organization?.vision ?? '',
       established: organization?.established ?? '',
-      valuesText: organization?.values.join(', ') ?? '',
-      achievementsText: organization?.achievements.join(', ') ?? '',
+      valuesText: organization?.values?.join(', ') ?? '',
+      achievementsText: organization?.achievements?.join(', ') ?? '',
       logo: organization?.logo ?? '',
       banner: organization?.banner ?? '',
       color: {
@@ -47,6 +48,25 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
         secondary: organization?.color.secondary ?? '#93c5fd',
         accent: organization?.color.accent ?? '#f59e0b',
       },
+      email: organization?.email ?? '',
+      phone: organization?.phone ?? '',
+      website: organization?.website ?? '',
+      facebookUrl: organization?.facebookUrl ?? '',
+      twitterUrl: organization?.twitterUrl ?? '',
+      instagramUrl: organization?.instagramUrl ?? '',
+      tiktokUrl: organization?.tiktokUrl ?? '',
+      linkedinUrl: organization?.linkedinUrl ?? '',
+      building: organization?.building ?? '',
+      room: organization?.room ?? '',
+      campus: organization?.campus ?? '',
+      advisorName: organization?.advisorName ?? '',
+      advisorEmail: organization?.advisorEmail ?? '',
+      moderatorName: organization?.moderatorName ?? '',
+      moderatorEmail: organization?.moderatorEmail ?? '',
+      organizationType: organization?.organizationType ?? '',
+      tagsText: organization?.tags?.join(', ') ?? '',
+      seoDescription: organization?.seoDescription ?? '',
+      isActive: organization?.isActive ?? true,
     }
   });
 
@@ -95,6 +115,27 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           .split(',')
           .map((value) => value.trim())
           .filter(Boolean),
+        email: data.email || undefined,
+        phone: data.phone || undefined,
+        website: data.website || undefined,
+        facebookUrl: data.facebookUrl || undefined,
+        twitterUrl: data.twitterUrl || undefined,
+        instagramUrl: data.instagramUrl || undefined,
+        tiktokUrl: data.tiktokUrl || undefined,
+        linkedinUrl: data.linkedinUrl || undefined,
+        building: data.building || undefined,
+        room: data.room || undefined,
+        campus: data.campus || undefined,
+        advisorName: data.advisorName || undefined,
+        advisorEmail: data.advisorEmail || undefined,
+        moderatorName: data.moderatorName || undefined,
+        moderatorEmail: data.moderatorEmail || undefined,
+        organizationType: data.organizationType || undefined,
+        tags: data.tagsText
+          ? data.tagsText.split(',').map((t) => t.trim()).filter(Boolean)
+          : undefined,
+        seoDescription: data.seoDescription || undefined,
+        isActive: data.isActive,
       };
 
       if (isEditing && organization) {
@@ -296,6 +337,131 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <div className="space-y-2">
               <label className="text-sm font-medium">Accent Color</label>
               <Input {...register('color.accent')} />
+            </div>
+          </div>
+
+          {/* Contact Section */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Contact Information</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Email</label>
+                <Input {...register('email')} type="email" placeholder="org@example.com" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Phone</label>
+                <Input {...register('phone')} placeholder="+63..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Website</label>
+                <Input {...register('website')} placeholder="https://..." />
+              </div>
+            </div>
+          </div>
+
+          {/* Social Section */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Social Media</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Facebook URL</label>
+                <Input {...register('facebookUrl')} placeholder="https://facebook.com/..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Twitter URL</label>
+                <Input {...register('twitterUrl')} placeholder="https://twitter.com/..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Instagram URL</label>
+                <Input {...register('instagramUrl')} placeholder="https://instagram.com/..." />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">TikTok URL</label>
+                <Input {...register('tiktokUrl')} placeholder="https://tiktok.com/..." />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">LinkedIn URL</label>
+                <Input {...register('linkedinUrl')} placeholder="https://linkedin.com/..." />
+              </div>
+            </div>
+          </div>
+
+          {/* Location Section */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Location</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Building</label>
+                <Input {...register('building')} placeholder="e.g. Arts Building" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Room</label>
+                <Input {...register('room')} placeholder="e.g. Rm 201" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Campus</label>
+                <Input {...register('campus')} placeholder="e.g. Main Campus" />
+              </div>
+            </div>
+          </div>
+
+          {/* Advisor Section */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Advisor & Moderator</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Advisor Name</label>
+                <Input {...register('advisorName')} placeholder="Full name" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Advisor Email</label>
+                <Input {...register('advisorEmail')} type="email" placeholder="advisor@example.com" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Moderator Name</label>
+                <Input {...register('moderatorName')} placeholder="Full name" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Moderator Email</label>
+                <Input {...register('moderatorEmail')} type="email" placeholder="moderator@example.com" />
+              </div>
+            </div>
+          </div>
+
+          {/* Classification Section */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Classification</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Organization Type</label>
+                <select
+                  {...register('organizationType')}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="">Select Type...</option>
+                  <option value="academic">Academic</option>
+                  <option value="cultural">Cultural</option>
+                  <option value="sports">Sports</option>
+                  <option value="special_interest">Special Interest</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Tags (comma-separated)</label>
+                <Input {...register('tagsText')} placeholder="Leadership, Tech, Innovation" />
+              </div>
+            </div>
+            <div className="space-y-2 mt-4">
+              <label className="text-sm font-medium">SEO Description</label>
+              <Textarea
+                {...register('seoDescription')}
+                placeholder="Brief description for search engines"
+                rows={2}
+              />
             </div>
           </div>
 

@@ -9,6 +9,7 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +41,25 @@ const emptyStudentForm: StudentMutationPayload = {
   sectionId: '',
   status: StudentStatus.PENDING,
   isActive: false,
+  profilePhoto: '',
+  phone: '',
+  address: '',
+  birthDate: '',
+  aboutMe: '',
+  enrollmentDate: '',
+  expectedGraduationYear: 0,
+  previousSchool: '',
+  guardianName: '',
+  guardianContact: '',
+  guardianRelationship: '',
+  emergencyContactName: '',
+  emergencyContactPhone: '',
+  emergencyContactRelationship: '',
+  notificationPreferences: {
+    email: true,
+    push: true,
+    sms: false,
+  },
 };
 
 const getProgramLabel = (program: Student['programId']) =>
@@ -146,6 +166,25 @@ export default function StudentsPage() {
       sectionId: typeof student.sectionId === 'string' ? student.sectionId : student.sectionId._id,
       status: student.status,
       isActive: student.isActive,
+      profilePhoto: student.profilePhoto ?? '',
+      phone: student.phone ?? '',
+      address: student.address ?? '',
+      birthDate: student.birthDate ?? '',
+      aboutMe: student.aboutMe ?? '',
+      enrollmentDate: student.enrollmentDate ?? '',
+      expectedGraduationYear: student.expectedGraduationYear ?? 0,
+      previousSchool: student.previousSchool ?? '',
+      guardianName: student.guardianName ?? '',
+      guardianContact: student.guardianContact ?? '',
+      guardianRelationship: student.guardianRelationship ?? '',
+      emergencyContactName: student.emergencyContactName ?? '',
+      emergencyContactPhone: student.emergencyContactPhone ?? '',
+      emergencyContactRelationship: student.emergencyContactRelationship ?? '',
+      notificationPreferences: student.notificationPreferences ?? {
+        email: true,
+        push: true,
+        sms: false,
+      },
     });
   };
 
@@ -298,6 +337,127 @@ export default function StudentsPage() {
               </SelectContent>
             </Select>
           </div>
+
+          <div className="space-y-2 md:col-span-2 xl:col-span-3 mt-4">
+            <h3 className="font-semibold text-sm">Profile</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>Profile Photo URL</Label>
+            <Input
+              value={form.profilePhoto ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, profilePhoto: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Phone</Label>
+            <Input
+              value={form.phone ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, phone: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Address</Label>
+            <Input
+              value={form.address ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, address: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Birth Date</Label>
+            <Input
+              type="date"
+              value={form.birthDate ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, birthDate: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2 xl:col-span-3">
+            <Label>About Me</Label>
+            <Textarea
+              value={form.aboutMe ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, aboutMe: event.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2 xl:col-span-3 mt-4">
+            <h3 className="font-semibold text-sm">Academic</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>Enrollment Date</Label>
+            <Input
+              type="date"
+              value={form.enrollmentDate ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, enrollmentDate: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Expected Graduation Year</Label>
+            <Input
+              type="number"
+              min={2000}
+              max={2100}
+              value={form.expectedGraduationYear ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, expectedGraduationYear: Number(event.target.value) }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Previous School</Label>
+            <Input
+              value={form.previousSchool ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, previousSchool: event.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2 xl:col-span-3 mt-4">
+            <h3 className="font-semibold text-sm">Guardian</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>Guardian Name</Label>
+            <Input
+              value={form.guardianName ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, guardianName: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Guardian Contact</Label>
+            <Input
+              value={form.guardianContact ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, guardianContact: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Guardian Relationship</Label>
+            <Input
+              value={form.guardianRelationship ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, guardianRelationship: event.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2 xl:col-span-3 mt-4">
+            <h3 className="font-semibold text-sm">Emergency Contact</h3>
+          </div>
+          <div className="space-y-2">
+            <Label>Emergency Contact Name</Label>
+            <Input
+              value={form.emergencyContactName ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, emergencyContactName: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Emergency Contact Phone</Label>
+            <Input
+              value={form.emergencyContactPhone ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, emergencyContactPhone: event.target.value }))}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Emergency Contact Relationship</Label>
+            <Input
+              value={form.emergencyContactRelationship ?? ''}
+              onChange={(event) => setForm((current) => ({ ...current, emergencyContactRelationship: event.target.value }))}
+            />
+          </div>
+
           <div className="space-y-2">
             <Label>Status</Label>
             <Select
@@ -398,6 +558,7 @@ export default function StudentsPage() {
                 <TableRow>
                   <TableHead>Student</TableHead>
                   <TableHead>Academic</TableHead>
+                  <TableHead>Phone</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Login</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -406,13 +567,13 @@ export default function StudentsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : students.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">
+                    <TableCell colSpan={6} className="h-24 text-center">
                       No students found.
                     </TableCell>
                   </TableRow>
@@ -420,9 +581,11 @@ export default function StudentsPage() {
                   students.map((student) => (
                     <TableRow key={student._id}>
                       <TableCell>
-                        <div className="font-medium">
-                          {student.firstName} {student.lastName}
-                        </div>
+                        <Link href={`/admin/students/${student._id}`} className="hover:underline">
+                          <div className="font-medium">
+                            {student.firstName} {student.lastName}
+                          </div>
+                        </Link>
                         <div className="text-xs text-muted-foreground">{student.studentNumber}</div>
                         {student.email ? (
                           <div className="text-xs text-muted-foreground">{student.email}</div>
@@ -433,6 +596,13 @@ export default function StudentsPage() {
                         <div className="text-xs text-muted-foreground">
                           {getYearLevelLabel(student.yearLevelId)} • {getSectionLabel(student.sectionId)}
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {student.phone ? (
+                          <span className="text-sm">{student.phone}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">&mdash;</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={student.isActive ? 'default' : 'secondary'}>

@@ -5,6 +5,10 @@ import {
   NewsStatus,
   Permission,
   UserRole,
+  OrganizationType,
+  OrganizationStatus,
+  MembershipStatus,
+  MemberType,
 } from '@cict/contracts';
 import type {
   AdminModuleKey,
@@ -18,6 +22,7 @@ import type {
   EventScheduleItem,
   MediaAsset,
   OrganizationAssignment,
+  OrganizationMembership,
   PermissionMetadataGroup,
   PermissionMetadataItem,
   Role,
@@ -38,6 +43,10 @@ export {
   NewsStatus,
   Permission,
   UserRole,
+  OrganizationType,
+  OrganizationStatus,
+  MembershipStatus,
+  MemberType,
 };
 
 export type {
@@ -52,6 +61,7 @@ export type {
   EventScheduleItem,
   MediaAsset,
   OrganizationAssignment,
+  OrganizationMembership,
   PermissionMetadataGroup,
   PermissionMetadataItem,
   Role,
@@ -196,6 +206,16 @@ export interface OrganizationMember {
     github?: string;
     email?: string;
   };
+  phone?: string;
+  personalEmail?: string;
+  program?: string;
+  yearLevel?: string;
+  startDate?: string;
+  endDate?: string;
+  memberType?: 'officer' | 'general' | 'alumni' | 'honorary' | 'advisor';
+  status?: 'active' | 'inactive' | 'alumni';
+  sortOrder?: number;
+  batch?: string;
 }
 
 export interface Organization {
@@ -219,6 +239,26 @@ export interface Organization {
     accent: string;
   };
   adminAssignments?: OrganizationAdminAssignment[];
+  email?: string;
+  phone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  building?: string;
+  room?: string;
+  campus?: string;
+  advisorName?: string;
+  advisorEmail?: string;
+  moderatorName?: string;
+  moderatorEmail?: string;
+  organizationType?: string;
+  tags?: string[];
+  gallery?: MediaAsset[];
+  seoDescription?: string;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -308,6 +348,25 @@ export interface Student {
   isActive: boolean;
   lastLoginAt?: string;
   qrVersion: number;
+  profilePhoto?: string;
+  phone?: string;
+  address?: string;
+  birthDate?: string;
+  aboutMe?: string;
+  enrollmentDate?: string;
+  expectedGraduationYear?: number;
+  previousSchool?: string;
+  guardianName?: string;
+  guardianContact?: string;
+  guardianRelationship?: string;
+  emergencyContactName?: string;
+  emergencyContactPhone?: string;
+  emergencyContactRelationship?: string;
+  notificationPreferences?: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -367,4 +426,23 @@ export interface OrganizationInput {
     secondary: string;
     accent: string;
   };
+  email?: string;
+  phone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  building?: string;
+  room?: string;
+  campus?: string;
+  advisorName?: string;
+  advisorEmail?: string;
+  moderatorName?: string;
+  moderatorEmail?: string;
+  organizationType?: string;
+  tags?: string[];
+  seoDescription?: string;
+  isActive?: boolean;
 }

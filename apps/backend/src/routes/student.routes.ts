@@ -4,6 +4,8 @@ import * as studentController from '../controllers/student.controller';
 import * as eventRegistrationController from '../controllers/eventRegistration.controller';
 import { validate } from '../middleware/validate';
 import { eventIdValidator } from '../validators/event.validator';
+import { getMyMemberships, applyToOrganization, resignMembership } from '../controllers/organization-membership.controller';
+import { applyToOrgValidator, membershipIdValidator } from '../validators/organization-membership.validator';
 
 const router = Router();
 
@@ -25,5 +27,8 @@ router.get(
 router.get('/registrations', eventRegistrationController.getStudentRegistrations);
 router.get('/events/:id/qr', validate(eventIdValidator), eventRegistrationController.getEventQrPayload);
 router.get('/attendance/history', eventRegistrationController.getStudentAttendanceHistory);
+router.get('/memberships', getMyMemberships);
+router.post('/organizations/:orgId/apply', validate(applyToOrgValidator), applyToOrganization);
+router.post('/memberships/:id/resign', validate(membershipIdValidator), resignMembership);
 
 export default router;

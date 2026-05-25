@@ -18,6 +18,21 @@ export const createStudentValidator = [
     .isIn(Object.values(StudentStatus))
     .withMessage('Invalid student status'),
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+  body('profilePhoto').optional().trim(),
+  body('phone').optional().trim(),
+  body('address').optional().trim(),
+  body('birthDate').optional().trim(),
+  body('aboutMe').optional().trim(),
+  body('enrollmentDate').optional().trim(),
+  body('expectedGraduationYear').optional().isInt({ min: 2000, max: 2100 }).withMessage('Expected graduation year must be valid'),
+  body('previousSchool').optional().trim(),
+  body('guardianName').optional().trim(),
+  body('guardianContact').optional().trim(),
+  body('guardianRelationship').optional().trim(),
+  body('emergencyContactName').optional().trim(),
+  body('emergencyContactPhone').optional().trim(),
+  body('emergencyContactRelationship').optional().trim(),
+  body('notificationPreferences').optional().isObject().withMessage('Notification preferences must be an object'),
 ];
 
 export const updateStudentValidator = [
@@ -39,6 +54,21 @@ export const updateStudentValidator = [
     .isIn(Object.values(StudentStatus))
     .withMessage('Invalid student status'),
   body('isActive').optional().isBoolean().withMessage('isActive must be a boolean'),
+  body('profilePhoto').optional().trim(),
+  body('phone').optional().trim(),
+  body('address').optional().trim(),
+  body('birthDate').optional().trim(),
+  body('aboutMe').optional().trim(),
+  body('enrollmentDate').optional().trim(),
+  body('expectedGraduationYear').optional().isInt({ min: 2000, max: 2100 }).withMessage('Expected graduation year must be valid'),
+  body('previousSchool').optional().trim(),
+  body('guardianName').optional().trim(),
+  body('guardianContact').optional().trim(),
+  body('guardianRelationship').optional().trim(),
+  body('emergencyContactName').optional().trim(),
+  body('emergencyContactPhone').optional().trim(),
+  body('emergencyContactRelationship').optional().trim(),
+  body('notificationPreferences').optional().isObject().withMessage('Notification preferences must be an object'),
 ];
 
 export const updateStudentStatusValidator = [

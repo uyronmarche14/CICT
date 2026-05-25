@@ -76,6 +76,78 @@ const organizationBaseValidator = [
     .trim()
     .notEmpty()
     .withMessage('Accent color is required when color is provided'),
+  body('email')
+    .optional()
+    .isEmail()
+    .withMessage('Email must be valid'),
+  body('phone')
+    .optional()
+    .trim(),
+  body('website')
+    .optional()
+    .isURL()
+    .withMessage('Website must be a valid URL'),
+  body('facebookUrl')
+    .optional()
+    .isURL()
+    .withMessage('Facebook URL must be valid'),
+  body('twitterUrl')
+    .optional()
+    .isURL()
+    .withMessage('Twitter URL must be valid'),
+  body('instagramUrl')
+    .optional()
+    .isURL()
+    .withMessage('Instagram URL must be valid'),
+  body('tiktokUrl')
+    .optional()
+    .isURL()
+    .withMessage('TikTok URL must be valid'),
+  body('linkedinUrl')
+    .optional()
+    .isURL()
+    .withMessage('LinkedIn URL must be valid'),
+  body('building')
+    .optional()
+    .trim(),
+  body('room')
+    .optional()
+    .trim(),
+  body('campus')
+    .optional()
+    .trim(),
+  body('advisorName')
+    .optional()
+    .trim(),
+  body('advisorEmail')
+    .optional()
+    .isEmail()
+    .withMessage('Advisor email must be valid'),
+  body('moderatorName')
+    .optional()
+    .trim(),
+  body('moderatorEmail')
+    .optional()
+    .isEmail()
+    .withMessage('Moderator email must be valid'),
+  body('organizationType')
+    .optional()
+    .trim(),
+  body('tags')
+    .optional()
+    .isArray()
+    .withMessage('Tags must be an array'),
+  body('tags.*')
+    .optional()
+    .isString()
+    .trim(),
+  body('seoDescription')
+    .optional()
+    .trim(),
+  body('isActive')
+    .optional()
+    .isBoolean()
+    .withMessage('isActive must be a boolean'),
 ];
 
 export const createOrganizationValidator = [

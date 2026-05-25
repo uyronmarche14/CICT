@@ -1,22 +1,32 @@
-import type {
-  AttendanceLog,
-  AttendanceScanResult,
-  ContentOwnerType,
-  EventRegistrationStatus,
-  NewsStatus,
-  StudentEvent,
-  StudentIdentity,
-  StudentProfile,
-  StudentRegistration,
+import {
+  MembershipStatus,
+  type AttendanceLog,
+  type AttendanceScanResult,
+  type ContentOwnerType,
+  type EventRegistrationStatus,
+  type MemberType,
+  type NewsStatus,
+  type OrganizationMembership,
+  type OrganizationStatus,
+  type OrganizationType,
+  type StudentEvent,
+  type StudentIdentity,
+  type StudentProfile,
+  type StudentRegistration,
 } from '@cict/contracts';
 
 export type {
   AttendanceLog,
+  MemberType,
+  OrganizationMembership,
+  OrganizationStatus,
+  OrganizationType,
   StudentEvent,
   StudentIdentity,
   StudentProfile,
   StudentRegistration,
 };
+export { MembershipStatus };
 
 export type StudentRegistrationStatus = EventRegistrationStatus;
 export type AttendanceResult = AttendanceScanResult;
@@ -226,4 +236,24 @@ export type Organization = {
     secondary: string;
     accent: string;
   };
+  email?: string;
+  phone?: string;
+  website?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  tiktokUrl?: string;
+  linkedinUrl?: string;
+  building?: string;
+  room?: string;
+  campus?: string;
+  advisorName?: string;
+  advisorEmail?: string;
+  moderatorName?: string;
+  moderatorEmail?: string;
+  organizationType?: string;
+  tags?: string[];
+  gallery?: { imageUrl: string; alt?: string }[];
+  seoDescription?: string;
+  isActive?: boolean;
 };

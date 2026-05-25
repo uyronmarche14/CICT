@@ -12,6 +12,7 @@ import roleRoutes from "./routes/role.routes";
 import announcementRoutes from "./routes/announcement.routes";
 import eventRoutes from "./routes/event.routes";
 import organizationRoutes from "./routes/organization.routes";
+import organizationMembershipRoutes from "./routes/organization-membership.routes";
 import publicAnnouncementRoutes from "./routes/public-announcement.routes";
 import adminRoutes from "./routes/admin.routes";
 import uploadRoutes from "./routes/upload.routes";
@@ -24,10 +25,12 @@ import studentRoutes from "./routes/student.routes";
 import adminEventRoutes from "./routes/admin-event.routes";
 import pushTokenRoutes from "./routes/pushToken.routes";
 import approvalRoutes from "./routes/approval.routes";
+import settingsRoutes from "./routes/settings.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import { createGeneralApiRateLimiter } from "./middleware/rateLimiters";
+import { maintenanceMode } from "./middleware/maintenanceMode";
 
 // Import utilities
 import logger from "./utils/logger";
@@ -109,6 +112,9 @@ if (process.env.NODE_ENV === "development") {
   );
 }
 
+// Maintenance mode middleware (blocks public traffic when enabled)
+app.use(maintenanceMode);
+
 // Health check endpoint
 app.get("/health", (_req, res) => {
   res.status(200).json({
@@ -127,6 +133,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/public/announcements", publicAnnouncementRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/organizations", organizationRoutes);
+app.use("/api/organizations", organizationMembershipRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/students", studentAdminRoutes);
 app.use("/api/admin/academic", academicRoutes);
@@ -138,6 +145,7 @@ app.use("/api/student/auth", studentAuthRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/student", pushTokenRoutes);
 app.use("/api/admin/approvals", approvalRoutes);
+app.use("/api/admin/settings", settingsRoutes);
 
 // 404 handler
 app.use(notFound);

@@ -138,6 +138,8 @@ export interface SingleEventResponse {
   success: boolean;
   data: {
     event: Event;
+    relatedNews?: Array<{ _id: string; title: string; excerpt?: string; publishedAt?: string }>;
+    relatedAnnouncements?: Array<{ _id: string; title: string; subtype?: string }>;
   };
 }
 

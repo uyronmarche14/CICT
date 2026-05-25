@@ -21,6 +21,7 @@ import {
   ScrollText,
   Workflow,
   ClipboardCheck,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -128,6 +129,13 @@ const buildRoutes = (
     icon: Workflow,
     active: pathname.startsWith('/admin/processes'),
     visible: permissions.canAccessProcessesModule(),
+  },
+  {
+    href: '/admin/settings',
+    label: 'Settings',
+    icon: Settings,
+    active: pathname.startsWith('/admin/settings'),
+    visible: permissions.canManageSettings(),
   },
   {
     href: '/admin/faq',
