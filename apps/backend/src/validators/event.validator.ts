@@ -15,6 +15,9 @@ import {
   validateTags,
   validateTitle,
   validateTitleOptional,
+  validateUrl,
+  validateContactEmail,
+  validateArrayField,
   approvalSummaryNotEditable,
   processInstanceNotEditable,
   publishedAtNotEditable,
@@ -82,6 +85,60 @@ export const createEventValidator = [
     .optional()
     .isInt({ min: 0 })
     .withMessage('Max attendees must be a positive integer'),
+
+  validateUrl('registrationUrl'),
+  validateUrl('mapUrl'),
+  validateUrl('meetingUrl'),
+
+  body('registrationDeadline')
+    .optional()
+    .isISO8601()
+    .withMessage('Registration deadline must be a valid date'),
+
+  body('contactName')
+    .optional()
+    .trim(),
+
+  validateContactEmail(),
+
+  body('contactPhone')
+    .optional()
+    .trim(),
+
+  validateArrayField('hostOrganizationIds'),
+  validateArrayField('coHostOrganizationIds'),
+  validateArrayField('speakerItems'),
+
+  body('audience')
+    .optional()
+    .trim(),
+
+  body('eligibility')
+    .optional()
+    .trim(),
+
+  body('feeLabel')
+    .optional()
+    .trim(),
+
+  body('certificateInfo')
+    .optional()
+    .trim(),
+
+  body('venueDetails')
+    .optional()
+    .isObject()
+    .withMessage('Venue details must be an object'),
+
+  body('requirements')
+    .optional()
+    .trim(),
+
+  validateArrayField('attachmentItems'),
+
+  body('posterCaption')
+    .optional()
+    .trim(),
 ];
 
 export const updateEventValidator = [

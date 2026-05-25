@@ -16,6 +16,9 @@ import {
   validateSections,
   validateTitle,
   validateTitleOptional,
+  validateUrl,
+  validateContactEmail,
+  validateArrayField,
   approvalSummaryNotEditable,
   processInstanceNotEditable,
   publishedAtNotEditable,
@@ -72,6 +75,54 @@ export const createAnnouncementValidator = [
   approvalSummaryNotEditable(),
 
   processInstanceNotEditable(),
+
+  body('subtype')
+    .optional()
+    .trim(),
+
+  body('effectiveDate')
+    .optional()
+    .isISO8601()
+    .withMessage('effectiveDate must be a valid ISO date'),
+
+  body('termStart')
+    .optional()
+    .isISO8601()
+    .withMessage('termStart must be a valid ISO date'),
+
+  body('termEnd')
+    .optional()
+    .isISO8601()
+    .withMessage('termEnd must be a valid ISO date'),
+
+  body('relatedOrganizationId')
+    .optional()
+    .isString(),
+
+  body('relatedEventId')
+    .optional()
+    .isString(),
+
+  body('approvalSource')
+    .optional()
+    .trim(),
+
+  body('contactName')
+    .optional()
+    .trim(),
+
+  validateContactEmail(),
+
+  body('ctaLabel')
+    .optional()
+    .trim(),
+
+  validateUrl('ctaUrl'),
+
+  validateArrayField('officerItems'),
+  validateArrayField('outgoingOfficerItems'),
+  validateArrayField('awardItems'),
+  validateArrayField('attachmentItems'),
 ];
 
 export const updateAnnouncementValidator = [

@@ -25,7 +25,7 @@ export function ContentSectionsEditor({ sections, onChange }: ContentSectionsEdi
           onClick={() =>
             onChange([
               ...sections,
-              { heading: '', style: 'default', bodyHtml: '', items: [] },
+              { heading: '', style: 'default', bodyHtml: '', items: [], image: undefined, link: undefined, embed: undefined },
             ])
           }
         >
@@ -123,6 +123,127 @@ export function ContentSectionsEditor({ sections, onChange }: ContentSectionsEdi
                 }
                 placeholder="Comma-separated items"
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Section Image URL</Label>
+              <Input
+                value={section.image?.imageUrl ?? ''}
+                onChange={(event) =>
+                  onChange(
+                    sections.map((item, sectionIndex) =>
+                      sectionIndex === index
+                        ? {
+                            ...item,
+                            image: event.target.value
+                              ? { imageUrl: event.target.value, alt: item.image?.alt ?? '' }
+                              : undefined,
+                          }
+                        : item
+                    )
+                  )
+                }
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Link URL</Label>
+                <Input
+                  value={section.link?.url ?? ''}
+                  onChange={(event) =>
+                    onChange(
+                      sections.map((item, sectionIndex) =>
+                        sectionIndex === index
+                          ? {
+                              ...item,
+                              link: event.target.value
+                                ? { url: event.target.value, label: item.link?.label ?? '' }
+                                : undefined,
+                            }
+                          : item
+                      )
+                    )
+                  }
+                  placeholder="https://example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Link Label</Label>
+                <Input
+                  value={section.link?.label ?? ''}
+                  onChange={(event) =>
+                    onChange(
+                      sections.map((item, sectionIndex) =>
+                        sectionIndex === index
+                          ? {
+                              ...item,
+                              link: event.target.value
+                                ? { url: item.link?.url ?? '', label: event.target.value }
+                                : undefined,
+                            }
+                          : item
+                      )
+                    )
+                  }
+                  placeholder="Learn more"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Embed Type</Label>
+                <Select
+                  value={section.embed?.type ?? 'none'}
+                  onValueChange={(value: string) =>
+                    onChange(
+                      sections.map((item, sectionIndex) =>
+                        sectionIndex === index
+                          ? {
+                              ...item,
+                              embed: value === 'none'
+                                ? undefined
+                                : { type: value as 'video' | 'map' | 'form', url: item.embed?.url ?? '' },
+                            }
+                          : item
+                      )
+                    )
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="None" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="video">Video</SelectItem>
+                    <SelectItem value="map">Map</SelectItem>
+                    <SelectItem value="form">Form</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {section.embed && (
+                <div className="space-y-2">
+                  <Label>Embed URL</Label>
+                  <Input
+                    value={section.embed.url}
+                    onChange={(event) =>
+                      onChange(
+                        sections.map((item, sectionIndex) =>
+                          sectionIndex === index
+                            ? {
+                                ...item,
+                                embed: { ...item.embed!, url: event.target.value },
+                              }
+                            : item
+                        )
+                      )
+                    }
+                    placeholder="https://www.youtube.com/embed/..."
+                  />
+                </div>
+              )}
             </div>
           </div>
         ))

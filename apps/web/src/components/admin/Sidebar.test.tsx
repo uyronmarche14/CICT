@@ -51,6 +51,7 @@ vi.mock('@/hooks/permissions/use-permissions', () => ({
     canAccessRolesModule: () => false,
     canAccessLogsModule: () => false,
     canAccessProcessesModule: () => false,
+    canAccessApprovalsModule: () => false,
     canManageSettings: () => false,
   }),
 }));

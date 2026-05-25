@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Search, Trash, Edit } from "lucide-react";
+import { MoreHorizontal, Plus, Search, Trash, Edit, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
@@ -31,9 +31,12 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
+import { useRouter } from 'next/navigation';
 
 export default function AnnouncementsPage() {
+  const router = useRouter();
   const {
     hasPermission,
     hasScopedPermission,
@@ -55,6 +58,8 @@ export default function AnnouncementsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; title: string } | null>(null);
   const { shouldRender } = useAdminPageAccess(canAccessAnnouncementsModule());
   const canViewAllAnnouncements = hasPermission(Permission.VIEW_ANNOUNCEMENT);
   const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
@@ -68,6 +73,19 @@ export default function AnnouncementsPage() {
   const availableOrganizations = canViewAllAnnouncements
     ? organizations
     : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
+
+  const [subtypeFilter, setSubtypeFilter] = useState<string>('all');
+  const [ctaFilter, setCtaFilter] = useState<'all' | 'has_cta' | 'no_cta'>('all');
+
+  const filtered = subtypeFilter === 'all'
+    ? announcements
+    : announcements.filter(item => item.subtype === subtypeFilter);
+
+  const filteredAnnouncements = filtered.filter(item => {
+    if (ctaFilter === 'has_cta') return !!item.ctaLabel;
+    if (ctaFilter === 'no_cta') return !item.ctaLabel;
+    return true;
+  });
 
   const fetchAnnouncements = useCallback(async () => {
     setLoading(true);
@@ -159,19 +177,29 @@ export default function AnnouncementsPage() {
     id: string,
     action: 'submit' | 'approve' | 'reject' | 'publish' | 'archive'
   ) => {
+    if (action === 'reject') {
+      const item = announcements.find((a) => a._id === id);
+      setRejectTarget(item ? { id, title: item.title } : { id, title: '' });
+      setRejectDialogOpen(true);
+      return;
+    }
+
     try {
-      if (action === 'reject') {
-        const reason = window.prompt('Enter rejection reason');
-        if (!reason?.trim()) {
-          return;
-        }
-        await api.patch(`/announcements/${id}/reject`, { reason: reason.trim() });
-      } else {
-        await api.patch(`/announcements/${id}/${action}`);
-      }
+      await api.patch(`/announcements/${id}/${action}`);
       fetchAnnouncements();
     } catch (error) {
       console.error(`Failed to ${action} announcement:`, error);
+    }
+  };
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectTarget) return;
+    try {
+      await api.patch(`/announcements/${rejectTarget.id}/reject`, { reason });
+      fetchAnnouncements();
+      setRejectTarget(null);
+    } catch (error) {
+      console.error('Failed to reject announcement:', error);
     }
   };
 
@@ -289,6 +317,27 @@ export default function AnnouncementsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select value={subtypeFilter} onValueChange={(value: string) => setSubtypeFilter(value)}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Subtype" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All subtypes</SelectItem>
+                  <SelectItem value="leadership">Leadership</SelectItem>
+                  <SelectItem value="recognition">Recognition</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={ctaFilter} onValueChange={(value: 'all' | 'has_cta' | 'no_cta') => setCtaFilter(value)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="CTA" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="has_cta">Has CTA</SelectItem>
+                  <SelectItem value="no_cta">No CTA</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -303,24 +352,27 @@ export default function AnnouncementsPage() {
                   <TableHead>Ownership</TableHead>
                   <TableHead>Target Audience</TableHead>
                   <TableHead>Expires At</TableHead>
+                  <TableHead>Subtype</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>CTA</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={10} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : announcements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="h-24 text-center">
+                    <TableCell colSpan={10} className="h-24 text-center">
                       No announcements found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  announcements.map((item) => (
+                  filteredAnnouncements.map((item) => (
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getPriorityBadge(item.priority)}</TableCell>
@@ -344,6 +396,15 @@ export default function AnnouncementsPage() {
                           ? format(new Date(item.expiresAt), 'MMM d, yyyy')
                           : 'Never'}
                       </TableCell>
+                      <TableCell>
+                        {item.subtype ? <Badge variant="outline">{item.subtype}</Badge> : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {item.contactName ? `${item.contactName.substring(0, 20)}${item.contactName.length > 20 ? '...' : ''}` : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {item.ctaLabel ? <Badge>{item.ctaLabel}</Badge> : '—'}
+                      </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -353,6 +414,9 @@ export default function AnnouncementsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/admin/announcements/${item._id}`)}>
+                              <Eye className="mr-2 h-4 w-4" /> View
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               disabled={!canActOnAnnouncement(item, Permission.EDIT_ANNOUNCEMENT)}
                               onClick={() => handleEdit(item)}
@@ -438,6 +502,13 @@ export default function AnnouncementsPage() {
         message="Are you sure you want to delete this announcement?"
         confirmLabel="Delete"
         onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+      />
+      <RejectionReasonDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onConfirm={handleRejectConfirm}
+        title="Reject Announcement"
+        itemTitle={rejectTarget?.title}
       />
     </div>
   );

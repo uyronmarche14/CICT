@@ -39,7 +39,11 @@ import {
   MediaAsset,
   Organization,
   Permission,
+  OfficerItem,
+  AwardItem,
+  AttachmentItem,
 } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import api from '@/lib/api/axios';
 import { Loader2 } from 'lucide-react';
 import { RichTextEditor } from '@/components/admin/DynamicRichTextEditor';
@@ -116,6 +120,39 @@ export function AnnouncementForm({
   );
   const [gallery, setGallery] = useState<MediaAsset[]>(announcement?.gallery ?? []);
   const [sections, setSections] = useState<ContentSection[]>(announcement?.sections ?? []);
+  const [subtype, setSubtype] = useState<string>(announcement?.subtype ?? '');
+  const [effectiveDate, setEffectiveDate] = useState<string>(announcement?.effectiveDate ?? '');
+  const [termStart, setTermStart] = useState<string>(announcement?.termStart ?? '');
+  const [termEnd, setTermEnd] = useState<string>(announcement?.termEnd ?? '');
+  const [relatedOrgId, setRelatedOrgId] = useState<string>(announcement?.relatedOrganizationId ?? '');
+  const [relatedEventId, setRelatedEventId] = useState<string>(announcement?.relatedEventId ?? '');
+  const [approvalSource, setApprovalSource] = useState<string>(announcement?.approvalSource ?? '');
+  const [contactName, setContactName] = useState<string>(announcement?.contactName ?? '');
+  const [contactEmail, setContactEmail] = useState<string>(announcement?.contactEmail ?? '');
+  const [ctaLabel, setCtaLabel] = useState<string>(announcement?.ctaLabel ?? '');
+  const [ctaUrl, setCtaUrl] = useState<string>(announcement?.ctaUrl ?? '');
+  const [officerItems, setOfficerItems] = useState<OfficerItem[]>(announcement?.officerItems ?? []);
+  const [outgoingOfficerItems, setOutgoingOfficerItems] = useState<OfficerItem[]>(announcement?.outgoingOfficerItems ?? []);
+  const [awardItems, setAwardItems] = useState<AwardItem[]>(announcement?.awardItems ?? []);
+  const [attachmentItems, setAttachmentItems] = useState<AttachmentItem[]>(announcement?.attachmentItems ?? []);
+
+  const parseOfficerItems = (value: string): OfficerItem[] =>
+    value.split(',').map(pair => {
+      const [position, name] = pair.split('|').map(s => s.trim());
+      return position && name ? { position, name } : null;
+    }).filter(Boolean) as OfficerItem[];
+
+  const parseAwardItems = (value: string): AwardItem[] =>
+    value.split(',').map(pair => {
+      const [title, recipient] = pair.split('|').map(s => s.trim());
+      return title && recipient ? { title, recipient } : null;
+    }).filter(Boolean) as AwardItem[];
+
+  const parseAttachmentItems = (value: string): AttachmentItem[] =>
+    value.split(',').map(pair => {
+      const [label, url] = pair.split('|').map(s => s.trim());
+      return label && url ? { label, url } : null;
+    }).filter(Boolean) as AttachmentItem[];
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
@@ -276,6 +313,21 @@ export function AnnouncementForm({
         imageId: coverImage?.imageId,
         gallery: sanitizedGallery,
         sections,
+        subtype: subtype || undefined,
+        effectiveDate: effectiveDate || undefined,
+        termStart: termStart || undefined,
+        termEnd: termEnd || undefined,
+        relatedOrganizationId: relatedOrgId || undefined,
+        relatedEventId: relatedEventId || undefined,
+        approvalSource: approvalSource || undefined,
+        contactName: contactName || undefined,
+        contactEmail: contactEmail || undefined,
+        ctaLabel: ctaLabel || undefined,
+        ctaUrl: ctaUrl || undefined,
+        officerItems: officerItems.length > 0 ? officerItems : undefined,
+        outgoingOfficerItems: outgoingOfficerItems.length > 0 ? outgoingOfficerItems : undefined,
+        awardItems: awardItems.length > 0 ? awardItems : undefined,
+        attachmentItems: attachmentItems.length > 0 ? attachmentItems : undefined,
       };
 
       if (announcement) {
@@ -291,6 +343,21 @@ export function AnnouncementForm({
       setCoverImage(undefined);
       setGallery([]);
       setSections([]);
+      setSubtype('');
+      setEffectiveDate('');
+      setTermStart('');
+      setTermEnd('');
+      setRelatedOrgId('');
+      setRelatedEventId('');
+      setApprovalSource('');
+      setContactName('');
+      setContactEmail('');
+      setCtaLabel('');
+      setCtaUrl('');
+      setOfficerItems([]);
+      setOutgoingOfficerItems([]);
+      setAwardItems([]);
+      setAttachmentItems([]);
     } catch (error) {
       console.error('Failed to save announcement:', error);
       form.setError('root', { message: 'Failed to save announcement' });
@@ -479,6 +546,158 @@ export function AnnouncementForm({
                 )}
               />
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Classification</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <FormLabel>Subtype</FormLabel>
+                  <Input
+                    placeholder="leadership, recognition, general"
+                    value={subtype}
+                    onChange={(e) => setSubtype(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Effective Date</FormLabel>
+                  <Input
+                    type="datetime-local"
+                    value={effectiveDate}
+                    onChange={(e) => setEffectiveDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Term Start</FormLabel>
+                  <Input
+                    type="datetime-local"
+                    value={termStart}
+                    onChange={(e) => setTermStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Term End</FormLabel>
+                  <Input
+                    type="datetime-local"
+                    value={termEnd}
+                    onChange={(e) => setTermEnd(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Related Content</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <FormLabel>Related Organization ID</FormLabel>
+                  <Input
+                    value={relatedOrgId}
+                    onChange={(e) => setRelatedOrgId(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Related Event ID</FormLabel>
+                  <Input
+                    value={relatedEventId}
+                    onChange={(e) => setRelatedEventId(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Approval Source</FormLabel>
+                  <Input
+                    value={approvalSource}
+                    onChange={(e) => setApprovalSource(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Contact & CTA</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <FormLabel>Contact Name</FormLabel>
+                  <Input
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Contact Email</FormLabel>
+                  <Input
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>CTA Label</FormLabel>
+                  <Input
+                    placeholder="Register Now"
+                    value={ctaLabel}
+                    onChange={(e) => setCtaLabel(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>CTA URL</FormLabel>
+                  <Input
+                    placeholder="https://..."
+                    value={ctaUrl}
+                    onChange={(e) => setCtaUrl(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Officers & Awards</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <FormLabel>Incoming Officers</FormLabel>
+                  <Input
+                    placeholder="President|John Doe, VP|Jane Smith"
+                    value={officerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
+                    onChange={(e) => setOfficerItems(parseOfficerItems(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Outgoing Officers</FormLabel>
+                  <Input
+                    placeholder="President|John Doe, VP|Jane Smith"
+                    value={outgoingOfficerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
+                    onChange={(e) => setOutgoingOfficerItems(parseOfficerItems(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Awards</FormLabel>
+                  <Input
+                    placeholder="Best Leader|John Doe, Dean's List|Jane Smith"
+                    value={awardItems.map((a) => `${a.title}|${a.recipient}`).join(', ')}
+                    onChange={(e) => setAwardItems(parseAwardItems(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">Format: title|recipient, title|recipient</p>
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Attachments</FormLabel>
+                  <Input
+                    placeholder="Guidelines|https://..., Form|https://..."
+                    value={attachmentItems.map((a) => `${a.label}|${a.url}`).join(', ')}
+                    onChange={(e) => setAttachmentItems(parseAttachmentItems(e.target.value))}
+                  />
+                  <p className="text-xs text-muted-foreground">Format: label|url, label|url</p>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="space-y-3">
               <FormLabel>Cover Image</FormLabel>

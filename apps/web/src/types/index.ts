@@ -9,7 +9,10 @@ import {
 import type {
   AdminModuleKey,
   AdminScopes,
+  ApprovalActionItem,
   ApprovalSummary,
+  ApprovalQueueItem,
+  ApprovalStats,
   AuthProfile,
   ContentSection,
   EventScheduleItem,
@@ -19,6 +22,13 @@ import type {
   PermissionMetadataItem,
   Role,
   User,
+  ReferenceLink,
+  AttachmentItem,
+  OfficerItem,
+  AwardItem,
+  SpeakerItem,
+  VenueDetails,
+  StudentEvent,
 } from '@cict/contracts';
 
 export {
@@ -33,7 +43,10 @@ export {
 export type {
   AdminModuleKey,
   AdminScopes,
+  ApprovalActionItem,
   ApprovalSummary,
+  ApprovalQueueItem,
+  ApprovalStats,
   AuthProfile,
   ContentSection,
   EventScheduleItem,
@@ -43,6 +56,13 @@ export type {
   PermissionMetadataItem,
   Role,
   User,
+  ReferenceLink,
+  AttachmentItem,
+  OfficerItem,
+  AwardItem,
+  SpeakerItem,
+  VenueDetails,
+  StudentEvent,
 };
 
 export interface OrganizationAdminAssignment extends OrganizationAssignment {
@@ -71,6 +91,21 @@ export interface News {
   gallery: MediaAsset[];
   sections: ContentSection[];
   imageUrl?: string;
+  category?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sourceUrl?: string;
+  referenceLinks?: ReferenceLink[];
+  attachmentItems?: AttachmentItem[];
+  readingTime?: number;
+  authorDisplayName?: string;
+  authorRole?: string;
+  associatedEventId?: string;
+  associatedOrganizationId?: string;
+  spotlightLabel?: string;
+  seoDescription?: string;
+  canonicalSlug?: string;
+  relatedArticleIds?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -98,6 +133,21 @@ export interface Announcement {
   archivedAt?: string;
   approvalSummary?: ApprovalSummary;
   processInstanceId?: string | null;
+  subtype?: string;
+  effectiveDate?: string;
+  termStart?: string;
+  termEnd?: string;
+  relatedOrganizationId?: string;
+  relatedEventId?: string;
+  approvalSource?: string;
+  contactName?: string;
+  contactEmail?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  officerItems?: OfficerItem[];
+  outgoingOfficerItems?: OfficerItem[];
+  awardItems?: AwardItem[];
+  attachmentItems?: AttachmentItem[];
   createdAt: string;
   updatedAt: string;
 }

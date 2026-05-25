@@ -1,7 +1,15 @@
 import ContentApprovalAction from '../models/ContentApprovalAction';
 import { AppError } from '../middleware/errorHandler';
-import { EventStatus, IApprovalSummary, IAuthenticatedUser, NewsStatus, Permission, UserRole } from '../types';
+import {
+  ContentOwnerType,
+  EventStatus,
+  IApprovalSummary,
+  IAuthenticatedUser,
+  NewsStatus,
+  Permission,
+} from '../types';
 import { hasGlobalPermission } from './rbac';
+import { hasScopedOrganizationPermissionForUser } from './organizationScope';
 
 export type ApprovalContentType = 'news' | 'announcement' | 'event';
 export type WorkflowStatus = NewsStatus | EventStatus;
@@ -28,14 +36,44 @@ const PUBLISHABLE_WORKFLOW_STATUSES = new Set<string>([
 export const canPublishFromWorkflowStatus = (status: string): boolean =>
   PUBLISHABLE_WORKFLOW_STATUSES.has(status);
 
-export const ensureFullAdminApprover = (user?: IAuthenticatedUser): void => {
-  if (!user) {
-    throw new AppError('User not authenticated', 401);
+export const ensureCanApprove = (
+  user: IAuthenticatedUser,
+  ownerType: ContentOwnerType,
+  organizationId?: string | null
+): void => {
+  if (hasGlobalPermission(user, Permission.APPROVE_CONTENT)) {
+    return;
   }
 
-  if (user.role !== UserRole.FULL_ADMIN || !hasGlobalPermission(user, Permission.APPROVE_CONTENT)) {
-    throw new AppError('Only full admins can approve or reject content', 403);
+  if (
+    ownerType === ContentOwnerType.ORGANIZATION &&
+    organizationId &&
+    hasScopedOrganizationPermissionForUser(user, organizationId, Permission.APPROVE_CONTENT)
+  ) {
+    return;
   }
+
+  throw new AppError('You do not have permission to approve this content', 403);
+};
+
+export const ensureCanReject = (
+  user: IAuthenticatedUser,
+  ownerType: ContentOwnerType,
+  organizationId?: string | null
+): void => {
+  if (hasGlobalPermission(user, Permission.REJECT_CONTENT)) {
+    return;
+  }
+
+  if (
+    ownerType === ContentOwnerType.ORGANIZATION &&
+    organizationId &&
+    hasScopedOrganizationPermissionForUser(user, organizationId, Permission.REJECT_CONTENT)
+  ) {
+    return;
+  }
+
+  throw new AppError('You do not have permission to reject this content', 403);
 };
 
 export const buildSubmittedApprovalSummary = (
@@ -83,7 +121,7 @@ export const recordContentApprovalAction = async (input: {
   contentType: ApprovalContentType;
   contentId: string;
   actorUserId: string;
-  action: 'submitted' | 'approved' | 'rejected' | 'published' | 'archived' | 'returned_to_draft';
+  action: 'submitted' | 'approved' | 'rejected' | 'published' | 'archived' | 'cancelled' | 'completed' | 'returned_to_draft';
   fromStatus: WorkflowStatus;
   toStatus: WorkflowStatus;
   reason?: string;

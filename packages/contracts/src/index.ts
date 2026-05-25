@@ -155,7 +155,8 @@ export type AdminModuleKey =
   | 'roles'
   | 'faq'
   | 'logs'
-  | 'processes';
+  | 'processes'
+  | 'approvals';
 
 export type AdminScopes = {
   global: boolean;
@@ -249,6 +250,190 @@ export type ContentSection = {
   style: 'default' | 'callout' | 'checklist';
   bodyHtml?: string;
   items?: string[];
+  image?: MediaAsset;
+  link?: {
+    url: string;
+    label: string;
+  };
+  embed?: {
+    type: 'video' | 'map' | 'form';
+    url: string;
+  };
+};
+
+export type SpeakerItem = {
+  name: string;
+  title?: string;
+  organization?: string;
+  photo?: MediaAsset;
+};
+
+export type AttachmentItem = {
+  label: string;
+  url: string;
+  fileType?: string;
+  fileSize?: number;
+};
+
+export type VenueDetails = {
+  name?: string;
+  address?: string;
+  room?: string;
+  capacity?: number;
+  accessibility?: string;
+};
+
+export type OfficerItem = {
+  position: string;
+  name: string;
+  photo?: MediaAsset;
+};
+
+export type AwardItem = {
+  title: string;
+  recipient: string;
+  category?: string;
+  description?: string;
+};
+
+export type ReferenceLink = {
+  label: string;
+  url: string;
+};
+
+export type Event = {
+  _id: string;
+  title: string;
+  description?: string;
+  bodyHtml: string;
+  excerpt: string;
+  organizer: string | { firstName: string; lastName: string; email: string };
+  ownerType: ContentOwnerType;
+  organizationId?: string | null;
+  startDate: string;
+  endDate: string;
+  location: string;
+  status: EventStatus | string;
+  publishedAt?: string;
+  cancelledAt?: string;
+  completedAt?: string;
+  attendees: string[];
+  maxAttendees?: number;
+  coverImage?: MediaAsset;
+  gallery: MediaAsset[];
+  sections: ContentSection[];
+  schedule: EventScheduleItem[];
+  imageUrl?: string;
+  tags?: string[];
+  isRegistrationOpen: boolean;
+  registeredCount?: number;
+  checkedInCount?: number;
+  registrationCloseAt?: string;
+  allowWalkIns?: boolean;
+  targetProgramIds?: string[];
+  targetYearLevelIds?: string[];
+  targetSectionIds?: string[];
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
+  registrationUrl?: string;
+  registrationDeadline?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  hostOrganizationIds?: string[];
+  coHostOrganizationIds?: string[];
+  speakerItems?: SpeakerItem[];
+  audience?: string;
+  eligibility?: string;
+  feeLabel?: string;
+  certificateInfo?: string;
+  venueDetails?: VenueDetails;
+  mapUrl?: string;
+  meetingUrl?: string;
+  requirements?: string;
+  attachmentItems?: AttachmentItem[];
+  posterCaption?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type News = {
+  _id: string;
+  title: string;
+  content?: string;
+  bodyHtml: string;
+  excerpt: string;
+  author: string | { firstName: string; lastName: string; email: string };
+  ownerType: ContentOwnerType;
+  organizationId?: string | null;
+  status: NewsStatus;
+  publishedAt?: string;
+  archivedAt?: string;
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
+  tags: string[];
+  coverImage?: MediaAsset;
+  gallery: MediaAsset[];
+  sections: ContentSection[];
+  imageUrl?: string;
+  category?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sourceUrl?: string;
+  referenceLinks?: ReferenceLink[];
+  attachmentItems?: AttachmentItem[];
+  readingTime?: number;
+  authorDisplayName?: string;
+  authorRole?: string;
+  associatedEventId?: string;
+  associatedOrganizationId?: string;
+  spotlightLabel?: string;
+  seoDescription?: string;
+  canonicalSlug?: string;
+  relatedArticleIds?: string[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type Announcement = {
+  _id: string;
+  title: string;
+  content?: string;
+  bodyHtml: string;
+  priority: AnnouncementPriority;
+  type: AnnouncementType;
+  author: string | { firstName: string; lastName: string; email: string };
+  ownerType: ContentOwnerType;
+  organizationId?: string | null;
+  isActive: boolean;
+  targetAudience: string[];
+  expiresAt?: string;
+  coverImage?: MediaAsset;
+  gallery: MediaAsset[];
+  sections: ContentSection[];
+  imageUrl?: string;
+  status?: NewsStatus;
+  publishedAt?: string;
+  archivedAt?: string;
+  approvalSummary?: ApprovalSummary;
+  processInstanceId?: string | null;
+  subtype?: string;
+  effectiveDate?: string;
+  termStart?: string;
+  termEnd?: string;
+  relatedOrganizationId?: string;
+  relatedEventId?: string;
+  approvalSource?: string;
+  contactName?: string;
+  contactEmail?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  officerItems?: OfficerItem[];
+  outgoingOfficerItems?: OfficerItem[];
+  awardItems?: AwardItem[];
+  attachmentItems?: AttachmentItem[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type StudentEventSection = ContentSection & {
@@ -262,6 +447,17 @@ export type EventScheduleItem = {
   description?: string;
 };
 
+export type ApprovalActionItem = {
+  action: 'submitted' | 'approved' | 'rejected' | 'published' | 'archived' | 'cancelled' | 'completed' | 'returned_to_draft';
+  actorUserId: string;
+  actorDisplayName: string;
+  timestamp: string;
+  reason?: string;
+  comment?: string;
+  fromStatus: string;
+  toStatus: string;
+};
+
 export type ApprovalSummary = {
   submittedAt?: string;
   submittedBy?: string;
@@ -270,6 +466,33 @@ export type ApprovalSummary = {
   rejectedAt?: string;
   rejectedBy?: string;
   rejectionReason?: string;
+  approvalHistory?: ApprovalActionItem[];
+};
+
+export type ApprovalQueueItem = {
+  _id: string;
+  contentType: 'news' | 'announcement' | 'event';
+  contentId: string;
+  title: string;
+  status: string;
+  submittedAt: string;
+  submittedBy: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  organizationId?: string | null;
+  organizationName?: string | null;
+  ownerType: ContentOwnerType;
+};
+
+export type ApprovalStats = {
+  pending: number;
+  byType: {
+    events: number;
+    news: number;
+    announcements: number;
+  };
 };
 
 export type StudentIdentity = {
@@ -351,6 +574,11 @@ export type StudentEvent = {
   registrationCloseAt?: string;
   allowWalkIns?: boolean;
   tags?: string[];
+  speakerItems?: SpeakerItem[];
+  feeLabel?: string;
+  contactName?: string;
+  contactEmail?: string;
+  venueDetails?: VenueDetails;
   organizer?: {
     firstName: string;
     lastName: string;
@@ -447,6 +675,56 @@ export const mediaAssetSchema = z.object({
   sortOrder: z.number().optional(),
 });
 
+export const contentSectionExtendedSchema: z.ZodType<ContentSection> = z.object({
+  heading: z.string(),
+  style: z.enum(['default', 'callout', 'checklist']),
+  bodyHtml: z.string().optional(),
+  items: z.array(z.string()).optional(),
+  image: mediaAssetSchema.optional(),
+  link: z.object({ url: z.string(), label: z.string() }).optional(),
+  embed: z.object({ type: z.enum(['video', 'map', 'form']), url: z.string() }).optional(),
+});
+
+export const speakerItemSchema: z.ZodType<SpeakerItem> = z.object({
+  name: z.string(),
+  title: z.string().optional(),
+  organization: z.string().optional(),
+  photo: mediaAssetSchema.optional(),
+});
+
+export const attachmentItemSchema: z.ZodType<AttachmentItem> = z.object({
+  label: z.string(),
+  url: z.string(),
+  fileType: z.string().optional(),
+  fileSize: z.number().optional(),
+});
+
+export const venueDetailsSchema: z.ZodType<VenueDetails> = z.object({
+  name: z.string().optional(),
+  address: z.string().optional(),
+  room: z.string().optional(),
+  capacity: z.number().optional(),
+  accessibility: z.string().optional(),
+});
+
+export const officerItemSchema: z.ZodType<OfficerItem> = z.object({
+  position: z.string(),
+  name: z.string(),
+  photo: mediaAssetSchema.optional(),
+});
+
+export const awardItemSchema: z.ZodType<AwardItem> = z.object({
+  title: z.string(),
+  recipient: z.string(),
+  category: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export const referenceLinkSchema: z.ZodType<ReferenceLink> = z.object({
+  label: z.string(),
+  url: z.string(),
+});
+
 export const studentProfileSchema: z.ZodType<StudentProfile> = z.object({
   id: z.string().optional(),
   _id: z.string(),
@@ -486,6 +764,141 @@ export const studentRegistrationSchema: z.ZodType<StudentRegistration> = z.objec
   source: z.enum(['self', 'admin', 'walk_in']),
 });
 
+export const eventSchema: z.ZodType<Event> = z.object({
+  _id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  bodyHtml: z.string(),
+  excerpt: z.string(),
+  organizer: z.union([z.string(), z.object({ firstName: z.string(), lastName: z.string(), email: z.string() })]),
+  ownerType: contentOwnerTypeSchema,
+  organizationId: z.string().nullable().optional(),
+  startDate: z.string(),
+  endDate: z.string(),
+  location: z.string(),
+  status: z.union([eventStatusSchema, z.string()]),
+  publishedAt: z.string().optional(),
+  cancelledAt: z.string().optional(),
+  completedAt: z.string().optional(),
+  attendees: z.array(z.string()),
+  maxAttendees: z.number().optional(),
+  coverImage: mediaAssetSchema.optional(),
+  gallery: z.array(mediaAssetSchema),
+  sections: z.array(contentSectionExtendedSchema),
+  schedule: z.array(z.object({ label: z.string(), title: z.string(), description: z.string().optional() })),
+  imageUrl: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  isRegistrationOpen: z.boolean(),
+  registeredCount: z.number().optional(),
+  checkedInCount: z.number().optional(),
+  registrationCloseAt: z.string().optional(),
+  allowWalkIns: z.boolean().optional(),
+  targetProgramIds: z.array(z.string()).optional(),
+  targetYearLevelIds: z.array(z.string()).optional(),
+  targetSectionIds: z.array(z.string()).optional(),
+  approvalSummary: z.record(z.unknown()).optional(),
+  processInstanceId: z.string().nullable().optional(),
+  registrationUrl: z.string().optional(),
+  registrationDeadline: z.string().optional(),
+  contactName: z.string().optional(),
+  contactEmail: z.string().optional(),
+  contactPhone: z.string().optional(),
+  hostOrganizationIds: z.array(z.string()).optional(),
+  coHostOrganizationIds: z.array(z.string()).optional(),
+  speakerItems: z.array(speakerItemSchema).optional(),
+  audience: z.string().optional(),
+  eligibility: z.string().optional(),
+  feeLabel: z.string().optional(),
+  certificateInfo: z.string().optional(),
+  venueDetails: venueDetailsSchema.optional(),
+  mapUrl: z.string().optional(),
+  meetingUrl: z.string().optional(),
+  requirements: z.string().optional(),
+  attachmentItems: z.array(attachmentItemSchema).optional(),
+  posterCaption: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const newsSchema: z.ZodType<News> = z.object({
+  _id: z.string(),
+  title: z.string(),
+  content: z.string().optional(),
+  bodyHtml: z.string(),
+  excerpt: z.string(),
+  author: z.union([z.string(), z.object({ firstName: z.string(), lastName: z.string(), email: z.string() })]),
+  ownerType: contentOwnerTypeSchema,
+  organizationId: z.string().nullable().optional(),
+  status: newsStatusSchema,
+  publishedAt: z.string().optional(),
+  archivedAt: z.string().optional(),
+  approvalSummary: z.record(z.unknown()).optional(),
+  processInstanceId: z.string().nullable().optional(),
+  tags: z.array(z.string()),
+  coverImage: mediaAssetSchema.optional(),
+  gallery: z.array(mediaAssetSchema),
+  sections: z.array(contentSectionExtendedSchema),
+  imageUrl: z.string().optional(),
+  category: z.string().optional(),
+  featured: z.boolean().optional(),
+  pinned: z.boolean().optional(),
+  sourceUrl: z.string().optional(),
+  referenceLinks: z.array(referenceLinkSchema).optional(),
+  attachmentItems: z.array(attachmentItemSchema).optional(),
+  readingTime: z.number().optional(),
+  authorDisplayName: z.string().optional(),
+  authorRole: z.string().optional(),
+  associatedEventId: z.string().optional(),
+  associatedOrganizationId: z.string().optional(),
+  spotlightLabel: z.string().optional(),
+  seoDescription: z.string().optional(),
+  canonicalSlug: z.string().optional(),
+  relatedArticleIds: z.array(z.string()).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const announcementSchema: z.ZodType<Announcement> = z.object({
+  _id: z.string(),
+  title: z.string(),
+  content: z.string().optional(),
+  bodyHtml: z.string(),
+  priority: announcementPrioritySchema,
+  type: announcementTypeSchema,
+  author: z.union([z.string(), z.object({ firstName: z.string(), lastName: z.string(), email: z.string() })]),
+  ownerType: contentOwnerTypeSchema,
+  organizationId: z.string().nullable().optional(),
+  isActive: z.boolean(),
+  targetAudience: z.array(z.string()),
+  expiresAt: z.string().optional(),
+  coverImage: mediaAssetSchema.optional(),
+  gallery: z.array(mediaAssetSchema),
+  sections: z.array(contentSectionExtendedSchema),
+  imageUrl: z.string().optional(),
+  status: newsStatusSchema.optional(),
+  publishedAt: z.string().optional(),
+  archivedAt: z.string().optional(),
+  approvalSummary: z.record(z.unknown()).optional(),
+  processInstanceId: z.string().nullable().optional(),
+  subtype: z.string().optional(),
+  effectiveDate: z.string().optional(),
+  termStart: z.string().optional(),
+  termEnd: z.string().optional(),
+  relatedOrganizationId: z.string().optional(),
+  relatedEventId: z.string().optional(),
+  approvalSource: z.string().optional(),
+  contactName: z.string().optional(),
+  contactEmail: z.string().optional(),
+  ctaLabel: z.string().optional(),
+  ctaUrl: z.string().optional(),
+  officerItems: z.array(officerItemSchema).optional(),
+  outgoingOfficerItems: z.array(officerItemSchema).optional(),
+  awardItems: z.array(awardItemSchema).optional(),
+  attachmentItems: z.array(attachmentItemSchema).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
 export const studentEventSchema: z.ZodType<StudentEvent> = z.object({
   _id: z.string(),
   title: z.string(),
@@ -505,6 +918,11 @@ export const studentEventSchema: z.ZodType<StudentEvent> = z.object({
   registrationCloseAt: z.string().optional(),
   allowWalkIns: z.boolean().optional(),
   tags: z.array(z.string()).optional(),
+  speakerItems: z.array(speakerItemSchema).optional(),
+  feeLabel: z.string().optional(),
+  contactName: z.string().optional(),
+  contactEmail: z.string().optional(),
+  venueDetails: venueDetailsSchema.optional(),
   organizer: z
     .object({
       firstName: z.string(),

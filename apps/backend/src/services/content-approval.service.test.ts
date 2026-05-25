@@ -11,6 +11,7 @@ const mockUser = {
   role: UserRole.FULL_ADMIN,
   permissions: [
     Permission.APPROVE_CONTENT,
+    Permission.REJECT_CONTENT,
     Permission.PUBLISH_NEWS,
     Permission.ARCHIVE_NEWS,
     Permission.SUBMIT_CONTENT_FOR_APPROVAL,

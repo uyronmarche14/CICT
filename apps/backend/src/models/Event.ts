@@ -1,65 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { ContentOwnerType, IEvent, EventStatus } from '../types';
-
-const mediaAssetSchema = new Schema(
-  {
-    imageUrl: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    imageId: {
-      type: String,
-      trim: true,
-    },
-    assetFingerprint: {
-      type: String,
-      trim: true,
-    },
-    alt: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [200, 'Alt text cannot exceed 200 characters'],
-    },
-    caption: {
-      type: String,
-      trim: true,
-      maxlength: [300, 'Caption cannot exceed 300 characters'],
-    },
-    sortOrder: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { _id: false }
-);
-
-const contentSectionSchema = new Schema(
-  {
-    heading: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [120, 'Section heading cannot exceed 120 characters'],
-    },
-    style: {
-      type: String,
-      enum: ['default', 'callout', 'checklist'],
-      default: 'default',
-    },
-    bodyHtml: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    items: {
-      type: [String],
-      default: [],
-    },
-  },
-  { _id: false }
-);
+import { mediaAssetSchema, contentSectionSchema, approvalSummarySchema } from './schemas/shared';
 
 const scheduleItemSchema = new Schema(
   {
@@ -80,19 +21,6 @@ const scheduleItemSchema = new Schema(
       trim: true,
       maxlength: [400, 'Schedule description cannot exceed 400 characters'],
     },
-  },
-  { _id: false }
-);
-
-const approvalSummarySchema = new Schema(
-  {
-    submittedAt: Date,
-    submittedBy: String,
-    approvedAt: Date,
-    approvedBy: String,
-    rejectedAt: Date,
-    rejectedBy: String,
-    rejectionReason: String,
   },
   { _id: false }
 );
@@ -236,6 +164,92 @@ const eventSchema = new Schema<IEvent>(
       type: String,
       default: null,
     },
+    registrationUrl: {
+      type: String,
+    },
+    registrationDeadline: {
+      type: Date,
+    },
+    contactName: {
+      type: String,
+      trim: true,
+    },
+    contactEmail: {
+      type: String,
+      trim: true,
+    },
+    contactPhone: {
+      type: String,
+      trim: true,
+    },
+    hostOrganizationIds: {
+      type: [String],
+      default: [],
+    },
+    coHostOrganizationIds: {
+      type: [String],
+      default: [],
+    },
+    speakerItems: {
+      type: [new Schema(
+        {
+          name: { type: String, required: true },
+          title: { type: String },
+          organization: { type: String },
+          photo: { type: mediaAssetSchema },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    audience: {
+      type: String,
+    },
+    eligibility: {
+      type: String,
+    },
+    feeLabel: {
+      type: String,
+    },
+    certificateInfo: {
+      type: String,
+    },
+    venueDetails: {
+      type: new Schema(
+        {
+          name: { type: String },
+          address: { type: String },
+          room: { type: String },
+          capacity: { type: Number },
+          accessibility: { type: String },
+        },
+        { _id: false }
+      ),
+    },
+    mapUrl: {
+      type: String,
+    },
+    meetingUrl: {
+      type: String,
+    },
+    requirements: {
+      type: String,
+    },
+    attachmentItems: {
+      type: [new Schema(
+        {
+          label: { type: String, required: true },
+          url: { type: String, required: true },
+          fileType: { type: String },
+          fileSize: { type: Number },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    posterCaption: {
+      type: String,
+    },
   },
   {
     timestamps: true,
@@ -245,6 +259,9 @@ const eventSchema = new Schema<IEvent>(
 // Index for getting upcoming events
 eventSchema.index({ startDate: 1, status: 1 });
 eventSchema.index({ ownerType: 1, organizationId: 1 });
+
+// Index for approval queue queries
+eventSchema.index({ status: 1, createdAt: -1 });
 
 eventSchema.pre('validate', function () {
     if (!this.bodyHtml && this.description) {

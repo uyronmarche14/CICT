@@ -17,6 +17,9 @@ import {
   normalizeGalleryExcludingCover,
   normalizeMediaAsset,
   normalizeSections,
+  normalizeOfficerItems,
+  normalizeAwardItems,
+  normalizeAttachmentItems,
 } from '../utils/content';
 import {
   canReassignOwnership,
@@ -45,6 +48,21 @@ const ANNOUNCEMENT_EDITABLE_FIELDS = [
   'sections',
   'imageUrl',
   'imageId',
+  'subtype',
+  'effectiveDate',
+  'termStart',
+  'termEnd',
+  'relatedOrganizationId',
+  'relatedEventId',
+  'approvalSource',
+  'contactName',
+  'contactEmail',
+  'ctaLabel',
+  'ctaUrl',
+  'officerItems',
+  'outgoingOfficerItems',
+  'awardItems',
+  'attachmentItems',
 ] as const;
 
 const getPublicAnnouncementQuery = () => ({
@@ -74,6 +92,21 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
     coverImage,
     gallery,
     sections,
+    subtype,
+    effectiveDate,
+    termStart,
+    termEnd,
+    relatedOrganizationId,
+    relatedEventId,
+    approvalSource,
+    contactName,
+    contactEmail,
+    ctaLabel,
+    ctaUrl,
+    officerItems,
+    outgoingOfficerItems,
+    awardItems,
+    attachmentItems,
   } = req.body;
   const ownership = resolveOwnershipInput(req.body);
   await validateOwnershipPair(ownership.ownerType, ownership.organizationId);
@@ -110,6 +143,21 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
     gallery: normalizeGalleryExcludingCover(gallery, resolvedCoverImage),
     imageUrl,
     imageId,
+    subtype,
+    effectiveDate,
+    termStart,
+    termEnd,
+    relatedOrganizationId,
+    relatedEventId,
+    approvalSource,
+    contactName,
+    contactEmail,
+    ctaLabel,
+    ctaUrl,
+    officerItems: normalizeOfficerItems(officerItems),
+    outgoingOfficerItems: normalizeOfficerItems(outgoingOfficerItems),
+    awardItems: normalizeAwardItems(awardItems),
+    attachmentItems: normalizeAttachmentItems(attachmentItems),
   });
 
   logger.info(`Announcement created: ${announcement._id} by user ${req.user.userId}`);
@@ -404,6 +452,22 @@ export const updateAnnouncement = async (req: AuthRequest, res: Response): Promi
 
   if (req.body.sections !== undefined) {
     updates.sections = normalizeSections(req.body.sections);
+  }
+
+  if (req.body.officerItems !== undefined) {
+    updates.officerItems = normalizeOfficerItems(req.body.officerItems);
+  }
+
+  if (req.body.outgoingOfficerItems !== undefined) {
+    updates.outgoingOfficerItems = normalizeOfficerItems(req.body.outgoingOfficerItems);
+  }
+
+  if (req.body.awardItems !== undefined) {
+    updates.awardItems = normalizeAwardItems(req.body.awardItems);
+  }
+
+  if (req.body.attachmentItems !== undefined) {
+    updates.attachmentItems = normalizeAttachmentItems(req.body.attachmentItems);
   }
 
   (updates as Record<string, unknown>).ownerType = nextOwnership.ownerType;

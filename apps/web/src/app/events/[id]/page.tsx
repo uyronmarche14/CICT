@@ -7,7 +7,7 @@ import { studentEventAPI } from '@/lib/api/student';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info, ExternalLink, QrCode, XCircle, CheckCircle } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, Loader2, ArrowLeft, Info, ExternalLink, QrCode, XCircle, CheckCircle, User, Paperclip } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import MeshGradientBg from '@/components/ripplebg';
@@ -173,6 +173,8 @@ export default function EventDetailsPage() {
                 <div>
                   <p className="text-sm text-muted-foreground">Location</p>
                   <p className="font-medium">{event.location}</p>
+                  {event.venueDetails?.name && <p className="text-sm text-muted-foreground">{event.venueDetails.name}</p>}
+                  {event.venueDetails?.room && <p className="text-sm text-muted-foreground">Room: {event.venueDetails.room}</p>}
                 </div>
               </div>
 
@@ -193,6 +195,37 @@ export default function EventDetailsPage() {
               <StructuredContent bodyHtml={bodyHtml} sections={event.sections} />
             </div>
 
+            {(event.speakerItems?.length ?? 0) > 0 && (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-4">Speakers</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {event.speakerItems?.map((speaker, i) => (
+                    <div key={i} className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
+                      {speaker.photo?.imageUrl ? (
+                        <img src={speaker.photo.imageUrl} alt={speaker.name} className="w-12 h-12 rounded-full object-cover" />
+                      ) : <User className="w-12 h-12 p-2 bg-muted rounded-full" />}
+                      <div>
+                        <p className="font-medium">{speaker.name}</p>
+                        {speaker.title && <p className="text-sm text-muted-foreground">{speaker.title}</p>}
+                        {speaker.organization && <p className="text-sm text-muted-foreground">{speaker.organization}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {(event.audience || event.eligibility || event.feeLabel || event.requirements) && (
+              <div className="pt-6 border-t space-y-4">
+                <h3 className="text-lg font-semibold">Event Details</h3>
+                {event.audience && <div><p className="text-sm text-muted-foreground">Target Audience</p><p>{event.audience}</p></div>}
+                {event.eligibility && <div><p className="text-sm text-muted-foreground">Eligibility</p><p>{event.eligibility}</p></div>}
+                {event.feeLabel && <Badge variant="secondary">{event.feeLabel}</Badge>}
+                {event.requirements && <div><p className="text-sm text-muted-foreground">Requirements</p><p>{event.requirements}</p></div>}
+                {event.certificateInfo && <Badge variant="outline">{event.certificateInfo}</Badge>}
+              </div>
+            )}
+
             {event.tags && event.tags.length > 0 && (
               <div className="pt-6 border-t">
                 <h3 className="text-lg font-semibold mb-3">Tags</h3>
@@ -206,6 +239,17 @@ export default function EventDetailsPage() {
               </div>
             )}
 
+            {(event.contactName || event.contactEmail || event.contactPhone) && (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3">Contact</h3>
+                <div className="space-y-2 text-sm">
+                  {event.contactName && <p className="font-medium">{event.contactName}</p>}
+                  {event.contactEmail && <a href={`mailto:${event.contactEmail}`} className="text-primary hover:underline block">{event.contactEmail}</a>}
+                  {event.contactPhone && <p className="text-muted-foreground">{event.contactPhone}</p>}
+                </div>
+              </div>
+            )}
+
             <div className="pt-6 border-t">
               <h3 className="text-lg font-semibold mb-3">Organizer</h3>
               <p className="text-muted-foreground">
@@ -213,6 +257,22 @@ export default function EventDetailsPage() {
               </p>
               <p className="text-sm text-muted-foreground">{event.organizer.email}</p>
             </div>
+
+            {(event.attachmentItems?.length ?? 0) > 0 && (
+              <div className="pt-6 border-t">
+                <h3 className="text-lg font-semibold mb-3">Attachments</h3>
+                <div className="space-y-2">
+                  {event.attachmentItems?.map((att, i) => (
+                    <a key={i} href={att.url} target="_blank" rel="noopener noreferrer"
+                       className="flex items-center gap-2 p-3 rounded-lg border hover:bg-secondary/20 transition-colors">
+                      <Paperclip className="w-4 h-4 text-primary" />
+                      <span className="font-medium">{att.label}</span>
+                      {att.fileSize && <span className="text-xs text-muted-foreground ml-auto">({(att.fileSize / 1024).toFixed(0)} KB)</span>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {event.schedule && event.schedule.length > 0 ? (
               <div className="pt-6 border-t">

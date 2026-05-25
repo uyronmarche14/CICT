@@ -31,12 +31,15 @@ import { GalleryManager } from '@/components/admin/GalleryManager';
 import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
 import { EventScheduleEditor } from '@/components/admin/EventScheduleEditor';
 import {
+  AttachmentItem,
   ContentOwnerType,
   ContentSection,
   EventScheduleItem,
   MediaAsset,
   Organization,
   Permission,
+  SpeakerItem,
+  VenueDetails,
 } from '@/types';
 import { uploadsAPI } from '@/lib/api/uploads';
 import { organizationService } from '@/services/organizationService';
@@ -123,6 +126,24 @@ export function EventForm({ onSuccess }: EventFormProps) {
   const [targetProgramIds, setTargetProgramIds] = useState<string[]>([]);
   const [targetYearLevelIds, setTargetYearLevelIds] = useState<string[]>([]);
   const [targetSectionIds, setTargetSectionIds] = useState<string[]>([]);
+  const [registrationUrl, setRegistrationUrl] = useState('');
+  const [registrationDeadline, setRegistrationDeadline] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [hostOrganizationIds, setHostOrganizationIds] = useState<string[]>([]);
+  const [coHostOrganizationIds, setCoHostOrganizationIds] = useState<string[]>([]);
+  const [speakerItems, setSpeakerItems] = useState<SpeakerItem[]>([]);
+  const [audience, setAudience] = useState('');
+  const [eligibility, setEligibility] = useState('');
+  const [feeLabel, setFeeLabel] = useState('');
+  const [certificateInfo, setCertificateInfo] = useState('');
+  const [venueDetails, setVenueDetails] = useState<VenueDetails | undefined>(undefined);
+  const [mapUrl, setMapUrl] = useState('');
+  const [meetingUrl, setMeetingUrl] = useState('');
+  const [requirements, setRequirements] = useState('');
+  const [attachmentItems, setAttachmentItems] = useState<AttachmentItem[]>([]);
+  const [posterCaption, setPosterCaption] = useState('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -297,6 +318,24 @@ export function EventForm({ onSuccess }: EventFormProps) {
         targetProgramIds: targetProgramIds.length > 0 ? targetProgramIds : undefined,
         targetYearLevelIds: targetYearLevelIds.length > 0 ? targetYearLevelIds : undefined,
         targetSectionIds: targetSectionIds.length > 0 ? targetSectionIds : undefined,
+        registrationUrl: registrationUrl || undefined,
+        registrationDeadline: registrationDeadline || undefined,
+        contactName: contactName || undefined,
+        contactEmail: contactEmail || undefined,
+        contactPhone: contactPhone || undefined,
+        hostOrganizationIds: hostOrganizationIds.length > 0 ? hostOrganizationIds : undefined,
+        coHostOrganizationIds: coHostOrganizationIds.length > 0 ? coHostOrganizationIds : undefined,
+        speakerItems: speakerItems.length > 0 ? speakerItems : undefined,
+        audience: audience || undefined,
+        eligibility: eligibility || undefined,
+        feeLabel: feeLabel || undefined,
+        certificateInfo: certificateInfo || undefined,
+        venueDetails: venueDetails || undefined,
+        mapUrl: mapUrl || undefined,
+        meetingUrl: meetingUrl || undefined,
+        requirements: requirements || undefined,
+        attachmentItems: attachmentItems.length > 0 ? attachmentItems : undefined,
+        posterCaption: posterCaption || undefined,
       });
       appToast.success('Event Created', 'The event has been created and will appear after approval.');
       setOpen(false);
@@ -311,6 +350,24 @@ export function EventForm({ onSuccess }: EventFormProps) {
       setTargetProgramIds([]);
       setTargetYearLevelIds([]);
       setTargetSectionIds([]);
+      setRegistrationUrl('');
+      setRegistrationDeadline('');
+      setContactName('');
+      setContactEmail('');
+      setContactPhone('');
+      setHostOrganizationIds([]);
+      setCoHostOrganizationIds([]);
+      setSpeakerItems([]);
+      setAudience('');
+      setEligibility('');
+      setFeeLabel('');
+      setCertificateInfo('');
+      setVenueDetails(undefined);
+      setMapUrl('');
+      setMeetingUrl('');
+      setRequirements('');
+      setAttachmentItems([]);
+      setPosterCaption('');
       onSuccess();
     } catch (error) {
       console.error('Failed to create event:', error);
@@ -507,6 +564,203 @@ export function EventForm({ onSuccess }: EventFormProps) {
                     type="datetime-local"
                     value={registrationCloseAt}
                     onChange={(e) => setRegistrationCloseAt(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Additional Registration Fields</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Registration URL</label>
+                  <Input
+                    placeholder="https://..."
+                    value={registrationUrl}
+                    onChange={(e) => setRegistrationUrl(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Registration Deadline</label>
+                  <Input
+                    type="datetime-local"
+                    value={registrationDeadline}
+                    onChange={(e) => setRegistrationDeadline(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Target Audience</label>
+                <textarea
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="e.g. CICT students, faculty, and staff"
+                  value={audience}
+                  onChange={(e) => setAudience(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Eligibility Criteria</label>
+                <textarea
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="e.g. Must be enrolled in CICT"
+                  value={eligibility}
+                  onChange={(e) => setEligibility(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Fee Label</label>
+                  <Input
+                    placeholder='e.g. "Free", "₱50"'
+                    value={feeLabel}
+                    onChange={(e) => setFeeLabel(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Certificate Info</label>
+                  <Input
+                    placeholder="e.g. Certificate of Participation"
+                    value={certificateInfo}
+                    onChange={(e) => setCertificateInfo(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Contact Information</h3>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contact Name</label>
+                  <Input
+                    placeholder="John Doe"
+                    value={contactName}
+                    onChange={(e) => setContactName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contact Email</label>
+                  <Input
+                    type="email"
+                    placeholder="john@example.com"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Contact Phone</label>
+                  <Input
+                    placeholder="+63 912 345 6789"
+                    value={contactPhone}
+                    onChange={(e) => setContactPhone(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Venue Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Venue Name</label>
+                  <Input
+                    placeholder="e.g. CICT Auditorium"
+                    value={venueDetails?.name ?? ''}
+                    onChange={(e) => setVenueDetails({ ...venueDetails, name: e.target.value } as VenueDetails)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Venue Address</label>
+                  <Input
+                    placeholder="e.g. CICT Building, UPV"
+                    value={venueDetails?.address ?? ''}
+                    onChange={(e) => setVenueDetails({ ...venueDetails, address: e.target.value } as VenueDetails)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Room</label>
+                  <Input
+                    placeholder="e.g. Room 201"
+                    value={venueDetails?.room ?? ''}
+                    onChange={(e) => setVenueDetails({ ...venueDetails, room: e.target.value } as VenueDetails)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Capacity</label>
+                  <Input
+                    type="number"
+                    placeholder="e.g. 200"
+                    value={venueDetails?.capacity ?? ''}
+                    onChange={(e) => setVenueDetails({ ...venueDetails, capacity: parseInt(e.target.value) || undefined } as VenueDetails)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Accessibility Info</label>
+                  <Input
+                    placeholder="e.g. Wheelchair accessible"
+                    value={venueDetails?.accessibility ?? ''}
+                    onChange={(e) => setVenueDetails({ ...venueDetails, accessibility: e.target.value } as VenueDetails)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Map URL</label>
+                  <Input
+                    placeholder="https://maps.google.com/..."
+                    value={mapUrl}
+                    onChange={(e) => setMapUrl(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Meeting URL (for virtual)</label>
+                  <Input
+                    placeholder="https://meet.google.com/..."
+                    value={meetingUrl}
+                    onChange={(e) => setMeetingUrl(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-xl border p-4 space-y-4">
+              <h3 className="font-medium text-sm">Additional Info</h3>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Requirements / What to Bring</label>
+                <textarea
+                  className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="e.g. Laptop, valid ID"
+                  value={requirements}
+                  onChange={(e) => setRequirements(e.target.value)}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Poster Caption</label>
+                  <Input
+                    placeholder="Caption for the event poster"
+                    value={posterCaption}
+                    onChange={(e) => setPosterCaption(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Host Organization IDs</label>
+                  <Input
+                    placeholder="Comma-separated IDs"
+                    value={hostOrganizationIds.join(', ')}
+                    onChange={(e) => setHostOrganizationIds(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Co-Host Organization IDs</label>
+                  <Input
+                    placeholder="Comma-separated IDs"
+                    value={coHostOrganizationIds.join(', ')}
+                    onChange={(e) => setCoHostOrganizationIds(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
                   />
                 </div>
               </div>

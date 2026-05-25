@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Bell, Calendar, Loader2, Share2 } from 'lucide-react';
+import { ArrowLeft, Bell, Calendar, ExternalLink, Loader2, Paperclip, Share2, User } from 'lucide-react';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,6 +60,7 @@ export default function AnnouncementDetailPage() {
             {announcement.priority}
           </Badge>
           <Badge variant="outline">{announcement.type}</Badge>
+          {announcement.subtype && <Badge variant="outline">{announcement.subtype}</Badge>}
           <Badge variant="outline">
             {getOwnershipLabel(announcement)}
           </Badge>
@@ -80,6 +81,11 @@ export default function AnnouncementDetailPage() {
               {format(new Date(announcement.publishedAt ?? announcement.createdAt), 'MMMM d, yyyy')}
             </span>
           </div>
+          {announcement.effectiveDate && (
+            <span className="text-sm text-muted-foreground">
+              Effective: {format(new Date(announcement.effectiveDate), 'MMMM d, yyyy')}
+            </span>
+          )}
         </div>
 
         {heroImage ? (
@@ -94,6 +100,99 @@ export default function AnnouncementDetailPage() {
         ) : null}
 
         <StructuredContent bodyHtml={bodyHtml} sections={announcement.sections} className="mb-12" />
+
+        {announcement.officerItems?.length ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Incoming Officers</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {announcement.officerItems!.map((officer, i) => (
+                <div key={i} className="flex items-center gap-3 p-4 rounded-lg border bg-secondary/10">
+                  {officer.photo ? (
+                    <img src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : <User className="w-10 h-10 p-2 bg-muted rounded-full" />}
+                  <div>
+                    <p className="font-medium text-sm">{officer.position}</p>
+                    <p className="text-sm text-muted-foreground">{officer.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {announcement.outgoingOfficerItems?.length ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Outgoing Officers</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {announcement.outgoingOfficerItems!.map((officer, i) => (
+                <div key={i} className="flex items-center gap-3 p-4 rounded-lg border bg-secondary/10">
+                  {officer.photo ? (
+                    <img src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : <User className="w-10 h-10 p-2 bg-muted rounded-full" />}
+                  <div>
+                    <p className="font-medium text-sm">{officer.position}</p>
+                    <p className="text-sm text-muted-foreground">{officer.name}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {announcement.awardItems?.length ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Awards & Recognition</h3>
+            <div className="space-y-3">
+              {announcement.awardItems!.map((award, i) => (
+                <div key={i} className="p-4 rounded-lg border">
+                  <p className="font-medium">{award.title}</p>
+                  <p className="text-sm text-muted-foreground">{award.recipient}</p>
+                  {award.category && <Badge variant="outline" className="mt-2">{award.category}</Badge>}
+                  {award.description && <p className="text-sm mt-2">{award.description}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {announcement.ctaLabel && announcement.ctaUrl && (
+          <div className="mb-8">
+            <a href={announcement.ctaUrl} target="_blank" rel="noopener noreferrer">
+              <Button className="w-full sm:w-auto">
+                <ExternalLink className="w-4 h-4 mr-2" />
+                {announcement.ctaLabel}
+              </Button>
+            </a>
+          </div>
+        )}
+
+        {(announcement.contactName || announcement.contactEmail) && (
+          <div className="mb-8 p-4 rounded-lg border bg-secondary/10">
+            <h4 className="font-medium mb-2">Contact</h4>
+            {announcement.contactName && <p className="text-sm">{announcement.contactName}</p>}
+            {announcement.contactEmail && (
+              <a href={`mailto:${announcement.contactEmail}`} className="text-sm text-primary hover:underline">
+                {announcement.contactEmail}
+              </a>
+            )}
+          </div>
+        )}
+
+        {announcement.attachmentItems?.length ? (
+          <div className="mb-8">
+            <h3 className="text-lg font-semibold mb-4">Attachments</h3>
+            <div className="space-y-2">
+              {announcement.attachmentItems!.map((att, i) => (
+                <a key={i} href={att.url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-2 p-3 rounded-lg border hover:bg-secondary/20 transition-colors">
+                  <Paperclip className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{att.label}</span>
+                  {att.fileSize && <span className="text-xs text-muted-foreground ml-auto">({(att.fileSize / 1024).toFixed(0)} KB)</span>}
+                </a>
+              ))}
+            </div>
+          </div>
+        ) : null}
 
         {announcement.gallery?.length ? (
           <div className="mb-12">

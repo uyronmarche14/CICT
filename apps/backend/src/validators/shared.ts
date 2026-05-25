@@ -174,3 +174,27 @@ export const validateContentRequired = () =>
     .trim()
     .notEmpty()
     .withMessage('Content cannot be empty');
+
+export const validateUrl = (field: string) =>
+  body(field)
+    .optional({ checkFalsy: true })
+    .isURL()
+    .withMessage(`${field} must be a valid URL`);
+
+export const validateContactEmail = () =>
+  body('contactEmail')
+    .optional({ checkFalsy: true })
+    .isEmail()
+    .withMessage('Contact email must be a valid email');
+
+export const validateArrayField = (field: string) =>
+  body(field)
+    .optional()
+    .isArray()
+    .withMessage(`${field} must be an array`);
+
+export const validateBooleanField = (field: string) =>
+  body(field)
+    .optional()
+    .isBoolean()
+    .withMessage(`${field} must be a boolean`);

@@ -1,10 +1,13 @@
 import api from './axios';
-import {
-  ApprovalSummary,
+import type {
   ContentOwnerType,
+  MediaAsset,
   ContentSection,
   EventScheduleItem,
-  MediaAsset,
+  ApprovalSummary,
+  SpeakerItem,
+  AttachmentItem,
+  VenueDetails,
 } from '@/types';
 
 export type EventMutationPayload = {
@@ -31,6 +34,24 @@ export type EventMutationPayload = {
   gallery?: MediaAsset[];
   sections?: ContentSection[];
   schedule?: EventScheduleItem[];
+  registrationUrl?: string;
+  registrationDeadline?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  hostOrganizationIds?: string[];
+  coHostOrganizationIds?: string[];
+  speakerItems?: SpeakerItem[];
+  audience?: string;
+  eligibility?: string;
+  feeLabel?: string;
+  certificateInfo?: string;
+  venueDetails?: VenueDetails;
+  mapUrl?: string;
+  meetingUrl?: string;
+  requirements?: string;
+  attachmentItems?: AttachmentItem[];
+  posterCaption?: string;
 };
 
 export interface Event {
@@ -78,6 +99,24 @@ export interface Event {
   imageUrl?: string;
   tags: string[];
   isRegistrationOpen: boolean;
+  registrationUrl?: string;
+  registrationDeadline?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  hostOrganizationIds?: string[];
+  coHostOrganizationIds?: string[];
+  speakerItems?: SpeakerItem[];
+  audience?: string;
+  eligibility?: string;
+  feeLabel?: string;
+  certificateInfo?: string;
+  venueDetails?: VenueDetails;
+  mapUrl?: string;
+  meetingUrl?: string;
+  requirements?: string;
+  attachmentItems?: AttachmentItem[];
+  posterCaption?: string;
   createdAt: string;
   updatedAt: string;
 }

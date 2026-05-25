@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Search, Trash, Edit } from "lucide-react";
+import { MoreHorizontal, Plus, Search, Trash, Edit, Eye, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
@@ -31,9 +31,12 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
+import { useRouter } from 'next/navigation';
 
 export default function NewsPage() {
+  const router = useRouter();
   const {
     hasPermission,
     hasScopedPermission,
@@ -50,11 +53,15 @@ export default function NewsPage() {
     hasPermission(Permission.VIEW_NEWS) ? 'all' : ContentOwnerType.ORGANIZATION
   );
   const [organizationFilter, setOrganizationFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'featured' | 'not_featured'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; title: string } | null>(null);
   const { shouldRender } = useAdminPageAccess(canAccessNewsModule());
   const canViewAllNews = hasPermission(Permission.VIEW_NEWS);
   const scopedOrganizationIds = getScopedOrganizationIdsForPermissions([
@@ -130,6 +137,13 @@ export default function NewsPage() {
     return null;
   }
 
+  const filteredNews = news.filter((item) => {
+    if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
+    if (featuredFilter === 'featured' && !item.featured) return false;
+    if (featuredFilter === 'not_featured' && item.featured) return false;
+    return true;
+  });
+
   const handleCreate = () => {
     setSelectedNews(null);
     setIsFormOpen(true);
@@ -159,19 +173,29 @@ export default function NewsPage() {
     id: string,
     action: 'submit' | 'approve' | 'reject' | 'publish' | 'archive'
   ) => {
+    if (action === 'reject') {
+      const item = news.find((n) => n._id === id);
+      setRejectTarget(item ? { id, title: item.title } : { id, title: '' });
+      setRejectDialogOpen(true);
+      return;
+    }
+
     try {
-      if (action === 'reject') {
-        const reason = window.prompt('Enter rejection reason');
-        if (!reason?.trim()) {
-          return;
-        }
-        await api.patch(`/news/${id}/reject`, { reason: reason.trim() });
-      } else {
-        await api.patch(`/news/${id}/${action}`);
-      }
+      await api.patch(`/news/${id}/${action}`);
       fetchNews();
     } catch (error) {
       console.error(`Failed to ${action} news:`, error);
+    }
+  };
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectTarget) return;
+    try {
+      await api.patch(`/news/${rejectTarget.id}/reject`, { reason });
+      fetchNews();
+      setRejectTarget(null);
+    } catch (error) {
+      console.error('Failed to reject news:', error);
     }
   };
 
@@ -270,8 +294,38 @@ export default function NewsPage() {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
-            </div>
+                </Select>
+                <Select
+                  value={categoryFilter}
+                  onValueChange={(value: string) => setCategoryFilter(value)}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All categories</SelectItem>
+                    <SelectItem value="news">news</SelectItem>
+                    <SelectItem value="feature">feature</SelectItem>
+                    <SelectItem value="opinion">opinion</SelectItem>
+                    <SelectItem value="announcement">announcement</SelectItem>
+                    <SelectItem value="event">event</SelectItem>
+                    <SelectItem value="general">general</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={featuredFilter}
+                  onValueChange={(value: 'all' | 'featured' | 'not_featured') => setFeaturedFilter(value)}
+                >
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Featured" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="featured">Featured</SelectItem>
+                    <SelectItem value="not_featured">Not Featured</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -283,6 +337,9 @@ export default function NewsPage() {
                   <TableHead>Status</TableHead>
                   <TableHead>Ownership</TableHead>
                   <TableHead>Tags</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Featured</TableHead>
+                  <TableHead>Author</TableHead>
                   <TableHead>Created At</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -290,18 +347,18 @@ export default function NewsPage() {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
                 ) : news.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center">
+                    <TableCell colSpan={9} className="h-24 text-center">
                       No news articles found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  news.map((item) => (
+                  filteredNews.map((item) => (
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
@@ -319,6 +376,23 @@ export default function NewsPage() {
                           ))}
                         </div>
                       </TableCell>
+                      <TableCell>{item.category ? <Badge>{item.category}</Badge> : '—'}</TableCell>
+                      <TableCell>
+                        {item.featured ? (
+                          <Badge className="bg-green-500">
+                            <CheckCircle className="mr-1 h-4 w-4" /> Featured
+                          </Badge>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {item.authorDisplayName
+                          ? item.authorDisplayName.length > 20
+                            ? item.authorDisplayName.slice(0, 20) + '…'
+                            : item.authorDisplayName
+                          : '—'}
+                      </TableCell>
                       <TableCell>{format(new Date(item.createdAt), 'MMM d, yyyy')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -329,6 +403,9 @@ export default function NewsPage() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => router.push(`/admin/news/${item._id}`)}>
+                              <Eye className="mr-2 h-4 w-4" /> View
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               disabled={!canActOnNews(item, Permission.EDIT_NEWS)}
                               onClick={() => handleEdit(item)}
@@ -414,6 +491,13 @@ export default function NewsPage() {
         message="Are you sure you want to delete this news article?"
         confirmLabel="Delete"
         onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+      />
+      <RejectionReasonDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onConfirm={handleRejectConfirm}
+        title="Reject News"
+        itemTitle={rejectTarget?.title}
       />
     </div>
   );

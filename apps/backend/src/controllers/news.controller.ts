@@ -11,6 +11,8 @@ import {
   normalizeGalleryExcludingCover,
   normalizeMediaAsset,
   normalizeSections,
+  normalizeAttachmentItems,
+  normalizeReferenceLinks,
 } from '../utils/content';
 import {
   canReassignOwnership,
@@ -37,6 +39,21 @@ const NEWS_EDITABLE_FIELDS = [
   'sections',
   'imageUrl',
   'imageId',
+  'category',
+  'featured',
+  'pinned',
+  'sourceUrl',
+  'referenceLinks',
+  'attachmentItems',
+  'readingTime',
+  'authorDisplayName',
+  'authorRole',
+  'associatedEventId',
+  'associatedOrganizationId',
+  'spotlightLabel',
+  'seoDescription',
+  'canonicalSlug',
+  'relatedArticleIds',
 ] as const;
 
 /**
@@ -58,6 +75,21 @@ export const createNews = async (req: AuthRequest, res: Response): Promise<void>
     coverImage,
     gallery,
     sections,
+    category,
+    featured,
+    pinned,
+    sourceUrl,
+    referenceLinks,
+    attachmentItems,
+    readingTime,
+    authorDisplayName,
+    authorRole,
+    associatedEventId,
+    associatedOrganizationId,
+    spotlightLabel,
+    seoDescription,
+    canonicalSlug,
+    relatedArticleIds,
   } = req.body;
   const ownership = resolveOwnershipInput(req.body);
   await validateOwnershipPair(ownership.ownerType, ownership.organizationId);
@@ -91,6 +123,21 @@ export const createNews = async (req: AuthRequest, res: Response): Promise<void>
     imageUrl,
     imageId,
     status: NewsStatus.DRAFT,
+    category,
+    featured: featured ?? false,
+    pinned: pinned ?? false,
+    sourceUrl,
+    referenceLinks: normalizeReferenceLinks(referenceLinks),
+    attachmentItems: normalizeAttachmentItems(attachmentItems),
+    readingTime,
+    authorDisplayName,
+    authorRole,
+    associatedEventId,
+    associatedOrganizationId,
+    spotlightLabel,
+    seoDescription,
+    canonicalSlug,
+    relatedArticleIds: relatedArticleIds || [],
   });
 
   logger.info(`News created: ${news._id} by user ${req.user.userId}`);
@@ -307,6 +354,14 @@ export const updateNews = async (req: AuthRequest, res: Response): Promise<void>
 
   if (req.body.sections !== undefined) {
     updates.sections = normalizeSections(req.body.sections);
+  }
+
+  if (req.body.referenceLinks !== undefined) {
+    updates.referenceLinks = normalizeReferenceLinks(req.body.referenceLinks);
+  }
+
+  if (req.body.attachmentItems !== undefined) {
+    updates.attachmentItems = normalizeAttachmentItems(req.body.attachmentItems);
   }
 
   (updates as Record<string, unknown>).ownerType = nextOwnership.ownerType;

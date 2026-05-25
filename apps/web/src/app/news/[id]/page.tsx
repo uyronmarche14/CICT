@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, User, Tag, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Calendar, User, Tag, Share2, Loader2, ExternalLink, Paperclip } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useNewsById } from '@/hooks/use-news-by-id';
@@ -48,9 +48,10 @@ export default function NewsDetailPage() {
     );
   }
 
-  const author = typeof article.author === 'object'
-    ? `${article.author.firstName} ${article.author.lastName}`
-    : 'CICT';
+  const authorDisplay = article.authorDisplayName ||
+    (typeof article.author === 'object'
+      ? `${article.author.firstName} ${article.author.lastName}`
+      : 'CICT');
 
   const relatedArticles = relatedData?.news.filter(a => a._id !== newsId).slice(0, 3) || [];
 
@@ -72,9 +73,11 @@ export default function NewsDetailPage() {
           <Badge variant="outline">
             {getOwnershipLabel(article)}
           </Badge>
+          {article.category && <Badge variant="secondary">{article.category}</Badge>}
           <div className="flex items-center gap-2">
             <User className="h-4 w-4" />
-            <span>{author}</span>
+            <span>{authorDisplay}</span>
+            {article.authorRole && <span className="text-xs text-muted-foreground">({article.authorRole})</span>}
           </div>
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4" />
@@ -85,6 +88,8 @@ export default function NewsDetailPage() {
               }
             </span>
           </div>
+          {article.readingTime && <span className="text-muted-foreground">{article.readingTime} min read</span>}
+          {article.featured && <Badge className="bg-amber-500">Featured</Badge>}
         </div>
 
         {/* Featured Image */}
@@ -129,6 +134,50 @@ export default function NewsDetailPage() {
                 </Badge>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Reference Links */}
+        {article.referenceLinks && article.referenceLinks.length > 0 && (
+          <div className="mb-12">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">References</h3>
+            <div className="space-y-2">
+              {article.referenceLinks.map((ref, i) => (
+                <a key={i} href={ref.url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-2 text-primary hover:underline">
+                  <ExternalLink className="w-3 h-3" />
+                  {ref.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Attachments */}
+        {article.attachmentItems && article.attachmentItems.length > 0 && (
+          <div className="mb-12">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Attachments</h3>
+            <div className="space-y-2">
+              {article.attachmentItems.map((att, i) => (
+                <a key={i} href={att.url} target="_blank" rel="noopener noreferrer"
+                   className="flex items-center gap-2 p-3 rounded-lg border hover:bg-secondary/20 transition-colors">
+                  <Paperclip className="w-4 h-4 text-primary" />
+                  <span className="font-medium">{att.label}</span>
+                  {att.fileSize && <span className="text-xs text-muted-foreground ml-auto">({(att.fileSize / 1024).toFixed(0)} KB)</span>}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Source URL */}
+        {article.sourceUrl && (
+          <div className="mb-12">
+            <a href={article.sourceUrl} target="_blank" rel="noopener noreferrer"
+               className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+              <ExternalLink className="w-3 h-3" />
+              View original source
+            </a>
           </div>
         )}
 

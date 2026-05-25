@@ -15,7 +15,7 @@ const contentApprovalActionSchema = new Schema<IContentApprovalAction>(
     },
     action: {
       type: String,
-      enum: ['submitted', 'approved', 'rejected', 'published', 'archived', 'returned_to_draft'],
+      enum: ['submitted', 'approved', 'rejected', 'published', 'archived', 'cancelled', 'completed', 'returned_to_draft'],
       required: true,
     },
     actorUserId: {
@@ -46,6 +46,7 @@ const contentApprovalActionSchema = new Schema<IContentApprovalAction>(
 );
 
 contentApprovalActionSchema.index({ contentType: 1, contentId: 1, createdAt: -1 });
+contentApprovalActionSchema.index({ actorUserId: 1 });
 
 const ContentApprovalAction = mongoose.model<IContentApprovalAction>(
   'ContentApprovalAction',

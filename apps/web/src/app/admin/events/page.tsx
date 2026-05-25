@@ -16,7 +16,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Trash, Edit, MapPin, Users, Eye, CheckCircle } from "lucide-react";
+import { Trash, Edit, MapPin, Users, Eye, CheckCircle, Link as LinkIcon } from "lucide-react";
 import { format } from 'date-fns';
 import { appToast } from '@/lib/app-toast';
 import Link from 'next/link';
@@ -27,6 +27,7 @@ import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 
 export default function AdminEventsPage() {
   const {
@@ -43,7 +44,10 @@ export default function AdminEventsPage() {
     hasPermission(Permission.VIEW_EVENT) ? 'all' : ContentOwnerType.ORGANIZATION
   );
   const [organizationFilter, setOrganizationFilter] = useState('all');
+  const [registrationFilter, setRegistrationFilter] = useState<'all' | 'has_url' | 'open'>('all');
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const queryClient = useQueryClient();
   const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
   const canViewAllEvents = hasPermission(Permission.VIEW_EVENT);
@@ -100,17 +104,17 @@ export default function AdminEventsPage() {
     id: string,
     action: 'submit' | 'approve' | 'reject' | 'publish' | 'cancel' | 'complete'
   ) => {
+    if (action === 'reject') {
+      setRejectTarget(id);
+      setRejectDialogOpen(true);
+      return;
+    }
+
     try {
       if (action === 'submit') {
         await eventAPI.submit(id);
       } else if (action === 'approve') {
         await eventAPI.approve(id);
-      } else if (action === 'reject') {
-        const reason = window.prompt('Enter rejection reason');
-        if (!reason?.trim()) {
-          return;
-        }
-        await eventAPI.reject(id, { reason: reason.trim() });
       } else if (action === 'publish') {
         await eventAPI.publish(id);
       } else if (action === 'cancel') {
@@ -123,17 +127,27 @@ export default function AdminEventsPage() {
           ? 'submitted for approval'
           : action === 'approve'
             ? 'approved'
-            : action === 'reject'
-              ? 'rejected'
-              : action === 'publish'
-                ? 'published'
-                : action === 'cancel'
-                  ? 'cancelled'
-                  : 'completed';
+            : action === 'publish'
+              ? 'published'
+              : action === 'cancel'
+                ? 'cancelled'
+                : 'completed';
       appToast.success('Event Updated', `The event has been ${successLabel}.`);
       refetch();
     } catch {
       appToast.error('Action Failed', `Could not ${action} the event. Please try again.`);
+    }
+  };
+
+  const handleRejectConfirm = async (reason: string) => {
+    if (!rejectTarget) return;
+    try {
+      await eventAPI.reject(rejectTarget, { reason });
+      appToast.success('Event Updated', 'The event has been rejected.');
+      refetch();
+      setRejectTarget(null);
+    } catch {
+      appToast.error('Action Failed', 'Could not reject the event. Please try again.');
     }
   };
 
@@ -154,7 +168,12 @@ export default function AdminEventsPage() {
     }
   };
 
-  const activeEvents = data?.data.events || [];
+  const allEvents = data?.data.events || [];
+  const filteredEvents = allEvents.filter((event) => {
+    if (registrationFilter === 'has_url') return !!event.registrationUrl;
+    if (registrationFilter === 'open') return event.isRegistrationOpen;
+    return true;
+  });
 
   useEffect(() => {
     if (!canViewAllEvents && ownerTypeFilter !== ContentOwnerType.ORGANIZATION) {
@@ -250,6 +269,19 @@ export default function AdminEventsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <Select
+                value={registrationFilter}
+                onValueChange={(value: 'all' | 'has_url' | 'open') => setRegistrationFilter(value)}
+              >
+                <SelectTrigger className="w-[190px]">
+                  <SelectValue placeholder="Featured" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="has_url">Has Registration URL</SelectItem>
+                  <SelectItem value="open">Open Registration</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -265,24 +297,27 @@ export default function AdminEventsPage() {
                   <TableHead>Checked In</TableHead>
                   <TableHead>Ownership</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Registration URL</TableHead>
+                  <TableHead>Contact</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={11} className="h-24 text-center">
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : activeEvents.length === 0 ? (
+                ) : filteredEvents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-24 text-center">
+                    <TableCell colSpan={11} className="h-24 text-center">
                       No events found.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  activeEvents.map((event) => (
+                  filteredEvents.map((event) => (
                     <TableRow key={event._id}>
                       <TableCell className="font-medium max-w-[200px] truncate">
                         <Link href={`/admin/events/${event._id}`} className="hover:text-primary transition-colors">
@@ -319,6 +354,29 @@ export default function AdminEventsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(event.status)}</TableCell>
+                      <TableCell>
+                        {event.isRegistrationOpen ? (
+                          <Badge className="bg-green-600">Open</Badge>
+                        ) : (
+                          <Badge variant="secondary">Closed</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {event.registrationUrl ? (
+                          <a href={event.registrationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center">
+                            <LinkIcon className="w-4 h-4 text-muted-foreground hover:text-primary transition-colors" />
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[120px] truncate">
+                        {event.contactName ? (
+                          <span className="text-sm">{event.contactName.length > 20 ? `${event.contactName.slice(0, 20)}…` : event.contactName}</span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                             <Button 
@@ -431,6 +489,13 @@ export default function AdminEventsPage() {
         message="Are you sure you want to delete this event?"
         confirmLabel="Delete"
         onConfirm={deleteConfirm?.onConfirm ?? (() => {})}
+      />
+      <RejectionReasonDialog
+        open={rejectDialogOpen}
+        onOpenChange={setRejectDialogOpen}
+        onConfirm={handleRejectConfirm}
+        title="Reject Event"
+        itemTitle={rejectTarget ? allEvents.find(e => e._id === rejectTarget)?.title : undefined}
       />
     </div>
   );

@@ -10,6 +10,11 @@ const normalizeAnnouncement = (item: Announcement): HomeUpdate => ({
   summary: stripHtml(item.content || item.bodyHtml) || 'Official CICT announcement.',
   publishedAt: item.publishedAt || item.createdAt,
   imageUrl: item.imageUrl,
+  subtype: item.subtype,
+  contactName: item.contactName,
+  ctaLabel: item.ctaLabel,
+  ctaUrl: item.ctaUrl,
+  priority: item.priority,
 });
 
 const normalizeNews = (item: News): HomeUpdate => ({
@@ -19,6 +24,9 @@ const normalizeNews = (item: News): HomeUpdate => ({
   summary: item.excerpt || stripHtml(item.bodyHtml),
   publishedAt: item.publishedAt || item.createdAt,
   imageUrl: item.imageUrl,
+  category: item.category,
+  featured: item.featured,
+  readingTime: item.readingTime,
 });
 
 export const announcementsApi = {

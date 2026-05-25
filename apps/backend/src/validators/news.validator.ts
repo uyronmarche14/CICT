@@ -1,4 +1,4 @@
-import { param } from 'express-validator';
+import { body, param } from 'express-validator';
 import {
   validateBodyHtml,
   validateBodyHtmlRequired,
@@ -18,6 +18,9 @@ import {
   validateTags,
   validateTitle,
   validateTitleOptional,
+  validateUrl,
+  validateArrayField,
+  validateBooleanField,
   approvalSummaryNotEditable,
   processInstanceNotEditable,
   publishedAtNotEditable,
@@ -57,6 +60,53 @@ export const createNewsValidator = [
   approvalSummaryNotEditable(),
 
   processInstanceNotEditable(),
+
+  body('category')
+    .optional()
+    .trim(),
+
+  validateBooleanField('featured'),
+  validateBooleanField('pinned'),
+
+  validateUrl('sourceUrl'),
+
+  validateArrayField('referenceLinks'),
+  validateArrayField('attachmentItems'),
+
+  body('readingTime')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Reading time must be a positive integer'),
+
+  body('authorDisplayName')
+    .optional()
+    .trim(),
+
+  body('authorRole')
+    .optional()
+    .trim(),
+
+  body('associatedEventId')
+    .optional()
+    .isString(),
+
+  body('associatedOrganizationId')
+    .optional()
+    .isString(),
+
+  body('spotlightLabel')
+    .optional()
+    .trim(),
+
+  body('seoDescription')
+    .optional()
+    .trim(),
+
+  body('canonicalSlug')
+    .optional()
+    .trim(),
+
+  validateArrayField('relatedArticleIds'),
 ];
 
 export const updateNewsValidator = [

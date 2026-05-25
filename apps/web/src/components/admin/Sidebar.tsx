@@ -20,6 +20,7 @@ import {
   Building2,
   ScrollText,
   Workflow,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -47,6 +48,7 @@ const buildRoutes = (
     canAccessRolesModule: () => boolean;
     canAccessLogsModule: () => boolean;
     canAccessProcessesModule: () => boolean;
+    canAccessApprovalsModule: () => boolean;
     canManageSettings: () => boolean;
   }
 ): AdminRoute[] => [
@@ -84,6 +86,13 @@ const buildRoutes = (
     icon: Calendar,
     active: pathname.startsWith('/admin/events'),
     visible: permissions.canAccessEventsModule(),
+  },
+  {
+    href: '/admin/approvals',
+    label: 'Approvals',
+    icon: ClipboardCheck,
+    active: pathname.startsWith('/admin/approvals'),
+    visible: permissions.canAccessApprovalsModule(),
   },
   {
     href: '/admin/news',

@@ -121,6 +121,7 @@ export default function StudentEventDetailPage() {
               <div className="text-sm">
                 <p className="text-xs text-muted-foreground">Location</p>
                 <p className="font-medium">{event.location}</p>
+                {event.venueDetails?.name && <p className="text-xs text-muted-foreground">{event.venueDetails.name}{event.venueDetails?.room ? ` · Room ${event.venueDetails.room}` : ''}</p>}
               </div>
             </div>
             <div className="flex items-center gap-2 p-3 bg-secondary/20 rounded-lg">
@@ -139,6 +140,39 @@ export default function StudentEventDetailPage() {
               {event.tags.map((tag, i) => (
                 <Badge key={i} variant="outline" className="text-xs">{tag}</Badge>
               ))}
+            </div>
+          )}
+
+          {event.speakerItems && event.speakerItems.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-2">Speakers</h3>
+              <div className="space-y-2">
+                {event.speakerItems.map((speaker, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                      <span className="text-xs font-bold text-primary">{speaker.name.charAt(0)}</span>
+                    </div>
+                    <div>
+                      <p className="font-medium">{speaker.name}</p>
+                      {speaker.title && <p className="text-xs text-muted-foreground">{speaker.title}{speaker.organization ? `, ${speaker.organization}` : ''}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {event.feeLabel && (
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{event.feeLabel}</Badge>
+            </div>
+          )}
+
+          {(event.contactName || event.contactEmail) && (
+            <div className="text-sm">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Contact</h3>
+              {event.contactName && <p className="font-medium">{event.contactName}</p>}
+              {event.contactEmail && <p className="text-muted-foreground">{event.contactEmail}</p>}
             </div>
           )}
 

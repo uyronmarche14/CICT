@@ -6,79 +6,7 @@ import {
   ContentOwnerType,
   NewsStatus,
 } from '../types';
-
-const mediaAssetSchema = new Schema(
-  {
-    imageUrl: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    imageId: {
-      type: String,
-      trim: true,
-    },
-    assetFingerprint: {
-      type: String,
-      trim: true,
-    },
-    alt: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [200, 'Alt text cannot exceed 200 characters'],
-    },
-    caption: {
-      type: String,
-      trim: true,
-      maxlength: [300, 'Caption cannot exceed 300 characters'],
-    },
-    sortOrder: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { _id: false }
-);
-
-const contentSectionSchema = new Schema(
-  {
-    heading: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [120, 'Section heading cannot exceed 120 characters'],
-    },
-    style: {
-      type: String,
-      enum: ['default', 'callout', 'checklist'],
-      default: 'default',
-    },
-    bodyHtml: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    items: {
-      type: [String],
-      default: [],
-    },
-  },
-  { _id: false }
-);
-
-const approvalSummarySchema = new Schema(
-  {
-    submittedAt: Date,
-    submittedBy: String,
-    approvedAt: Date,
-    approvedBy: String,
-    rejectedAt: Date,
-    rejectedBy: String,
-    rejectionReason: String,
-  },
-  { _id: false }
-);
+import { mediaAssetSchema, contentSectionSchema, approvalSummarySchema } from './schemas/shared';
 
 const announcementSchema = new Schema<IAnnouncement>(
   {
@@ -171,6 +99,88 @@ const announcementSchema = new Schema<IAnnouncement>(
     imageId: {
       type: String,
     },
+    subtype: {
+      type: String,
+      trim: true,
+    },
+    effectiveDate: {
+      type: Date,
+    },
+    termStart: {
+      type: Date,
+    },
+    termEnd: {
+      type: Date,
+    },
+    relatedOrganizationId: {
+      type: String,
+    },
+    relatedEventId: {
+      type: String,
+    },
+    approvalSource: {
+      type: String,
+    },
+    contactName: {
+      type: String,
+      trim: true,
+    },
+    contactEmail: {
+      type: String,
+      trim: true,
+    },
+    ctaLabel: {
+      type: String,
+    },
+    ctaUrl: {
+      type: String,
+    },
+    officerItems: {
+      type: [new Schema(
+        {
+          position: { type: String, required: true },
+          name: { type: String, required: true },
+          photo: { type: mediaAssetSchema },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    outgoingOfficerItems: {
+      type: [new Schema(
+        {
+          position: { type: String, required: true },
+          name: { type: String, required: true },
+          photo: { type: mediaAssetSchema },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    awardItems: {
+      type: [new Schema(
+        {
+          title: { type: String, required: true },
+          recipient: { type: String, required: true },
+          category: { type: String },
+          description: { type: String },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    attachmentItems: {
+      type: [new Schema(
+        {
+          label: { type: String, required: true },
+          url: { type: String, required: true },
+          fileType: { type: String },
+          fileSize: { type: Number },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -182,6 +192,9 @@ announcementSchema.index({ status: 1, priority: -1, publishedAt: -1 });
 announcementSchema.index({ author: 1 });
 announcementSchema.index({ expiresAt: 1 });
 announcementSchema.index({ ownerType: 1, organizationId: 1 });
+
+// Index for approval queue queries
+announcementSchema.index({ status: 1, createdAt: -1 });
 
 // Auto-set publishedAt when status changes to published
 announcementSchema.pre('validate', function () {

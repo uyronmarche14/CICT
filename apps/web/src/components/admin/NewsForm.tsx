@@ -29,6 +29,8 @@ import {
   News,
   Organization,
   Permission,
+  ReferenceLink,
+  AttachmentItem,
 } from '@/types';
 import api from '@/lib/api/axios';
 import { Loader2 } from 'lucide-react';
@@ -40,6 +42,8 @@ import { organizationService } from '@/services/organizationService';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
 import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 
@@ -101,6 +105,21 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
   );
   const [gallery, setGallery] = useState<MediaAsset[]>(news?.gallery ?? []);
   const [sections, setSections] = useState<ContentSection[]>(news?.sections ?? []);
+  const [category, setCategory] = useState<string>(news?.category ?? '');
+  const [featured, setFeatured] = useState<boolean>(news?.featured ?? false);
+  const [pinned, setPinned] = useState<boolean>(news?.pinned ?? false);
+  const [sourceUrl, setSourceUrl] = useState<string>(news?.sourceUrl ?? '');
+  const [referenceLinks, setReferenceLinks] = useState<ReferenceLink[]>(news?.referenceLinks ?? []);
+  const [attachmentItems, setAttachmentItems] = useState<AttachmentItem[]>(news?.attachmentItems ?? []);
+  const [readingTime, setReadingTime] = useState<number | undefined>(news?.readingTime);
+  const [authorDisplayName, setAuthorDisplayName] = useState<string>(news?.authorDisplayName ?? '');
+  const [authorRole, setAuthorRole] = useState<string>(news?.authorRole ?? '');
+  const [associatedEventId, setAssociatedEventId] = useState<string>(news?.associatedEventId ?? '');
+  const [associatedOrganizationId, setAssociatedOrganizationId] = useState<string>(news?.associatedOrganizationId ?? '');
+  const [spotlightLabel, setSpotlightLabel] = useState<string>(news?.spotlightLabel ?? '');
+  const [seoDescription, setSeoDescription] = useState<string>(news?.seoDescription ?? '');
+  const [canonicalSlug, setCanonicalSlug] = useState<string>(news?.canonicalSlug ?? '');
+  const [relatedArticleIds, setRelatedArticleIds] = useState<string[]>(news?.relatedArticleIds ?? []);
 
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(newsSchema),
@@ -255,6 +274,21 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
         imageId: coverImage?.imageId,
         gallery: sanitizedGallery,
         sections,
+        category: category || undefined,
+        featured,
+        pinned,
+        sourceUrl: sourceUrl || undefined,
+        referenceLinks: referenceLinks.length > 0 ? referenceLinks : undefined,
+        attachmentItems: attachmentItems.length > 0 ? attachmentItems : undefined,
+        readingTime: readingTime || undefined,
+        authorDisplayName: authorDisplayName || undefined,
+        authorRole: authorRole || undefined,
+        associatedEventId: associatedEventId || undefined,
+        associatedOrganizationId: associatedOrganizationId || undefined,
+        spotlightLabel: spotlightLabel || undefined,
+        seoDescription: seoDescription || undefined,
+        canonicalSlug: canonicalSlug || undefined,
+        relatedArticleIds: relatedArticleIds.length > 0 ? relatedArticleIds : undefined,
       };
 
       if (news) {
@@ -270,6 +304,21 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
       setCoverImage(undefined);
       setGallery([]);
       setSections([]);
+      setCategory('');
+      setFeatured(false);
+      setPinned(false);
+      setSourceUrl('');
+      setReferenceLinks([]);
+      setAttachmentItems([]);
+      setReadingTime(undefined);
+      setAuthorDisplayName('');
+      setAuthorRole('');
+      setAssociatedEventId('');
+      setAssociatedOrganizationId('');
+      setSpotlightLabel('');
+      setSeoDescription('');
+      setCanonicalSlug('');
+      setRelatedArticleIds([]);
     } catch (error: unknown) {
       console.error('Failed to save news:', error);
       form.setError('root', { message: 'Failed to save news article' });
@@ -408,6 +457,192 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
                 </FormItem>
               )}
             />
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Metadata</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <FormLabel>Category</FormLabel>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="news">News</SelectItem>
+                      <SelectItem value="feature">Feature</SelectItem>
+                      <SelectItem value="opinion">Opinion</SelectItem>
+                      <SelectItem value="announcement">Announcement</SelectItem>
+                      <SelectItem value="event">Event</SelectItem>
+                      <SelectItem value="general">General</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Switch id="featured" checked={featured} onCheckedChange={setFeatured} />
+                    <FormLabel htmlFor="featured">Featured</FormLabel>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Switch id="pinned" checked={pinned} onCheckedChange={setPinned} />
+                    <FormLabel htmlFor="pinned">Pinned</FormLabel>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Source URL</FormLabel>
+                  <Input
+                    placeholder="https://..."
+                    value={sourceUrl}
+                    onChange={(e) => setSourceUrl(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Reading Time (minutes)</FormLabel>
+                  <Input
+                    type="number"
+                    placeholder="5"
+                    value={readingTime ?? ''}
+                    onChange={(e) => setReadingTime(e.target.value ? Number(e.target.value) : undefined)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Spotlight Label</FormLabel>
+                  <Input
+                    placeholder="e.g. Breaking News"
+                    value={spotlightLabel}
+                    onChange={(e) => setSpotlightLabel(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Author Info</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <FormLabel>Author Display Name</FormLabel>
+                  <Input
+                    placeholder="Override system author name"
+                    value={authorDisplayName}
+                    onChange={(e) => setAuthorDisplayName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Author Role / Title</FormLabel>
+                  <Input
+                    placeholder="e.g. Editor-in-Chief"
+                    value={authorRole}
+                    onChange={(e) => setAuthorRole(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Related Content</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <FormLabel>Associated Event ID</FormLabel>
+                  <Input
+                    placeholder="Event ID"
+                    value={associatedEventId}
+                    onChange={(e) => setAssociatedEventId(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Associated Organization ID</FormLabel>
+                  <Input
+                    placeholder="Organization ID"
+                    value={associatedOrganizationId}
+                    onChange={(e) => setAssociatedOrganizationId(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Related Article IDs</FormLabel>
+                  <Input
+                    placeholder="id1, id2, id3"
+                    value={relatedArticleIds.join(', ')}
+                    onChange={(e) =>
+                      setRelatedArticleIds(
+                        e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
+                      )
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">Comma-separated IDs</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>SEO</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <FormLabel>SEO Description</FormLabel>
+                  <Textarea
+                    placeholder="Meta description for search engines"
+                    value={seoDescription}
+                    onChange={(e) => setSeoDescription(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Canonical Slug</FormLabel>
+                  <Input
+                    placeholder="custom-slug"
+                    value={canonicalSlug}
+                    onChange={(e) => setCanonicalSlug(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Reference Links</FormLabel>
+                  <Textarea
+                    placeholder="label1|url1, label2|url2"
+                    value={referenceLinks.map((l) => `${l.label}|${l.url}`).join(', ')}
+                    onChange={(e) =>
+                      setReferenceLinks(
+                        e.target.value
+                          .split(',')
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                          .map((entry) => {
+                            const [label, url] = entry.split('|');
+                            return { label: label?.trim() ?? '', url: url?.trim() ?? '' };
+                          })
+                          .filter((l) => l.label && l.url)
+                      )
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">Comma-separated label|url pairs</p>
+                </div>
+                <div className="space-y-2">
+                  <FormLabel>Attachments</FormLabel>
+                  <Textarea
+                    placeholder="label1|url1, label2|url2"
+                    value={attachmentItems.map((a) => `${a.label}|${a.url}`).join(', ')}
+                    onChange={(e) =>
+                      setAttachmentItems(
+                        e.target.value
+                          .split(',')
+                          .map((s) => s.trim())
+                          .filter(Boolean)
+                          .map((entry) => {
+                            const [label, url] = entry.split('|');
+                            return { label: label?.trim() ?? '', url: url?.trim() ?? '' };
+                          })
+                          .filter((a) => a.label && a.url)
+                      )
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">Comma-separated label|url pairs</p>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="space-y-3">
               <FormLabel>Cover Image</FormLabel>

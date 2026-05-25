@@ -2,6 +2,7 @@
 
 import { ContentSection } from '@/types';
 import { cn } from '@/lib/utils';
+import { ExternalLink, MapPin } from 'lucide-react';
 
 interface StructuredContentProps {
   bodyHtml: string;
@@ -45,6 +46,52 @@ export function StructuredContent({
                   <li key={`${item}-${itemIndex}`}>{item}</li>
                 ))}
               </ul>
+            ) : null}
+            {section.image ? (
+              <div className="mt-4 rounded-lg overflow-hidden">
+                <img
+                  src={section.image.imageUrl}
+                  alt={section.image.alt || section.heading}
+                  className="w-full object-cover max-h-96"
+                />
+              </div>
+            ) : null}
+            {section.link ? (
+              <div className="mt-4">
+                <a
+                  href={section.link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-primary hover:underline font-medium"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {section.link.label || section.link.url}
+                </a>
+              </div>
+            ) : null}
+            {section.embed ? (
+              <div className="mt-4">
+                {section.embed.type === 'video' ? (
+                  <div className="aspect-video rounded-lg overflow-hidden">
+                    <iframe
+                      src={section.embed.url}
+                      className="w-full h-full"
+                      allowFullScreen
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    />
+                  </div>
+                ) : (
+                  <a
+                    href={section.embed.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <MapPin className="w-4 h-4" />
+                    View {section.embed.type === 'map' ? 'Map' : 'Form'}
+                  </a>
+                )}
+              </div>
             ) : null}
           </section>
         ))}

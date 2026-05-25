@@ -1,12 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   shouldResetApprovalOnEdit,
   canPublishFromWorkflowStatus,
   buildSubmittedApprovalSummary,
   buildApprovedApprovalSummary,
-  buildRejectedApprovalSummary,
+  ensureCanApprove,
+  ensureCanReject,
 } from './contentApproval';
-import { NewsStatus, EventStatus } from '../types';
+import { ContentOwnerType, NewsStatus, EventStatus, Permission, UserRole } from '../types';
+import * as orgScope from './organizationScope';
+
+const makeGlobalApprover = (permission: Permission) => ({
+  userId: 'admin-1',
+  email: 'admin@test.com',
+  role: UserRole.FULL_ADMIN,
+  permissions: [permission],
+  isActive: true,
+});
+
+const makeNoPermissionUser = () => ({
+  userId: 'user-1',
+  email: 'user@test.com',
+  role: UserRole.SUPPORT,
+  permissions: [],
+  isActive: true,
+});
+
+const makeScopedOnlyUser = () => ({
+  userId: 'scoped-1',
+  email: 'scoped@test.com',
+  role: UserRole.SUPPORT,
+  permissions: [],
+  isActive: true,
+});
 
 describe('shouldResetApprovalOnEdit', () => {
   it('returns true for pending approval status', () => {
@@ -100,13 +126,85 @@ describe('buildApprovedApprovalSummary', () => {
   });
 });
 
-describe('buildRejectedApprovalSummary', () => {
-  it('creates a rejection summary with reason', () => {
-    const existing = { submittedAt: new Date('2024-01-01'), submittedBy: 'user-1' };
-    const summary = buildRejectedApprovalSummary('admin-1', 'Not good enough', existing as any);
-    expect(summary.rejectedBy).toBe('admin-1');
-    expect(summary.rejectedAt).toBeInstanceOf(Date);
-    expect(summary.rejectionReason).toBe('Not good enough');
-    expect(summary.approvedAt).toBeUndefined();
+describe('ensureCanApprove', () => {
+  it('allows global APPROVE_CONTENT permission', () => {
+    const user = makeGlobalApprover(Permission.APPROVE_CONTENT);
+    expect(() => ensureCanApprove(user, ContentOwnerType.SYSTEM, null)).not.toThrow();
+  });
+
+  it('allows global APPROVE_CONTENT for org-owned content', () => {
+    const user = makeGlobalApprover(Permission.APPROVE_CONTENT);
+    expect(() => ensureCanApprove(user, ContentOwnerType.ORGANIZATION, 'org-1')).not.toThrow();
+  });
+
+  it('allows scoped APPROVE_CONTENT for matching org', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(true);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanApprove(user, ContentOwnerType.ORGANIZATION, 'org-1')).not.toThrow();
+    vi.restoreAllMocks();
+  });
+
+  it('denies scoped APPROVE_CONTENT for non-matching org', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(false);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanApprove(user, ContentOwnerType.ORGANIZATION, 'org-2')).toThrow('You do not have permission to approve this content');
+    vi.restoreAllMocks();
+  });
+
+  it('denies user without any APPROVE_CONTENT permission', () => {
+    const user = makeNoPermissionUser();
+    expect(() => ensureCanApprove(user, ContentOwnerType.SYSTEM, null)).toThrow('You do not have permission to approve this content');
+  });
+
+  it('denies scoped user for system-owned content (no org scope)', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(false);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanApprove(user, ContentOwnerType.SYSTEM, null)).toThrow();
+    vi.restoreAllMocks();
+  });
+
+  it('denies scoped user when organizationId is null for org content', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(false);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanApprove(user, ContentOwnerType.ORGANIZATION, null)).toThrow();
+    vi.restoreAllMocks();
+  });
+});
+
+describe('ensureCanReject', () => {
+  it('allows global REJECT_CONTENT permission', () => {
+    const user = makeGlobalApprover(Permission.REJECT_CONTENT);
+    expect(() => ensureCanReject(user, ContentOwnerType.SYSTEM, null)).not.toThrow();
+  });
+
+  it('allows global REJECT_CONTENT for org-owned content', () => {
+    const user = makeGlobalApprover(Permission.REJECT_CONTENT);
+    expect(() => ensureCanReject(user, ContentOwnerType.ORGANIZATION, 'org-1')).not.toThrow();
+  });
+
+  it('allows scoped REJECT_CONTENT for matching org', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(true);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanReject(user, ContentOwnerType.ORGANIZATION, 'org-1')).not.toThrow();
+    vi.restoreAllMocks();
+  });
+
+  it('denies scoped REJECT_CONTENT for non-matching org', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(false);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanReject(user, ContentOwnerType.ORGANIZATION, 'org-2')).toThrow('You do not have permission to reject this content');
+    vi.restoreAllMocks();
+  });
+
+  it('denies user without any REJECT_CONTENT permission', () => {
+    const user = makeNoPermissionUser();
+    expect(() => ensureCanReject(user, ContentOwnerType.SYSTEM, null)).toThrow('You do not have permission to reject this content');
+  });
+
+  it('denies scoped user for system-owned content', () => {
+    vi.spyOn(orgScope, 'hasScopedOrganizationPermissionForUser').mockReturnValue(false);
+    const user = makeScopedOnlyUser();
+    expect(() => ensureCanReject(user, ContentOwnerType.SYSTEM, null)).toThrow();
+    vi.restoreAllMocks();
   });
 });

@@ -56,6 +56,7 @@ const MODULE_KEYS: AdminModuleKey[] = [
   'faq',
   'logs',
   'processes',
+  'approvals',
 ];
 
 const unique = <T,>(values: T[]) => Array.from(new Set(values));
@@ -273,6 +274,12 @@ export const usePermissions = () => {
     canAccessEventsModule: () => hasVisibleAdminModule('events'),
     canAccessLogsModule: () => hasVisibleAdminModule('logs'),
     canAccessProcessesModule: () => hasVisibleAdminModule('processes'),
+    canAccessApprovalsModule: () =>
+      hasVisibleAdminModule('approvals') ||
+      hasPermission(Permission.APPROVE_CONTENT) ||
+      hasPermission(Permission.REJECT_CONTENT) ||
+      hasAnyScopedPermission(Permission.APPROVE_CONTENT) ||
+      hasAnyScopedPermission(Permission.REJECT_CONTENT),
     canCreateAnnouncement: () => hasPermission(Permission.CREATE_ANNOUNCEMENT),
     canPublishAnnouncement: () => hasPermission(Permission.PUBLISH_ANNOUNCEMENT),
     canArchiveAnnouncement: () => hasPermission(Permission.ARCHIVE_ANNOUNCEMENT),

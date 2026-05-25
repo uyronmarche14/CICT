@@ -5,12 +5,43 @@ import {
   buildRejectedApprovalSummary,
   buildSubmittedApprovalSummary,
   canPublishFromWorkflowStatus,
-  ensureFullAdminApprover,
+  ensureCanApprove,
+  ensureCanReject,
   type ApprovalContentType,
   recordContentApprovalAction,
   type WorkflowStatus,
 } from '../utils/contentApproval';
 import { ensureCanManageOwnedContent } from '../utils/organizationScope';
+
+const buildPublishedApprovalSummary = (userId: string, existing?: IApprovalSummary): IApprovalSummary => ({
+  ...(existing ? {
+    submittedAt: existing.submittedAt,
+    submittedBy: existing.submittedBy,
+    approvedAt: existing.approvedAt,
+    approvedBy: existing.approvedBy,
+    rejectedAt: existing.rejectedAt,
+    rejectedBy: existing.rejectedBy,
+    rejectionReason: existing.rejectionReason,
+  } : {}),
+  publishedAt: new Date(),
+  publishedBy: userId,
+});
+
+const buildArchivedApprovalSummary = (userId: string, existing?: IApprovalSummary): IApprovalSummary => ({
+  ...(existing ? {
+    submittedAt: existing.submittedAt,
+    submittedBy: existing.submittedBy,
+    approvedAt: existing.approvedAt,
+    approvedBy: existing.approvedBy,
+    rejectedAt: existing.rejectedAt,
+    rejectedBy: existing.rejectedBy,
+    rejectionReason: existing.rejectionReason,
+    publishedAt: existing.publishedAt,
+    publishedBy: existing.publishedBy,
+  } : {}),
+  archivedAt: new Date(),
+  archivedBy: userId,
+});
 
 type ContentDocument = {
   _id: { toString(): string };
@@ -73,13 +104,19 @@ export async function approve(
   contentType: ApprovalContentType,
   pendingStatus: string,
   approvedStatus: string,
-  comment?: string
+  comment?: string,
+  ownerType?: ContentOwnerType,
+  organizationId?: string | null
 ): Promise<ContentDocument> {
   if (!item) {
     throw new AppError(`${contentType} not found`, 404);
   }
 
-  ensureFullAdminApprover(user);
+  if (!user) {
+    throw new AppError('User not authenticated', 401);
+  }
+
+  ensureCanApprove(user, ownerType ?? item.ownerType, organizationId ?? item.organizationId);
 
   if (item.status !== pendingStatus) {
     throw new AppError(`Only pending approval ${contentType} can be approved`, 400);
@@ -87,13 +124,13 @@ export async function approve(
 
   const fromStatus = item.status;
   item.status = approvedStatus;
-  item.approvalSummary = buildApprovedApprovalSummary(user!.userId, item.approvalSummary);
+  item.approvalSummary = buildApprovedApprovalSummary(user.userId, item.approvalSummary);
   await item.save();
 
   await recordContentApprovalAction({
     contentType,
     contentId: id,
-    actorUserId: user!.userId,
+    actorUserId: user.userId,
     action: 'approved',
     fromStatus: fromStatus as WorkflowStatus,
     toStatus: item.status as WorkflowStatus,
@@ -111,13 +148,19 @@ export async function reject(
   pendingStatus: string,
   rejectedStatus: string,
   reason: string,
-  comment?: string
+  comment?: string,
+  ownerType?: ContentOwnerType,
+  organizationId?: string | null
 ): Promise<ContentDocument> {
   if (!item) {
     throw new AppError(`${contentType} not found`, 404);
   }
 
-  ensureFullAdminApprover(user);
+  if (!user) {
+    throw new AppError('User not authenticated', 401);
+  }
+
+  ensureCanReject(user, ownerType ?? item.ownerType, organizationId ?? item.organizationId);
 
   if (item.status !== pendingStatus) {
     throw new AppError(`Only pending approval ${contentType} can be rejected`, 400);
@@ -129,13 +172,13 @@ export async function reject(
 
   const fromStatus = item.status;
   item.status = rejectedStatus;
-  item.approvalSummary = buildRejectedApprovalSummary(user!.userId, reason, item.approvalSummary);
+  item.approvalSummary = buildRejectedApprovalSummary(user.userId, reason, item.approvalSummary);
   await item.save();
 
   await recordContentApprovalAction({
     contentType,
     contentId: id,
-    actorUserId: user!.userId,
+    actorUserId: user.userId,
     action: 'rejected',
     fromStatus: fromStatus as WorkflowStatus,
     toStatus: item.status as WorkflowStatus,
@@ -174,6 +217,7 @@ export async function publish(
   item.status = statusPublished;
   item.publishedAt = new Date();
   item.archivedAt = undefined;
+  item.approvalSummary = buildPublishedApprovalSummary(user!.userId, item.approvalSummary);
 
   if (onBeforeSave) {
     await onBeforeSave(item);
@@ -221,6 +265,7 @@ export async function archive(
   const fromStatus = item.status;
   item.status = archivedStatus;
   item.archivedAt = new Date();
+  item.approvalSummary = buildArchivedApprovalSummary(user!.userId, item.approvalSummary);
 
   if (onBeforeSave) {
     await onBeforeSave(item);

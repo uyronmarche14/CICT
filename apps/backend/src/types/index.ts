@@ -60,11 +60,60 @@ export interface IMediaAsset {
   sortOrder?: number;
 }
 
+export interface ISpeakerItem {
+  name: string;
+  title?: string;
+  organization?: string;
+  photo?: IMediaAsset;
+}
+
+export interface IAttachmentItem {
+  label: string;
+  url: string;
+  fileType?: string;
+  fileSize?: number;
+}
+
+export interface IVenueDetails {
+  name?: string;
+  address?: string;
+  room?: string;
+  capacity?: number;
+  accessibility?: string;
+}
+
+export interface IOfficerItem {
+  position: string;
+  name: string;
+  photo?: IMediaAsset;
+}
+
+export interface IAwardItem {
+  title: string;
+  recipient: string;
+  category?: string;
+  description?: string;
+}
+
+export interface IReferenceLink {
+  label: string;
+  url: string;
+}
+
 export interface IContentSection {
   heading: string;
   style: 'default' | 'callout' | 'checklist';
   bodyHtml?: string;
   items?: string[];
+  image?: IMediaAsset;
+  link?: {
+    url: string;
+    label: string;
+  };
+  embed?: {
+    type: 'video' | 'map' | 'form';
+    url: string;
+  };
 }
 
 export interface IEventScheduleItem {
@@ -93,6 +142,21 @@ export interface INews extends Document {
   sections: IContentSection[];
   imageUrl?: string;
   imageId?: string; // Cloudinary public ID
+  category?: string;
+  featured?: boolean;
+  pinned?: boolean;
+  sourceUrl?: string;
+  referenceLinks?: IReferenceLink[];
+  attachmentItems?: IAttachmentItem[];
+  readingTime?: number;
+  authorDisplayName?: string;
+  authorRole?: string;
+  associatedEventId?: string;
+  associatedOrganizationId?: string;
+  spotlightLabel?: string;
+  seoDescription?: string;
+  canonicalSlug?: string;
+  relatedArticleIds?: string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -120,6 +184,21 @@ export interface IAnnouncement extends Document {
   sections: IContentSection[];
   imageUrl?: string;
   imageId?: string; // Cloudinary public ID
+  subtype?: string;
+  effectiveDate?: Date;
+  termStart?: Date;
+  termEnd?: Date;
+  relatedOrganizationId?: string;
+  relatedEventId?: string;
+  approvalSource?: string;
+  contactName?: string;
+  contactEmail?: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  officerItems?: IOfficerItem[];
+  outgoingOfficerItems?: IOfficerItem[];
+  awardItems?: IAwardItem[];
+  attachmentItems?: IAttachmentItem[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -153,6 +232,10 @@ export interface IApprovalSummary {
   rejectedAt?: Date;
   rejectedBy?: string;
   rejectionReason?: string;
+  publishedAt?: Date;
+  publishedBy?: string;
+  archivedAt?: Date;
+  archivedBy?: string;
 }
 
 // Event Interface
@@ -190,6 +273,24 @@ export interface IEvent extends Document {
   targetSectionIds?: Array<string>;
   approvalSummary?: IApprovalSummary;
   processInstanceId?: string | null;
+  registrationUrl?: string;
+  registrationDeadline?: Date;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  hostOrganizationIds?: string[];
+  coHostOrganizationIds?: string[];
+  speakerItems?: ISpeakerItem[];
+  audience?: string;
+  eligibility?: string;
+  feeLabel?: string;
+  certificateInfo?: string;
+  venueDetails?: IVenueDetails;
+  mapUrl?: string;
+  meetingUrl?: string;
+  requirements?: string;
+  attachmentItems?: IAttachmentItem[];
+  posterCaption?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -445,6 +546,8 @@ export interface IContentApprovalAction extends Document {
     | 'rejected'
     | 'published'
     | 'archived'
+    | 'cancelled'
+    | 'completed'
     | 'returned_to_draft';
   actorUserId: Types.ObjectId | IUser | string;
   reason?: string;

@@ -1,78 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import { ContentOwnerType, INews, NewsStatus } from '../types';
-
-const mediaAssetSchema = new Schema(
-  {
-    imageUrl: {
-      type: String,
-      required: true,
-      trim: true,
-    },
-    imageId: {
-      type: String,
-      trim: true,
-    },
-    assetFingerprint: {
-      type: String,
-      trim: true,
-    },
-    alt: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [200, 'Alt text cannot exceed 200 characters'],
-    },
-    caption: {
-      type: String,
-      trim: true,
-      maxlength: [300, 'Caption cannot exceed 300 characters'],
-    },
-    sortOrder: {
-      type: Number,
-      default: 0,
-    },
-  },
-  { _id: false }
-);
-
-const contentSectionSchema = new Schema(
-  {
-    heading: {
-      type: String,
-      required: true,
-      trim: true,
-      maxlength: [120, 'Section heading cannot exceed 120 characters'],
-    },
-    style: {
-      type: String,
-      enum: ['default', 'callout', 'checklist'],
-      default: 'default',
-    },
-    bodyHtml: {
-      type: String,
-      trim: true,
-      default: '',
-    },
-    items: {
-      type: [String],
-      default: [],
-    },
-  },
-  { _id: false }
-);
-
-const approvalSummarySchema = new Schema(
-  {
-    submittedAt: Date,
-    submittedBy: String,
-    approvedAt: Date,
-    approvedBy: String,
-    rejectedAt: Date,
-    rejectedBy: String,
-    rejectionReason: String,
-  },
-  { _id: false }
-);
+import { mediaAssetSchema, contentSectionSchema, approvalSummarySchema } from './schemas/shared';
 
 const newsSchema = new Schema<INews>(
   {
@@ -153,6 +81,73 @@ const newsSchema = new Schema<INews>(
     imageId: {
       type: String,
     },
+    category: {
+      type: String,
+      trim: true,
+    },
+    featured: {
+      type: Boolean,
+      default: false,
+    },
+    pinned: {
+      type: Boolean,
+      default: false,
+    },
+    sourceUrl: {
+      type: String,
+    },
+    referenceLinks: {
+      type: [new Schema(
+        { label: { type: String }, url: { type: String } },
+        { _id: false }
+      )],
+      default: [],
+    },
+    attachmentItems: {
+      type: [new Schema(
+        {
+          label: { type: String, required: true },
+          url: { type: String, required: true },
+          fileType: { type: String },
+          fileSize: { type: Number },
+        },
+        { _id: false }
+      )],
+      default: [],
+    },
+    readingTime: {
+      type: Number,
+      min: 0,
+    },
+    authorDisplayName: {
+      type: String,
+      trim: true,
+    },
+    authorRole: {
+      type: String,
+      trim: true,
+    },
+    associatedEventId: {
+      type: String,
+    },
+    associatedOrganizationId: {
+      type: String,
+    },
+    spotlightLabel: {
+      type: String,
+      trim: true,
+    },
+    seoDescription: {
+      type: String,
+    },
+    canonicalSlug: {
+      type: String,
+      trim: true,
+    },
+    relatedArticleIds: {
+      type: [String],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -164,6 +159,9 @@ newsSchema.index({ status: 1, publishedAt: -1 });
 newsSchema.index({ author: 1 });
 newsSchema.index({ tags: 1 });
 newsSchema.index({ ownerType: 1, organizationId: 1 });
+
+// Index for approval queue queries
+newsSchema.index({ status: 1, createdAt: -1 });
 
 // Auto-set publishedAt when status changes to published
 newsSchema.pre('validate', function () {

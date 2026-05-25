@@ -23,6 +23,7 @@ import studentAuthRoutes from "./routes/student-auth.routes";
 import studentRoutes from "./routes/student.routes";
 import adminEventRoutes from "./routes/admin-event.routes";
 import pushTokenRoutes from "./routes/pushToken.routes";
+import approvalRoutes from "./routes/approval.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -136,6 +137,7 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/student/auth", studentAuthRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/student", pushTokenRoutes);
+app.use("/api/admin/approvals", approvalRoutes);
 
 // 404 handler
 app.use(notFound);

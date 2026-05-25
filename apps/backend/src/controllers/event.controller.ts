@@ -11,6 +11,8 @@ import {
   normalizeMediaAsset,
   normalizeSchedule,
   normalizeSections,
+  normalizeSpeakerItems,
+  normalizeAttachmentItems,
 } from '../utils/content';
 import {
   canReassignOwnership,
@@ -43,6 +45,24 @@ const EVENT_EDITABLE_FIELDS = [
   'imageUrl',
   'imageId',
   'isRegistrationOpen',
+  'registrationUrl',
+  'registrationDeadline',
+  'contactName',
+  'contactEmail',
+  'contactPhone',
+  'hostOrganizationIds',
+  'coHostOrganizationIds',
+  'speakerItems',
+  'audience',
+  'eligibility',
+  'feeLabel',
+  'certificateInfo',
+  'venueDetails',
+  'mapUrl',
+  'meetingUrl',
+  'requirements',
+  'attachmentItems',
+  'posterCaption',
 ] as const;
 
 const parseEventDateInput = (value: unknown, fieldLabel: string): Date => {
@@ -89,6 +109,24 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     gallery,
     sections,
     schedule,
+    registrationUrl,
+    registrationDeadline,
+    contactName,
+    contactEmail,
+    contactPhone,
+    hostOrganizationIds,
+    coHostOrganizationIds,
+    speakerItems,
+    audience,
+    eligibility,
+    feeLabel,
+    certificateInfo,
+    venueDetails,
+    mapUrl,
+    meetingUrl,
+    requirements,
+    attachmentItems,
+    posterCaption,
   } = req.body;
   const ownership = resolveOwnershipInput(req.body);
   await validateOwnershipPair(ownership.ownerType, ownership.organizationId);
@@ -130,6 +168,24 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     imageId,
     status: EventStatus.DRAFT,
     isRegistrationOpen: isRegistrationOpen ?? false,
+    registrationUrl,
+    registrationDeadline,
+    contactName,
+    contactEmail,
+    contactPhone,
+    hostOrganizationIds: hostOrganizationIds || [],
+    coHostOrganizationIds: coHostOrganizationIds || [],
+    speakerItems: normalizeSpeakerItems(speakerItems),
+    audience,
+    eligibility,
+    feeLabel,
+    certificateInfo,
+    venueDetails,
+    mapUrl,
+    meetingUrl,
+    requirements,
+    attachmentItems: normalizeAttachmentItems(attachmentItems),
+    posterCaption,
   });
 
   logger.info(`Event created: ${event._id} by user ${req.user.userId}`);
@@ -366,6 +422,14 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
 
   if (req.body.schedule !== undefined) {
     updates.schedule = normalizeSchedule(req.body.schedule);
+  }
+
+  if (req.body.speakerItems !== undefined) {
+    updates.speakerItems = normalizeSpeakerItems(req.body.speakerItems);
+  }
+
+  if (req.body.attachmentItems !== undefined) {
+    updates.attachmentItems = normalizeAttachmentItems(req.body.attachmentItems);
   }
 
   (updates as Record<string, unknown>).ownerType = nextOwnership.ownerType;

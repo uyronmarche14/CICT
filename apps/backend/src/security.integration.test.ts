@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import ActivityLog from './models/ActivityLog';
 import Announcement from './models/Announcement';
+import ContentApprovalAction from './models/ContentApprovalAction';
 import Event from './models/Event';
 import FAQContent from './models/FAQContent';
 import News from './models/News';
@@ -176,6 +177,7 @@ describe('Security-first MVP regression suite', () => {
     await Promise.all([
       ActivityLog.deleteMany({}),
       Announcement.deleteMany({}),
+      ContentApprovalAction.deleteMany({}),
       Event.deleteMany({}),
       FAQContent.deleteMany({}),
       News.deleteMany({}),
@@ -1191,5 +1193,293 @@ describe('Security-first MVP regression suite', () => {
     expect(sameFingerprintA).toBe(sameFingerprintB);
     expect(differentFingerprint).not.toBe(sameFingerprintA);
     expect(sameFingerprintA).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  describe('Approval API', () => {
+    describe('GET /api/admin/approvals/pending', () => {
+      it('returns empty pending list for global approver', async () => {
+        const { token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data.items).toEqual([]);
+      });
+
+      it('returns pending events for global approver', async () => {
+        const { user, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        await Event.create({
+          title: 'Pending Event',
+          description: 'Desc',
+          excerpt: 'Excerpt',
+          organizer: user._id,
+          startDate: new Date(),
+          endDate: new Date(),
+          location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL,
+          author: user._id,
+          ownerType: 'system',
+          attendees: [],
+          tags: [],
+          isRegistrationOpen: false,
+        });
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.items).toHaveLength(1);
+        expect(res.body.data.items[0].title).toBe('Pending Event');
+        expect(res.body.data.items[0].contentType).toBe('event');
+      });
+
+      it('returns pending items across all content types', async () => {
+        const { user, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        await News.create({
+          title: 'Pending News', content: 'Content', excerpt: 'Excerpt',
+          status: NewsStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system', tags: [],
+        });
+        await Announcement.create({
+          title: 'Pending Announcement', content: 'Content',
+          priority: AnnouncementPriority.MEDIUM, type: AnnouncementType.GENERAL,
+          status: NewsStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system', tags: [],
+          isActive: true, targetAudience: ['all'],
+        });
+        await Event.create({
+          title: 'Pending Event', description: 'Desc', excerpt: 'Excerpt',
+          organizer: user._id, startDate: new Date(), endDate: new Date(), location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system',
+          attendees: [], tags: [], isRegistrationOpen: false,
+        });
+
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.items).toHaveLength(3);
+        const types = res.body.data.items.map((i: any) => i.contentType).sort();
+        expect(types).toEqual(['announcement', 'event', 'news']);
+      });
+
+      it('filters by type query param', async () => {
+        const { user, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        await News.create({
+          title: 'Pending News', content: 'Content', excerpt: 'Excerpt',
+          status: NewsStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system', tags: [],
+        });
+        await Event.create({
+          title: 'Pending Event', description: 'Desc', excerpt: 'Excerpt',
+          organizer: user._id, startDate: new Date(), endDate: new Date(), location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system',
+          attendees: [], tags: [], isRegistrationOpen: false,
+        });
+        const res = await request(app)
+          .get('/api/admin/approvals/pending?type=events')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.items).toHaveLength(1);
+        expect(res.body.data.items[0].contentType).toBe('event');
+      });
+
+      it('returns 403 for user without approve/reject permission', async () => {
+        const { token } = await createSystemUser({ role: UserRole.SUPPORT });
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(token));
+        expect(res.status).toBe(403);
+      });
+
+      it('respects scoped permissions for org content', async () => {
+        const { user: fullAdmin } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const org = await Organization.create({
+          id: 'test-org', name: 'Test Org', fullName: 'Test Organization',
+          description: 'Test', longDescription: 'Test organization',
+          logo: '/logo.png', banner: '/banner.png', established: '2020',
+          mission: 'Test', vision: 'Test', values: [], achievements: [], members: [],
+          color: { primary: '#111', secondary: '#222', accent: '#333' },
+        });
+        const scopedUser = await createScopedUser(
+          [Permission.APPROVE_CONTENT, Permission.VIEW_EVENT],
+          org._id.toString(),
+          fullAdmin
+        );
+
+        await Event.create({
+          title: 'Org Pending Event',
+          description: 'Desc',
+          excerpt: 'Excerpt',
+          organizer: fullAdmin._id,
+          startDate: new Date(),
+          endDate: new Date(),
+          location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL,
+          author: fullAdmin._id,
+          ownerType: 'organization',
+          organizationId: org._id.toString(),
+          organizationName: 'Test Org',
+          attendees: [],
+          tags: [],
+          isRegistrationOpen: false,
+        });
+
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(scopedUser.token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.items).toHaveLength(1);
+        expect(res.body.data.items[0].title).toBe('Org Pending Event');
+      });
+
+      it('excludes org content outside scoped users permissions', async () => {
+        const { user: fullAdmin } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const org1 = await Organization.create({
+          id: 'org-1', name: 'Org 1', fullName: 'Organization 1',
+          description: 'Test 1', longDescription: 'Org 1 description',
+          logo: '/logo1.png', banner: '/banner1.png', established: '2020',
+          mission: 'Test 1', vision: 'Test 1', values: [], achievements: [], members: [],
+          color: { primary: '#111', secondary: '#222', accent: '#333' },
+        });
+        const org2 = await Organization.create({
+          id: 'org-2', name: 'Org 2', fullName: 'Organization 2',
+          description: 'Test 2', longDescription: 'Org 2 description',
+          logo: '/logo2.png', banner: '/banner2.png', established: '2021',
+          mission: 'Test 2', vision: 'Test 2', values: [], achievements: [], members: [],
+          color: { primary: '#aaa', secondary: '#bbb', accent: '#ccc' },
+        });
+        const scopedUser = await createScopedUser(
+          [Permission.APPROVE_CONTENT, Permission.VIEW_EVENT],
+          org1._id.toString(),
+          fullAdmin
+        );
+
+        await Event.create({
+          title: 'Org1 Event', description: 'Desc', excerpt: 'Excerpt',
+          organizer: fullAdmin._id, startDate: new Date(), endDate: new Date(), location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL,
+          author: fullAdmin._id, ownerType: 'organization',
+          organizationId: org1._id.toString(), attendees: [], tags: [], isRegistrationOpen: false,
+        });
+        await Event.create({
+          title: 'Org2 Event', description: 'Desc', excerpt: 'Excerpt',
+          organizer: fullAdmin._id, startDate: new Date(), endDate: new Date(), location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL,
+          author: fullAdmin._id, ownerType: 'organization',
+          organizationId: org2._id.toString(), attendees: [], tags: [], isRegistrationOpen: false,
+        });
+
+        const res = await request(app)
+          .get('/api/admin/approvals/pending')
+          .set(authHeader(scopedUser.token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.items).toHaveLength(1);
+        expect(res.body.data.items[0].title).toBe('Org1 Event');
+      });
+    });
+
+    describe('GET /api/admin/approvals/stats', () => {
+      it('returns zero stats when nothing is pending', async () => {
+        const { token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const res = await request(app)
+          .get('/api/admin/approvals/stats')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.pending).toBe(0);
+        expect(res.body.data.byType).toEqual({ events: 0, news: 0, announcements: 0 });
+      });
+
+      it('returns correct pending counts', async () => {
+        const { user, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        await News.create({
+          title: 'News', content: 'C', excerpt: 'E',
+          status: NewsStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system', tags: [],
+        });
+        await News.create({
+          title: 'News 2', content: 'C', excerpt: 'E',
+          status: NewsStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system', tags: [],
+        });
+        await Event.create({
+          title: 'Event', description: 'D', excerpt: 'E',
+          organizer: user._id, startDate: new Date(), endDate: new Date(), location: 'Hall',
+          status: EventStatus.PENDING_APPROVAL, author: user._id, ownerType: 'system',
+          attendees: [], tags: [], isRegistrationOpen: false,
+        });
+
+        const res = await request(app)
+          .get('/api/admin/approvals/stats')
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.pending).toBe(3);
+        expect(res.body.data.byType.news).toBe(2);
+        expect(res.body.data.byType.events).toBe(1);
+      });
+
+      it('returns 403 for user without permissions', async () => {
+        const { token } = await createSystemUser({ role: UserRole.SUPPORT });
+        const res = await request(app)
+          .get('/api/admin/approvals/stats')
+          .set(authHeader(token));
+        expect(res.status).toBe(403);
+      });
+    });
+
+    describe('GET /api/admin/approvals/history/:contentType/:contentId', () => {
+      it('returns empty history for content with no actions', async () => {
+        const { token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const res = await request(app)
+          .get(`/api/admin/approvals/history/news/${new mongoose.Types.ObjectId()}`)
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.actions).toEqual([]);
+      });
+
+      it('returns approval actions in reverse chron order', async () => {
+        const { user, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const contentId = new mongoose.Types.ObjectId().toString();
+        await ContentApprovalAction.create({
+          contentType: 'news',
+          contentId,
+          action: 'submitted',
+          actorUserId: user._id,
+          fromStatus: 'DRAFT',
+          toStatus: 'PENDING_APPROVAL',
+        });
+        await ContentApprovalAction.create({
+          contentType: 'news',
+          contentId,
+          action: 'approved',
+          actorUserId: user._id,
+          fromStatus: 'PENDING_APPROVAL',
+          toStatus: 'APPROVED',
+        });
+
+        const res = await request(app)
+          .get(`/api/admin/approvals/history/news/${contentId}`)
+          .set(authHeader(token));
+        expect(res.status).toBe(200);
+        expect(res.body.data.actions).toHaveLength(2);
+        expect(res.body.data.actions[0].action).toBe('approved');
+        expect(res.body.data.actions[1].action).toBe('submitted');
+      });
+
+      it('returns 400 for invalid content type', async () => {
+        const { token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const res = await request(app)
+          .get(`/api/admin/approvals/history/invalid/${new mongoose.Types.ObjectId()}`)
+          .set(authHeader(token));
+        expect(res.status).toBe(400);
+      });
+
+      it('allows VIEW_LOGS permission', async () => {
+        const { user: fullAdmin } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+        const viewer = await createPermissionedUser(
+          [Permission.VIEW_LOGS, Permission.VIEW_NEWS],
+          fullAdmin
+        );
+        const res = await request(app)
+          .get(`/api/admin/approvals/history/news/${new mongoose.Types.ObjectId()}`)
+          .set(authHeader(viewer.token));
+        expect(res.status).toBe(200);
+      });
+    });
   });
 });
