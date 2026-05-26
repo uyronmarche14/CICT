@@ -32,6 +32,7 @@ import { ApprovalTimeline } from '@/components/admin/ApprovalTimeline';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { useApprovalHistory } from '@/hooks/use-approval-queue';
 import { AnnouncementForm } from '@/components/admin/AnnouncementForm';
+import { getContentStatusBadge, getPriorityBadge as getCentralPriorityBadge } from '@/utils/badge-helpers';
 
 export default function AdminAnnouncementDetailPage() {
   const params = useParams();
@@ -139,32 +140,7 @@ export default function AdminAnnouncementDetailPage() {
     (hasPermission(Permission.APPROVE_CONTENT) || hasAnyScopedPermission(Permission.APPROVE_CONTENT) ||
      hasPermission(Permission.REJECT_CONTENT) || hasAnyScopedPermission(Permission.REJECT_CONTENT));
 
-  const getStatusBadgeClass = (s: NewsStatus) => {
-    switch (s) {
-      case NewsStatus.APPROVED: return 'bg-blue-600';
-      case NewsStatus.REJECTED: return 'bg-red-600';
-      case NewsStatus.PENDING_APPROVAL: return 'bg-amber-500';
-      case NewsStatus.PUBLISHED: return '';
-      case NewsStatus.DRAFT: return 'bg-secondary';
-      case NewsStatus.ARCHIVED: return 'bg-gray-500';
-      default: return 'bg-secondary';
-    }
-  };
-
-  const getPriorityBadge = (priority: AnnouncementPriority) => {
-    switch (priority) {
-      case AnnouncementPriority.URGENT:
-        return <Badge variant="destructive">Urgent</Badge>;
-      case AnnouncementPriority.HIGH:
-        return <Badge className="bg-orange-500">High</Badge>;
-      case AnnouncementPriority.MEDIUM:
-        return <Badge className="bg-blue-500">Medium</Badge>;
-      case AnnouncementPriority.LOW:
-        return <Badge variant="secondary">Low</Badge>;
-      default:
-        return <Badge variant="secondary">{priority}</Badge>;
-    }
-  };
+  const getPriorityBadge = (priority: AnnouncementPriority) => getCentralPriorityBadge(priority);
 
   return (
     <div className="space-y-6">
@@ -191,9 +167,7 @@ export default function AdminAnnouncementDetailPage() {
                 {format(new Date(announcement.createdAt), 'MMM dd, yyyy h:mm a')}
               </p>
             </div>
-            <Badge className={getStatusBadgeClass(status)}>
-              {status.replace(/_/g, ' ')}
-            </Badge>
+            {getContentStatusBadge(status)}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -471,9 +445,7 @@ export default function AdminAnnouncementDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Status:</span>
-                  <Badge className={getStatusBadgeClass(status)}>
-                    {status.replace(/_/g, ' ')}
-                  </Badge>
+                  {getContentStatusBadge(status)}
                 </div>
 
                 <ApprovalTimeline

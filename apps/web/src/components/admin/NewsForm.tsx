@@ -479,7 +479,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-2">
                     <Switch id="featured" checked={featured} onCheckedChange={setFeatured} />
                     <FormLabel htmlFor="featured">Featured</FormLabel>
@@ -489,22 +489,24 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
                     <FormLabel htmlFor="pinned">Pinned</FormLabel>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <FormLabel>Source URL</FormLabel>
-                  <Input
-                    placeholder="https://..."
-                    value={sourceUrl}
-                    onChange={(e) => setSourceUrl(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Reading Time (minutes)</FormLabel>
-                  <Input
-                    type="number"
-                    placeholder="5"
-                    value={readingTime ?? ''}
-                    onChange={(e) => setReadingTime(e.target.value ? Number(e.target.value) : undefined)}
-                  />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Source URL</FormLabel>
+                    <Input
+                      placeholder="https://..."
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Reading Time (minutes)</FormLabel>
+                    <Input
+                      type="number"
+                      placeholder="5"
+                      value={readingTime ?? ''}
+                      onChange={(e) => setReadingTime(e.target.value ? Number(e.target.value) : undefined)}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <FormLabel>Spotlight Label</FormLabel>
@@ -521,22 +523,24 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
               <CardHeader>
                 <CardTitle>Author Info</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <FormLabel>Author Display Name</FormLabel>
-                  <Input
-                    placeholder="Override system author name"
-                    value={authorDisplayName}
-                    onChange={(e) => setAuthorDisplayName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Author Role / Title</FormLabel>
-                  <Input
-                    placeholder="e.g. Editor-in-Chief"
-                    value={authorRole}
-                    onChange={(e) => setAuthorRole(e.target.value)}
-                  />
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Author Display Name</FormLabel>
+                    <Input
+                      placeholder="Override system author name"
+                      value={authorDisplayName}
+                      onChange={(e) => setAuthorDisplayName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Author Role / Title</FormLabel>
+                    <Input
+                      placeholder="e.g. Editor-in-Chief"
+                      value={authorRole}
+                      onChange={(e) => setAuthorRole(e.target.value)}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -546,21 +550,23 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
                 <CardTitle>Related Content</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <FormLabel>Associated Event ID</FormLabel>
-                  <Input
-                    placeholder="Event ID"
-                    value={associatedEventId}
-                    onChange={(e) => setAssociatedEventId(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Associated Organization ID</FormLabel>
-                  <Input
-                    placeholder="Organization ID"
-                    value={associatedOrganizationId}
-                    onChange={(e) => setAssociatedOrganizationId(e.target.value)}
-                  />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Associated Event ID</FormLabel>
+                    <Input
+                      placeholder="Event ID"
+                      value={associatedEventId}
+                      onChange={(e) => setAssociatedEventId(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Associated Organization ID</FormLabel>
+                    <Input
+                      placeholder="Organization ID"
+                      value={associatedOrganizationId}
+                      onChange={(e) => setAssociatedOrganizationId(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <FormLabel>Related Article IDs</FormLabel>

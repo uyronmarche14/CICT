@@ -85,7 +85,7 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-card rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-3xl bg-card rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-2 hover:bg-muted rounded-full"

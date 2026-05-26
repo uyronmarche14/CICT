@@ -551,38 +551,40 @@ export function AnnouncementForm({
               <CardHeader>
                 <CardTitle>Classification</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <FormLabel>Subtype</FormLabel>
-                  <Input
-                    placeholder="leadership, recognition, general"
-                    value={subtype}
-                    onChange={(e) => setSubtype(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Effective Date</FormLabel>
-                  <Input
-                    type="datetime-local"
-                    value={effectiveDate}
-                    onChange={(e) => setEffectiveDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Term Start</FormLabel>
-                  <Input
-                    type="datetime-local"
-                    value={termStart}
-                    onChange={(e) => setTermStart(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Term End</FormLabel>
-                  <Input
-                    type="datetime-local"
-                    value={termEnd}
-                    onChange={(e) => setTermEnd(e.target.value)}
-                  />
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Subtype</FormLabel>
+                    <Input
+                      placeholder="leadership, recognition, general"
+                      value={subtype}
+                      onChange={(e) => setSubtype(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Effective Date</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={effectiveDate}
+                      onChange={(e) => setEffectiveDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Term Start</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={termStart}
+                      onChange={(e) => setTermStart(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Term End</FormLabel>
+                    <Input
+                      type="datetime-local"
+                      value={termEnd}
+                      onChange={(e) => setTermEnd(e.target.value)}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -591,7 +593,7 @@ export function AnnouncementForm({
               <CardHeader>
                 <CardTitle>Related Content</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-4">
+              <CardContent className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <FormLabel>Related Organization ID</FormLabel>
                   <Input
@@ -659,42 +661,46 @@ export function AnnouncementForm({
               <CardHeader>
                 <CardTitle>Officers & Awards</CardTitle>
               </CardHeader>
-              <CardContent className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <FormLabel>Incoming Officers</FormLabel>
-                  <Input
-                    placeholder="President|John Doe, VP|Jane Smith"
-                    value={officerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
-                    onChange={(e) => setOfficerItems(parseOfficerItems(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
+              <CardContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Incoming Officers</FormLabel>
+                    <Input
+                      placeholder="President|John Doe, VP|Jane Smith"
+                      value={officerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
+                      onChange={(e) => setOfficerItems(parseOfficerItems(e.target.value))}
+                    />
+                    <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Outgoing Officers</FormLabel>
+                    <Input
+                      placeholder="President|John Doe, VP|Jane Smith"
+                      value={outgoingOfficerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
+                      onChange={(e) => setOutgoingOfficerItems(parseOfficerItems(e.target.value))}
+                    />
+                    <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <FormLabel>Outgoing Officers</FormLabel>
-                  <Input
-                    placeholder="President|John Doe, VP|Jane Smith"
-                    value={outgoingOfficerItems.map((o) => `${o.position}|${o.name}`).join(', ')}
-                    onChange={(e) => setOutgoingOfficerItems(parseOfficerItems(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Format: position|name, position|name</p>
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Awards</FormLabel>
-                  <Input
-                    placeholder="Best Leader|John Doe, Dean's List|Jane Smith"
-                    value={awardItems.map((a) => `${a.title}|${a.recipient}`).join(', ')}
-                    onChange={(e) => setAwardItems(parseAwardItems(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Format: title|recipient, title|recipient</p>
-                </div>
-                <div className="space-y-2">
-                  <FormLabel>Attachments</FormLabel>
-                  <Input
-                    placeholder="Guidelines|https://..., Form|https://..."
-                    value={attachmentItems.map((a) => `${a.label}|${a.url}`).join(', ')}
-                    onChange={(e) => setAttachmentItems(parseAttachmentItems(e.target.value))}
-                  />
-                  <p className="text-xs text-muted-foreground">Format: label|url, label|url</p>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <FormLabel>Awards</FormLabel>
+                    <Input
+                      placeholder="Best Leader|John Doe, Dean's List|Jane Smith"
+                      value={awardItems.map((a) => `${a.title}|${a.recipient}`).join(', ')}
+                      onChange={(e) => setAwardItems(parseAwardItems(e.target.value))}
+                    />
+                    <p className="text-xs text-muted-foreground">Format: title|recipient, title|recipient</p>
+                  </div>
+                  <div className="space-y-2">
+                    <FormLabel>Attachments</FormLabel>
+                    <Input
+                      placeholder="Guidelines|https://..., Form|https://..."
+                      value={attachmentItems.map((a) => `${a.label}|${a.url}`).join(', ')}
+                      onChange={(e) => setAttachmentItems(parseAttachmentItems(e.target.value))}
+                    />
+                    <p className="text-xs text-muted-foreground">Format: label|url, label|url</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>

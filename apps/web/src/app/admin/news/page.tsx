@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Plus, Search, Trash, Edit, Eye, CheckCircle } from "lucide-react";
+import { MoreHorizontal, Plus, Search, Trash, Edit, Eye } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from 'date-fns';
@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { getContentStatusBadge, getFeatureBadge } from '@/utils/badge-helpers';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
@@ -199,24 +200,7 @@ export default function NewsPage() {
     }
   };
 
-  const getStatusBadge = (status: NewsStatus) => {
-    switch (status) {
-      case NewsStatus.PUBLISHED:
-        return <Badge className="bg-green-500">Published</Badge>;
-      case NewsStatus.DRAFT:
-        return <Badge variant="secondary">Draft</Badge>;
-      case NewsStatus.PENDING_APPROVAL:
-        return <Badge className="bg-amber-500">Pending Approval</Badge>;
-      case NewsStatus.APPROVED:
-        return <Badge className="bg-blue-600">Approved</Badge>;
-      case NewsStatus.REJECTED:
-        return <Badge className="bg-red-600">Rejected</Badge>;
-      case NewsStatus.ARCHIVED:
-        return <Badge variant="outline">Archived</Badge>;
-      default:
-        return <Badge>{status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: NewsStatus) => getContentStatusBadge(status);
 
   return (
     <div className="space-y-6">
@@ -238,7 +222,7 @@ export default function NewsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>All News</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -378,13 +362,7 @@ export default function NewsPage() {
                       </TableCell>
                       <TableCell>{item.category ? <Badge>{item.category}</Badge> : '—'}</TableCell>
                       <TableCell>
-                        {item.featured ? (
-                          <Badge className="bg-green-500">
-                            <CheckCircle className="mr-1 h-4 w-4" /> Featured
-                          </Badge>
-                        ) : (
-                          '—'
-                        )}
+                        {item.featured ? getFeatureBadge(true) : '—'}
                       </TableCell>
                       <TableCell>
                         {item.authorDisplayName

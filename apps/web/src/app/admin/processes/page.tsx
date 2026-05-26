@@ -2,7 +2,10 @@
 
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { FileText, PlayCircle, Plus, GitBranch } from 'lucide-react';
 
 export default function ProcessesPage() {
   const { canAccessProcessesModule } = usePermissions();
@@ -17,20 +20,59 @@ export default function ProcessesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Process</h1>
         <p className="text-muted-foreground">
-          Process templates and workflow instances will live here.
+          Manage process templates and workflow instances.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Phase 6 Scaffold</CardTitle>
-        </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          The process module backend data model is planned as a template-and-instance workflow system.
-          The visual ReactFlow builder is intentionally scaffolded separately so the current CMS can stay
-          stable while the workflow foundation is added in controlled phases.
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" />
+              Process Templates
+            </CardTitle>
+            <CardDescription>
+              Create and manage reusable workflow templates. Define nodes, edges, and
+              approval steps that can be instantiated into live processes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-3">
+            <Button asChild>
+              <Link href="/admin/processes/templates">
+                <GitBranch className="mr-2 h-4 w-4" />
+                View Templates
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/processes/templates/new">
+                <Plus className="mr-2 h-4 w-4" />
+                New Template
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlayCircle className="h-5 w-5" />
+              Process Instances
+            </CardTitle>
+            <CardDescription>
+              View and manage live process instances. Track progress, add comments,
+              complete requirements, and approve steps.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex gap-3">
+            <Button asChild>
+              <Link href="/admin/processes/instances">
+                <PlayCircle className="mr-2 h-4 w-4" />
+                View Instances
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

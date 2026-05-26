@@ -24,6 +24,7 @@ import { ApprovalTimeline } from '@/components/admin/ApprovalTimeline';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { useApprovalHistory } from '@/hooks/use-approval-queue';
 import { NewsForm } from '@/components/admin/NewsForm';
+import { getContentStatusBadge, getFeatureBadge } from '@/utils/badge-helpers';
 
 export default function AdminNewsDetailPage() {
   const params = useParams();
@@ -130,18 +131,6 @@ export default function AdminNewsDetailPage() {
     (hasPermission(Permission.APPROVE_CONTENT) || hasAnyScopedPermission(Permission.APPROVE_CONTENT) ||
      hasPermission(Permission.REJECT_CONTENT) || hasAnyScopedPermission(Permission.REJECT_CONTENT));
 
-  const getStatusBadgeClass = (status: NewsStatus) => {
-    switch (status) {
-      case NewsStatus.APPROVED: return 'bg-blue-600';
-      case NewsStatus.REJECTED: return 'bg-red-600';
-      case NewsStatus.PENDING_APPROVAL: return 'bg-amber-500';
-      case NewsStatus.PUBLISHED: return '';
-      case NewsStatus.DRAFT: return 'bg-secondary';
-      case NewsStatus.ARCHIVED: return 'bg-gray-500';
-      default: return 'bg-secondary';
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -163,9 +152,7 @@ export default function AdminNewsDetailPage() {
                 {news.updatedAt !== news.createdAt && ` · Updated ${format(new Date(news.updatedAt), 'MMM dd, yyyy')}`}
               </p>
             </div>
-            <Badge className={getStatusBadgeClass(news.status)}>
-              {news.status.replace(/_/g, ' ')}
-            </Badge>
+            {getContentStatusBadge(news.status)}
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -224,12 +211,7 @@ export default function AdminNewsDetailPage() {
                 {news.category && (
                   <Badge variant="outline">{news.category}</Badge>
                 )}
-                {news.featured && (
-                  <Badge className="bg-yellow-500">Featured</Badge>
-                )}
-                {news.pinned && (
-                  <Badge className="bg-purple-500">Pinned</Badge>
-                )}
+                {getFeatureBadge(news.featured, news.pinned)}
               </div>
               {news.spotlightLabel && (
                 <p className="text-sm"><span className="text-muted-foreground">Spotlight:</span> {news.spotlightLabel}</p>
@@ -341,9 +323,7 @@ export default function AdminNewsDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Status:</span>
-                  <Badge className={getStatusBadgeClass(news.status)}>
-                    {news.status.replace(/_/g, ' ')}
-                  </Badge>
+                  {getContentStatusBadge(news.status)}
                 </div>
 
                 <ApprovalTimeline

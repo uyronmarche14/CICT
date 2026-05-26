@@ -9,6 +9,7 @@ import { Loader2, ArrowLeft, MapPin, Mail, Globe, Users, Calendar, ExternalLink 
 import api from '@/lib/api/axios';
 import { Organization } from '@/types';
 import { format } from 'date-fns';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function PublicOrganizationPage() {
   const params = useParams();
@@ -51,6 +52,11 @@ export default function PublicOrganizationPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={org.fullName || org.name}
+        description={org.seoDescription || org.description || ''}
+        ogImage={org.logo}
+      />
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         <Button variant="ghost" onClick={() => router.back()} className="mb-6">
           <ArrowLeft className="w-4 h-4 mr-2" /> Back

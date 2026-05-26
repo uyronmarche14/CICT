@@ -28,6 +28,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 
 const emptyStudentForm: StudentMutationPayload = {
   studentNumber: '',
@@ -93,6 +99,7 @@ export default function StudentsPage() {
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [form, setForm] = useState<StudentMutationPayload>(emptyStudentForm);
   const [formLoading, setFormLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('directory');
 
   const filteredSections = useMemo(
     () =>
@@ -153,6 +160,7 @@ export default function StudentsPage() {
 
   const handleEdit = (student: Student) => {
     setEditingStudent(student);
+    setActiveTab('form');
     setForm({
       studentNumber: student.studentNumber,
       email: student.email ?? '',
@@ -231,11 +239,18 @@ export default function StudentsPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{editingStudent ? 'Edit Student' : 'Create Student'}</CardTitle>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="form">{editingStudent ? 'Edit Student' : 'Add Student'}</TabsTrigger>
+          <TabsTrigger value="directory">Student Directory</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="form" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>{editingStudent ? 'Edit Student' : 'Create Student'}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div className="space-y-2">
             <Label>Student Number</Label>
             <Input
@@ -490,14 +505,16 @@ export default function StudentsPage() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
 
+      <TabsContent value="directory" className="mt-6">
       <Card>
         <CardHeader>
           <CardTitle>Student Directory</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-            <Input placeholder="Search students..." value={search} onChange={(event) => setSearch(event.target.value)} />
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <Input placeholder="Search students..." value={search} onChange={(event) => setSearch(event.target.value)} className="w-[180px]" />
             <Select value={programFilter} onValueChange={setProgramFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Program" />
@@ -633,6 +650,8 @@ export default function StudentsPage() {
           </div>
         </CardContent>
       </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

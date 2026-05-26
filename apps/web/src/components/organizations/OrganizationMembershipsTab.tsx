@@ -24,6 +24,7 @@ import { appToast } from '@/lib/app-toast';
 import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-membership';
 import MembershipForm from './MembershipForm';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { getMembershipStatusBadge, getMemberTypeLabel as getCentralMemberTypeLabel } from '@/utils/badge-helpers';
 
 interface OrganizationMembershipsTabProps {
   orgId: string;
@@ -38,28 +39,11 @@ const TAB_FILTERS: { value: TabFilter; label: string }[] = [
 ];
 
 function getStatusBadge(status: string) {
-  const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-    active: { label: 'Active', variant: 'default' },
-    applied: { label: 'Applied', variant: 'secondary' },
-    invited: { label: 'Invited', variant: 'secondary' },
-    inactive: { label: 'Inactive', variant: 'outline' },
-    alumni: { label: 'Alumni', variant: 'outline' },
-    rejected: { label: 'Rejected', variant: 'destructive' },
-    resigned: { label: 'Resigned', variant: 'outline' },
-  };
-  const info = map[status] ?? { label: status, variant: 'outline' as const };
-  return <Badge variant={info.variant}>{info.label}</Badge>;
+  return getMembershipStatusBadge(status);
 }
 
 function getMemberTypeBadge(memberType: string) {
-  const map: Record<string, string> = {
-    officer: 'Officer',
-    general: 'General',
-    alumni: 'Alumni',
-    honorary: 'Honorary',
-    advisor: 'Advisor',
-  };
-  return map[memberType] ?? memberType;
+  return getCentralMemberTypeLabel(memberType);
 }
 
 function getStudentInitials(membership: OrganizationMembership): string {

@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { getEventStatusBadge, getRegistrationBadge } from '@/utils/badge-helpers';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 
@@ -151,22 +152,7 @@ export default function AdminEventsPage() {
     }
   };
 
-  const getStatusBadge = (status: Event['status']) => {
-    switch (status) {
-      case 'published':
-        return <Badge>Published</Badge>;
-      case 'draft':
-        return <Badge variant="secondary">Draft</Badge>;
-      case 'pending_approval':
-        return <Badge className="bg-amber-500">Pending Approval</Badge>;
-      case 'approved':
-        return <Badge className="bg-blue-600">Approved</Badge>;
-      case 'rejected':
-        return <Badge className="bg-red-600">Rejected</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  const getStatusBadge = (status: Event['status']) => getEventStatusBadge(status);
 
   const allEvents = data?.data.events || [];
   const filteredEvents = allEvents.filter((event) => {
@@ -213,7 +199,7 @@ export default function AdminEventsPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <CardTitle>All Events</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <Select
                 value={ownerTypeFilter}
                 onValueChange={(value: 'all' | ContentOwnerType) => setOwnerTypeFilter(value)}
@@ -355,11 +341,7 @@ export default function AdminEventsPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(event.status)}</TableCell>
                       <TableCell>
-                        {event.isRegistrationOpen ? (
-                          <Badge className="bg-green-600">Open</Badge>
-                        ) : (
-                          <Badge variant="secondary">Closed</Badge>
-                        )}
+                        {getRegistrationBadge(event.isRegistrationOpen)}
                       </TableCell>
                       <TableCell>
                         {event.registrationUrl ? (

@@ -9,6 +9,8 @@ import {
   OrganizationStatus,
   MembershipStatus,
   MemberType,
+  ProcessNodeType,
+  ProcessInstanceStatus,
 } from '@cict/contracts';
 import type {
   AdminModuleKey,
@@ -34,6 +36,7 @@ import type {
   SpeakerItem,
   VenueDetails,
   StudentEvent,
+  NodeAssignment,
 } from '@cict/contracts';
 
 export {
@@ -47,6 +50,8 @@ export {
   OrganizationStatus,
   MembershipStatus,
   MemberType,
+  ProcessNodeType,
+  ProcessInstanceStatus,
 };
 
 export type {
@@ -73,6 +78,7 @@ export type {
   SpeakerItem,
   VenueDetails,
   StudentEvent,
+  NodeAssignment,
 };
 
 export interface OrganizationAdminAssignment extends OrganizationAssignment {

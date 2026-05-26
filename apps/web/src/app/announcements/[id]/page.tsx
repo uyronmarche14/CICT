@@ -10,6 +10,7 @@ import { useGetAnnouncementById } from '@/hooks/ui/announcement/get-announcement
 import { StructuredContent } from '@/components/StructuredContent';
 import ScrollingGallery from '@/components/ScrollingGallery';
 import { getOwnershipLabel } from '@/lib/content-ownership';
+import { SEOHead } from '@/components/SEOHead';
 
 export default function AnnouncementDetailPage() {
   const params = useParams();
@@ -47,6 +48,11 @@ export default function AnnouncementDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={announcement.title}
+        description={announcement.content || announcement.bodyHtml?.slice(0, 160) || ''}
+        ogImage={announcement.coverImage?.imageUrl || announcement.imageUrl}
+      />
       <article className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16">
         <Button asChild variant="ghost" className="mb-6">
           <Link href="/announcements">

@@ -76,7 +76,7 @@ export function RoleFormDialog({ open, onOpenChange, role, onSuccess }: RoleForm
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{role ? 'Edit Custom Role' : 'Create Custom Role'}</DialogTitle>
         </DialogHeader>

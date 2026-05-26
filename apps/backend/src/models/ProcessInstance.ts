@@ -72,6 +72,15 @@ const processInstanceSchema = new Schema<IProcessInstance>(
       type: [String],
       default: [],
     },
+    nodeAssignments: {
+      type: [{
+        nodeId: { type: String, required: true },
+        assigneeType: { type: String, enum: ['user', 'role', 'organization'], required: true },
+        assigneeId: { type: String, required: true },
+      }],
+      default: [],
+      _id: false,
+    },
     nodesSnapshot: {
       type: [processNodeSchema],
       default: [],

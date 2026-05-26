@@ -6,16 +6,9 @@ import { Bell, Calendar, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useGetAnnouncements } from '@/hooks/ui/announcement/get-announcements.hook';
-import { AnnouncementPriority } from '@/types';
 import { useState } from 'react';
 import { getOwnershipLabel } from '@/lib/content-ownership';
-
-const priorityLabelClass: Record<AnnouncementPriority, string> = {
-  low: 'bg-secondary text-secondary-foreground',
-  medium: 'bg-yellow-500 text-black',
-  high: 'bg-orange-500 text-white',
-  urgent: 'bg-red-500 text-white',
-};
+import { getPriorityBadge } from '@/utils/badge-helpers';
 
 export default function AnnouncementsPage() {
   const [page, setPage] = useState(1);
@@ -71,9 +64,7 @@ export default function AnnouncementsPage() {
 
                     <div className="flex flex-1 flex-col p-6">
                       <div className="mb-3 flex items-center justify-between gap-3">
-                        <Badge className={priorityLabelClass[announcement.priority]}>
-                          {announcement.priority}
-                        </Badge>
+                        {getPriorityBadge(announcement.priority)}
                         <Badge variant="outline">
                           {getOwnershipLabel(announcement)}
                         </Badge>

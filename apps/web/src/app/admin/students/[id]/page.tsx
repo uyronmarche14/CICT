@@ -7,9 +7,9 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { getStudentStatusBadge } from '@/utils/badge-helpers';
 
 const getProgramLabel = (program: string | { _id: string; code: string; name: string }) =>
   typeof program === 'string' ? program : `${program.code} - ${program.name}`;
@@ -20,12 +20,7 @@ const getYearLevelLabel = (yearLevel: string | { _id: string; code: string; labe
 const getSectionLabel = (section: string | { _id: string; name: string; displayName: string }) =>
   typeof section === 'string' ? section : section.displayName;
 
-const statusColors: Record<string, string> = {
-  active: 'bg-green-600',
-  pending: 'bg-amber-500',
-  inactive: 'bg-secondary',
-  suspended: 'bg-red-600',
-};
+
 
 export default function StudentDetailPage() {
   const params = useParams();
@@ -207,9 +202,7 @@ export default function StudentDetailPage() {
           <div>
             <span className="text-sm text-muted-foreground">Status</span>
             <div className="mt-1">
-              <Badge className={statusColors[student.status] ?? 'bg-secondary'}>
-                {student.status}
-              </Badge>
+              {getStudentStatusBadge(student.status)}
             </div>
           </div>
           <div>

@@ -30,6 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useOrganizations } from '@/hooks/useOrganizations';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { getContentStatusBadge, getPriorityBadge as getCentralPriorityBadge } from '@/utils/badge-helpers';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
@@ -203,39 +204,9 @@ export default function AnnouncementsPage() {
     }
   };
 
-  const getPriorityBadge = (priority: AnnouncementPriority) => {
-    switch (priority) {
-      case AnnouncementPriority.URGENT:
-        return <Badge variant="destructive">Urgent</Badge>;
-      case AnnouncementPriority.HIGH:
-        return <Badge className="bg-orange-500">High</Badge>;
-      case AnnouncementPriority.MEDIUM:
-        return <Badge className="bg-yellow-500">Medium</Badge>;
-      case AnnouncementPriority.LOW:
-        return <Badge variant="secondary">Low</Badge>;
-      default:
-        return <Badge>{priority}</Badge>;
-    }
-  };
+  const getPriorityBadge = (priority: AnnouncementPriority) => getCentralPriorityBadge(priority);
 
-  const getStatusBadge = (status?: NewsStatus) => {
-    switch (status) {
-      case NewsStatus.PUBLISHED:
-        return <Badge className="bg-green-500">Published</Badge>;
-      case NewsStatus.DRAFT:
-        return <Badge variant="secondary">Draft</Badge>;
-      case NewsStatus.PENDING_APPROVAL:
-        return <Badge className="bg-amber-500">Pending Approval</Badge>;
-      case NewsStatus.APPROVED:
-        return <Badge className="bg-blue-600">Approved</Badge>;
-      case NewsStatus.REJECTED:
-        return <Badge className="bg-red-600">Rejected</Badge>;
-      case NewsStatus.ARCHIVED:
-        return <Badge variant="outline">Archived</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
+  const getStatusBadge = (status?: NewsStatus) => getContentStatusBadge(status ?? 'unknown');
 
   return (
     <div className="space-y-6">
@@ -258,7 +229,7 @@ export default function AnnouncementsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>All Announcements</CardTitle>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input

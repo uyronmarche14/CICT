@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2, Clock, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
+import { getScanResultBadge } from '@/utils/badge-helpers';
 
 const RESULT_OPTIONS = [
   { value: 'all', label: 'All Results' },
@@ -35,28 +35,7 @@ const RESULT_OPTIONS = [
   { value: 'registration_closed', label: 'Registration Closed' },
 ];
 
-const getResultBadge = (result: string) => {
-  switch (result) {
-    case 'success':
-      return <Badge className="bg-green-600">Checked In</Badge>;
-    case 'duplicate':
-      return <Badge className="bg-blue-600">Duplicate Scan</Badge>;
-    case 'not_registered':
-      return <Badge variant="secondary">Not Registered</Badge>;
-    case 'not_eligible':
-      return <Badge className="bg-orange-600">Not Eligible</Badge>;
-    case 'invalid_qr':
-      return <Badge className="bg-red-600">Invalid QR</Badge>;
-    case 'event_full':
-      return <Badge className="bg-red-600">Event Full</Badge>;
-    case 'registration_closed':
-      return <Badge className="bg-red-600">Registration Closed</Badge>;
-    case 'denied':
-      return <Badge variant="destructive">Denied</Badge>;
-    default:
-      return <Badge variant="outline">{result}</Badge>;
-  }
-};
+const getResultBadge = (result: string) => getScanResultBadge(result);
 
 export default function StudentAttendancePage() {
   const [search, setSearch] = useState('');

@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { getScanResultBadge as getCentralScanResultBadge } from '@/utils/badge-helpers';
 
 export const PAGE_SIZE = 15;
 
@@ -38,16 +39,7 @@ export function getStatusBadge(status: string) {
 }
 
 export function getScanResultBadge(result: string) {
-  switch (result) {
-    case 'success': return <Badge className="bg-green-600">Success</Badge>;
-    case 'duplicate': return <Badge className="bg-blue-600">Duplicate</Badge>;
-    case 'not_registered': return <Badge variant="secondary">Not Registered</Badge>;
-    case 'not_eligible': return <Badge className="bg-orange-600">Not Eligible</Badge>;
-    case 'invalid_qr': return <Badge className="bg-red-600">Invalid QR</Badge>;
-    case 'event_full': return <Badge className="bg-red-600">Event Full</Badge>;
-    case 'registration_closed': return <Badge className="bg-red-600">Closed</Badge>;
-    default: return <Badge variant="outline">{result}</Badge>;
-  }
+  return getCentralScanResultBadge(result);
 }
 
 export function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {

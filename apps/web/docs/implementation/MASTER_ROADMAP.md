@@ -49,13 +49,12 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - Finished:
   - Phase 1
   - Phase 2
+  - Phase 6
 - In progress:
   - Phase 4
   - Phase 5
   - Phase 7
   - Phase 8
-- Scaffold only:
-  - Phase 6
 - Not started:
   - Phase 3A
   - Phase 5A
@@ -91,7 +90,7 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - Phase 4: In progress
 - Phase 5: In progress
 - Phase 5A: Not started
-- Phase 6: Scaffold only
+- Phase 6: Completed
 - Phase 6A: Not started
 - Phase 7: In progress
 - Phase 7A: Not started

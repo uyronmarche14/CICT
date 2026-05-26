@@ -87,6 +87,7 @@ import { ApprovalTimeline } from '@/components/admin/ApprovalTimeline';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { useApprovalHistory } from '@/hooks/use-approval-queue';
 import { ClipboardCheck, CheckCircle2, XCircle } from 'lucide-react';
+import { getEventStatusBadge, getRegistrationBadge } from '@/utils/badge-helpers';
 import {
   PAGE_SIZE,
   STATUS_OPTIONS,
@@ -445,15 +446,7 @@ export default function AdminEventDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Status:</span>
-                  <Badge className={
-                    event.status === 'approved' ? 'bg-blue-600' :
-                    event.status === 'rejected' ? 'bg-red-600' :
-                    event.status === 'pending_approval' ? 'bg-amber-500' :
-                    event.status === 'published' ? '' :
-                    'bg-secondary'
-                  }>
-                    {event.status.replace(/_/g, ' ')}
-                  </Badge>
+                  {getEventStatusBadge(event.status)}
                 </div>
 
                 <ApprovalTimeline
@@ -506,9 +499,7 @@ export default function AdminEventDetailPage() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div>
                     <span className="text-muted-foreground">Open: </span>
-                    <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
-                      {event.isRegistrationOpen ? 'Yes' : 'No'}
-                    </Badge>
+                    {getRegistrationBadge(event.isRegistrationOpen)}
                   </div>
                   <div>
                     <span className="text-muted-foreground">Walk-ins: </span>

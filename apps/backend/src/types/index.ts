@@ -661,6 +661,12 @@ export interface IProcessEdge {
   data?: Record<string, unknown>;
 }
 
+export interface INodeAssignment {
+  nodeId: string;
+  assigneeType: 'user' | 'role' | 'organization';
+  assigneeId: string;
+}
+
 export interface IProcessTemplate extends Document {
   title: string;
   description?: string;
@@ -669,6 +675,7 @@ export interface IProcessTemplate extends Document {
   createdBy: Types.ObjectId | IUser;
   nodes: IProcessNode[];
   edges: IProcessEdge[];
+  nodeAssignments: INodeAssignment[];
   version: number;
   isActive: boolean;
   createdAt: Date;
@@ -685,6 +692,7 @@ export interface IProcessInstance extends Document {
   organizationId?: string | null;
   createdBy: Types.ObjectId | IUser;
   assignedTo: string[];
+  nodeAssignments: INodeAssignment[];
   nodesSnapshot: IProcessNode[];
   edgesSnapshot: IProcessEdge[];
   currentNodeIds: string[];

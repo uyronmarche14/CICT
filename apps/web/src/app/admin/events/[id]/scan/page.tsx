@@ -24,9 +24,6 @@ import {
   Loader2,
   ArrowLeft,
   QrCode,
-  UserCheck,
-  AlertCircle,
-  CheckCircle,
   Undo2,
   Clock,
   Camera,
@@ -36,6 +33,7 @@ import {
 } from 'lucide-react';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
+import { getScanResultBadge as getCentralScanResultBadge } from '@/utils/badge-helpers';
 
 type ScanMethod = 'camera' | 'manual';
 
@@ -219,18 +217,7 @@ export default function AdminScanPage() {
     }
   };
 
-  const getResultBadge = (result: string) => {
-    switch (result) {
-      case 'SUCCESS': return <Badge className="bg-green-600 text-lg px-4 py-2"><CheckCircle className="w-5 h-5 mr-2" /> Checked In</Badge>;
-      case 'DUPLICATE': return <Badge className="bg-blue-600 text-lg px-4 py-2"><UserCheck className="w-5 h-5 mr-2" /> Already Checked In</Badge>;
-      case 'INVALID_QR': return <Badge className="bg-red-600 text-lg px-4 py-2"><AlertCircle className="w-5 h-5 mr-2" /> Invalid QR</Badge>;
-      case 'NOT_REGISTERED': return <Badge variant="secondary" className="text-lg px-4 py-2">Not Registered</Badge>;
-      case 'NOT_ELIGIBLE': return <Badge className="bg-orange-600 text-lg px-4 py-2">Not Eligible</Badge>;
-      case 'EVENT_FULL': return <Badge className="bg-red-600 text-lg px-4 py-2">Event Full</Badge>;
-      case 'REGISTRATION_CLOSED': return <Badge className="bg-red-600 text-lg px-4 py-2">Registration Closed</Badge>;
-      default: return <Badge variant="outline">{result}</Badge>;
-    }
-  };
+  const getResultBadge = (result: string) => getCentralScanResultBadge(result.toLowerCase());
 
   return (
     <div className="space-y-6">

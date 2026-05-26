@@ -12,6 +12,8 @@ import Link from 'next/link';
 import { StructuredContent } from '@/components/StructuredContent';
 import ScrollingGallery from '@/components/ScrollingGallery';
 import { getOwnershipLabel } from '@/lib/content-ownership';
+import { SEOHead } from '@/components/SEOHead';
+import { getFeatureBadge, getContentStatusBadge } from '@/utils/badge-helpers';
 
 export default function NewsDetailPage() {
   const params = useParams();
@@ -61,6 +63,11 @@ export default function NewsDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEOHead
+        title={article.title}
+        description={article.seoDescription || article.excerpt || ''}
+        ogImage={article.coverImage?.imageUrl || article.imageUrl}
+      />
       {/* Main Content */}
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
         {/* Title */}
@@ -89,7 +96,7 @@ export default function NewsDetailPage() {
             </span>
           </div>
           {article.readingTime && <span className="text-muted-foreground">{article.readingTime} min read</span>}
-          {article.featured && <Badge className="bg-amber-500">Featured</Badge>}
+          {getFeatureBadge(article.featured)}
         </div>
 
         {/* Featured Image */}
@@ -235,9 +242,7 @@ export default function NewsDetailPage() {
                         </div>
                       )}
                     </div>
-                    <Badge variant="outline" className="text-xs mb-2">
-                      {related.status}
-                    </Badge>
+                    {getContentStatusBadge(related.status)}
                     <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-2">
                       {related.title}
                     </h4>

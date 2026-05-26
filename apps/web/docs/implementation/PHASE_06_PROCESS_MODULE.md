@@ -6,15 +6,19 @@ Add a new admin `Process` module with reusable templates and live instances for 
 
 ## Current Status
 
-Scaffold only.
+**Completed.**
 
-- Process models exist.
-- Admin sidebar entry and placeholder page exist.
-- Remaining work:
-  - backend CRUD for templates and instances
-  - ReactFlow builder integration
-  - comments, requirements, approval-step APIs
-  - real content-to-process linkage UX
+- Process models exist with full CRUD.
+- Admin sidebar entry and full admin pages exist.
+- ReactFlow visual builder with 6 custom node types and edge styling.
+- Backend engine with status transitions, advance, approve/reject, checklist.
+- Instance executor with backend-wired actions and assignee gating.
+- Comments, requirements, approval-step, checklist APIs.
+- Node inspector with per-type configuration (task, approval, document, review, start/end).
+- Template → Instance lifecycle: design, launch, execute, archive.
+
+### Still Pending (non-blocking)
+- Content-to-process linkage UX in news/event/announcement admin forms.
 
 ## Dependencies
 

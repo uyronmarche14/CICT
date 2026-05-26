@@ -67,6 +67,15 @@ const processTemplateSchema = new Schema<IProcessTemplate>(
       type: [processEdgeSchema],
       default: [],
     },
+    nodeAssignments: {
+      type: [{
+        nodeId: { type: String, required: true },
+        assigneeType: { type: String, enum: ['user', 'role', 'organization'], required: true },
+        assigneeId: { type: String, required: true },
+      }],
+      default: [],
+      _id: false,
+    },
     version: {
       type: Number,
       default: 1,

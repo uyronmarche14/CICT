@@ -28,9 +28,6 @@ const EVENTS_MODULE_PERMISSIONS: Permission[] = [
   Permission.PUBLISH_EVENT,
   Permission.CANCEL_EVENT,
   Permission.COMPLETE_EVENT,
-  Permission.VIEW_EVENT_REGISTRATIONS,
-  Permission.MANAGE_EVENT_REGISTRATIONS,
-  Permission.SCAN_EVENT_ATTENDANCE,
 ];
 
 const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
@@ -42,6 +39,7 @@ const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
   Permission.CREATE_MEMBER,
   Permission.EDIT_MEMBER,
   Permission.DELETE_MEMBER,
+  Permission.MANAGE_MEMBER_ROLES,
 ];
 
 const MODULE_KEYS: AdminModuleKey[] = [
@@ -57,6 +55,7 @@ const MODULE_KEYS: AdminModuleKey[] = [
   'logs',
   'processes',
   'approvals',
+  'settings',
 ];
 
 const unique = <T,>(values: T[]) => Array.from(new Set(values));

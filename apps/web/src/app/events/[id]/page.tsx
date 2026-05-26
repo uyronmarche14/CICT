@@ -17,6 +17,8 @@ import ScrollingGallery from '@/components/ScrollingGallery';
 import { getOwnershipLabel } from '@/lib/content-ownership';
 import { useStudentAuth } from '@/context/StudentAuthContext';
 import { appToast } from '@/lib/app-toast';
+import { SEOHead } from '@/components/SEOHead';
+import { getRegistrationBadge } from '@/utils/badge-helpers';
 
 export default function EventDetailsPage() {
   const params = useParams();
@@ -100,6 +102,11 @@ export default function EventDetailsPage() {
 
   return (
     <div className="relative min-h-screen pt-24 pb-16">
+      <SEOHead
+        title={event.title}
+        description={event.excerpt || event.description || ''}
+        ogImage={event.coverImage?.imageUrl || event.imageUrl}
+      />
       <MeshGradientBg variant="subtle" className="fixed inset-0" interactive={false} />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
@@ -370,9 +377,7 @@ export default function EventDetailsPage() {
                 ) : isStudent ? (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
-                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
-                      </Badge>
+                      {getRegistrationBadge(event.isRegistrationOpen)}
                       {event.allowWalkIns && (
                         <Badge variant="outline">Walk-ins Allowed</Badge>
                       )}
@@ -460,9 +465,7 @@ export default function EventDetailsPage() {
                 ) : (
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-2">
-                      <Badge variant={event.isRegistrationOpen ? 'default' : 'secondary'}>
-                        {event.isRegistrationOpen ? 'Registration Open' : 'Registration Closed'}
-                      </Badge>
+                      {getRegistrationBadge(event.isRegistrationOpen)}
                       {event.allowWalkIns && (
                         <Badge variant="outline">Walk-ins Allowed</Badge>
                       )}

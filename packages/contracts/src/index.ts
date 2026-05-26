@@ -144,6 +144,107 @@ export const AttendanceScanResult = {
 export type AttendanceScanResult =
   (typeof AttendanceScanResult)[keyof typeof AttendanceScanResult];
 
+export const ProcessNodeType = {
+  START: 'start',
+  TASK: 'task',
+  APPROVAL: 'approval',
+  DOCUMENT_REQUIREMENT: 'document_requirement',
+  COMMENT_REVIEW: 'comment_review',
+  END: 'end',
+} as const;
+export type ProcessNodeType = (typeof ProcessNodeType)[keyof typeof ProcessNodeType];
+
+export const ProcessInstanceStatus = {
+  DRAFT: 'draft',
+  ACTIVE: 'active',
+  COMPLETED: 'completed',
+  ARCHIVED: 'archived',
+} as const;
+export type ProcessInstanceStatus = (typeof ProcessInstanceStatus)[keyof typeof ProcessInstanceStatus];
+
+export type ProcessNode = {
+  id: string;
+  type: ProcessNodeType;
+  position: { x: number; y: number };
+  data: Record<string, unknown>;
+};
+
+export type ProcessEdge = {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  data?: Record<string, unknown>;
+};
+
+export type ProcessTemplate = {
+  _id: string;
+  title: string;
+  description?: string;
+  processType: string;
+  organizationScope?: string | null;
+  createdBy: string | { _id: string; firstName: string; lastName: string; email: string };
+  nodes: ProcessNode[];
+  edges: ProcessEdge[];
+  nodeAssignments: NodeAssignment[];
+  version: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProcessCommentItem = {
+  authorId: string;
+  body: string;
+  createdAt: string;
+};
+
+export type ProcessRequirementItem = {
+  id: string;
+  label: string;
+  completed: boolean;
+  completedBy?: string;
+  completedAt?: string;
+};
+
+export type ProcessApprovalStepItem = {
+  nodeId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  actorId?: string;
+  actedAt?: string;
+  reason?: string;
+};
+
+export type NodeAssignment = {
+  nodeId: string;
+  assigneeType: 'user' | 'role' | 'organization';
+  assigneeId: string;
+};
+
+export type ProcessInstance = {
+  _id: string;
+  templateId?: string | ProcessTemplate;
+  title: string;
+  description?: string;
+  status: ProcessInstanceStatus;
+  linkedContentType?: 'news' | 'announcement' | 'event';
+  linkedContentId?: string;
+  organizationId?: string | null;
+  createdBy: string | { _id: string; firstName: string; lastName: string; email: string };
+  assignedTo: string[];
+  nodeAssignments: NodeAssignment[];
+  nodesSnapshot: ProcessNode[];
+  edgesSnapshot: ProcessEdge[];
+  currentNodeIds: string[];
+  comments: ProcessCommentItem[];
+  requirements: ProcessRequirementItem[];
+  approvalSteps: ProcessApprovalStepItem[];
+  startedAt?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export const NotificationChannel = {
   EMAIL: 'email',
   PUSH: 'push',
@@ -1338,6 +1439,98 @@ export const organizationMembershipSchema: z.ZodType<OrganizationMembership> = z
   notes: z.string().optional(),
   history: z.array(membershipHistoryEntrySchema),
   contributions: z.array(membershipContributionSchema).optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const processNodeTypeSchema = z.nativeEnum(ProcessNodeType);
+export const processInstanceStatusSchema = z.nativeEnum(ProcessInstanceStatus);
+
+export const processNodeSchema: z.ZodType<ProcessNode> = z.object({
+  id: z.string(),
+  type: processNodeTypeSchema,
+  position: z.object({ x: z.number(), y: z.number() }),
+  data: z.record(z.unknown()),
+});
+
+export const processEdgeSchema: z.ZodType<ProcessEdge> = z.object({
+  id: z.string(),
+  source: z.string(),
+  target: z.string(),
+  label: z.string().optional(),
+  data: z.record(z.unknown()).optional(),
+});
+
+export const processCommentItemSchema: z.ZodType<ProcessCommentItem> = z.object({
+  authorId: z.string(),
+  body: z.string(),
+  createdAt: z.string(),
+});
+
+export const processRequirementItemSchema: z.ZodType<ProcessRequirementItem> = z.object({
+  id: z.string(),
+  label: z.string(),
+  completed: z.boolean(),
+  completedBy: z.string().optional(),
+  completedAt: z.string().optional(),
+});
+
+export const processApprovalStepItemSchema: z.ZodType<ProcessApprovalStepItem> = z.object({
+  nodeId: z.string(),
+  status: z.enum(['pending', 'approved', 'rejected']),
+  actorId: z.string().optional(),
+  actedAt: z.string().optional(),
+  reason: z.string().optional(),
+});
+
+export const nodeAssignmentSchema: z.ZodType<NodeAssignment> = z.object({
+  nodeId: z.string(),
+  assigneeType: z.enum(['user', 'role', 'organization']),
+  assigneeId: z.string(),
+});
+
+export const processTemplateSchema: z.ZodType<ProcessTemplate> = z.object({
+  _id: z.string(),
+  title: z.string(),
+  description: z.string().optional(),
+  processType: z.string(),
+  organizationScope: z.string().nullable().optional(),
+  createdBy: z.union([
+    z.string(),
+    z.object({ _id: z.string(), firstName: z.string(), lastName: z.string(), email: z.string() }),
+  ]),
+  nodes: z.array(processNodeSchema),
+  edges: z.array(processEdgeSchema),
+  nodeAssignments: z.array(nodeAssignmentSchema),
+  version: z.number(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+export const processInstanceSchema: z.ZodType<ProcessInstance> = z.object({
+  _id: z.string(),
+  templateId: z.union([z.string(), processTemplateSchema]).optional(),
+  title: z.string(),
+  description: z.string().optional(),
+  status: processInstanceStatusSchema,
+  linkedContentType: z.enum(['news', 'announcement', 'event']).optional(),
+  linkedContentId: z.string().optional(),
+  organizationId: z.string().nullable().optional(),
+  createdBy: z.union([
+    z.string(),
+    z.object({ _id: z.string(), firstName: z.string(), lastName: z.string(), email: z.string() }),
+  ]),
+  assignedTo: z.array(z.string()),
+  nodeAssignments: z.array(nodeAssignmentSchema),
+  nodesSnapshot: z.array(processNodeSchema),
+  edgesSnapshot: z.array(processEdgeSchema),
+  currentNodeIds: z.array(z.string()),
+  comments: z.array(processCommentItemSchema),
+  requirements: z.array(processRequirementItemSchema),
+  approvalSteps: z.array(processApprovalStepItemSchema),
+  startedAt: z.string().optional(),
+  completedAt: z.string().optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

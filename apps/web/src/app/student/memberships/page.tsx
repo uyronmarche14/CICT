@@ -9,6 +9,7 @@ import { Loader2, Building2, Calendar, GraduationCap } from 'lucide-react';
 import { format } from 'date-fns';
 import { appToast } from '@/lib/app-toast';
 import Link from 'next/link';
+import { getMembershipStatusBadge } from '@/utils/badge-helpers';
 
 export default function StudentMembershipsPage() {
   const queryClient = useQueryClient();
@@ -28,20 +29,6 @@ export default function StudentMembershipsPage() {
       appToast.error('Failed', 'Could not resign.');
     },
   });
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'default';
-      case 'applied':
-      case 'invited':
-        return 'secondary';
-      case 'rejected':
-        return 'destructive';
-      default:
-        return 'outline';
-    }
-  };
 
   if (isLoading) {
     return (
@@ -87,9 +74,7 @@ export default function StudentMembershipsPage() {
                         {orgId}
                       </Link>
                     </CardTitle>
-                    <Badge variant={getStatusVariant(membership.status)} className="shrink-0">
-                      {membership.status}
-                    </Badge>
+                    {getMembershipStatusBadge(membership.status)}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">

@@ -25,6 +25,7 @@ import studentRoutes from "./routes/student.routes";
 import adminEventRoutes from "./routes/admin-event.routes";
 import pushTokenRoutes from "./routes/pushToken.routes";
 import approvalRoutes from "./routes/approval.routes";
+import processRoutes from "./routes/process.routes";
 import settingsRoutes from "./routes/settings.routes";
 
 // Import middleware
@@ -145,6 +146,7 @@ app.use("/api/student/auth", studentAuthRoutes);
 app.use("/api/student", studentRoutes);
 app.use("/api/student", pushTokenRoutes);
 app.use("/api/admin/approvals", approvalRoutes);
+app.use("/api/admin/processes", processRoutes);
 app.use("/api/admin/settings", settingsRoutes);
 
 // 404 handler
