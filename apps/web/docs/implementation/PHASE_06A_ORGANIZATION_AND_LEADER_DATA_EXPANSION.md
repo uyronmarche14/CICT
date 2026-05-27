@@ -6,10 +6,16 @@ Bring organization and leader data up to the level already implied by the public
 
 ## Current Status
 
-Not started.
+**Completed.**
 
-- Organization and member models already support some rich data.
-- Admin editing and public rendering still do not use the full structure consistently.
+- Organization and member models expanded with all requested fields.
+- All new types added to contracts with Zod schemas.
+- Backend types and Mongoose schema extended with structured subdocuments.
+- Validators updated with optional field support.
+- Controller whitelist expanded to pass through new fields.
+- AdminOrganizationForm expanded with Profile, Membership, and Location sections.
+- AdminMemberForm expanded with Leadership Details section.
+- All new fields are optional — existing records work without migration.
 
 ## Dependencies
 

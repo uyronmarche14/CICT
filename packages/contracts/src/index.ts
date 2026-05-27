@@ -316,6 +316,79 @@ export const MemberType = {
 } as const;
 export type MemberType = (typeof MemberType)[keyof typeof MemberType];
 
+export type OfficeLocation = {
+  building?: string;
+  room?: string;
+  campus?: string;
+  mapUrl?: string;
+};
+
+export type SocialLink = {
+  platform: string;
+  url: string;
+  label?: string;
+};
+
+export type AdviserItem = {
+  name: string;
+  role?: string;
+  email?: string;
+  photo?: string;
+};
+
+export type PartnerItem = {
+  name: string;
+  logo?: string;
+  website?: string;
+  description?: string;
+  partnershipType?: string;
+};
+
+export type CommitteeItem = {
+  name: string;
+  description?: string;
+  headName?: string;
+  memberCount?: number;
+  icon?: string;
+};
+
+export type OrganizationProgram = {
+  name: string;
+  description?: string;
+  schedule?: string;
+  icon?: string;
+};
+
+export type FlagshipEvent = {
+  name: string;
+  description?: string;
+  frequency?: string;
+  eventId?: string;
+};
+
+export type ProjectItem = {
+  name: string;
+  role?: string;
+  description?: string;
+  date?: string;
+  url?: string;
+};
+
+export type MilestoneItem = {
+  title: string;
+  date?: string;
+  description?: string;
+  category?: string;
+};
+
+export type OrganizationAchievement = {
+  title: string;
+  date?: string;
+  description?: string;
+  category?: 'award' | 'recognition' | 'milestone' | 'project';
+  imageUrl?: string;
+};
+
 export type Organization = {
   _id: string;
   id: string;
@@ -356,6 +429,22 @@ export type Organization = {
   gallery?: MediaAsset[];
   seoDescription?: string;
   isActive?: boolean;
+  tagline?: string;
+  officialEmail?: string;
+  socialLinks?: SocialLink[];
+  adviserItems?: AdviserItem[];
+  officeLocation?: OfficeLocation;
+  meetingSchedule?: string;
+  membershipSize?: number;
+  joinRequirements?: string;
+  joinSteps?: string[];
+  joinUrl?: string;
+  benefits?: string;
+  programs?: OrganizationProgram[];
+  flagshipEvents?: FlagshipEvent[];
+  partnerItems?: PartnerItem[];
+  committeeItems?: CommitteeItem[];
+  structuredAchievements?: OrganizationAchievement[];
   createdAt: string;
   updatedAt: string;
 };
@@ -393,6 +482,17 @@ export type OrganizationMember = {
   status?: 'active' | 'inactive' | 'alumni';
   sortOrder?: number;
   batch?: string;
+  termStart?: string;
+  termEnd?: string;
+  leadershipStatus?: 'current' | 'past' | 'emeritus';
+  course?: string;
+  department?: string;
+  committee?: string;
+  displayOrder?: number;
+  isAdviser?: boolean;
+  contactNumber?: string;
+  projectItems?: ProjectItem[];
+  milestoneItems?: MilestoneItem[];
 };
 
 export type OrganizationMembership = {
@@ -1326,6 +1426,79 @@ export const organizationTypeSchema = z.nativeEnum(OrganizationType);
 export const membershipStatusSchema = z.nativeEnum(MembershipStatus);
 export const memberTypeSchema = z.nativeEnum(MemberType);
 
+export const officeLocationSchema: z.ZodType<OfficeLocation> = z.object({
+  building: z.string().optional(),
+  room: z.string().optional(),
+  campus: z.string().optional(),
+  mapUrl: z.string().optional(),
+});
+
+export const socialLinkSchema: z.ZodType<SocialLink> = z.object({
+  platform: z.string(),
+  url: z.string(),
+  label: z.string().optional(),
+});
+
+export const adviserItemSchema: z.ZodType<AdviserItem> = z.object({
+  name: z.string(),
+  role: z.string().optional(),
+  email: z.string().optional(),
+  photo: z.string().optional(),
+});
+
+export const partnerItemSchema: z.ZodType<PartnerItem> = z.object({
+  name: z.string(),
+  logo: z.string().optional(),
+  website: z.string().optional(),
+  description: z.string().optional(),
+  partnershipType: z.string().optional(),
+});
+
+export const committeeItemSchema: z.ZodType<CommitteeItem> = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  headName: z.string().optional(),
+  memberCount: z.number().optional(),
+  icon: z.string().optional(),
+});
+
+export const organizationProgramSchema: z.ZodType<OrganizationProgram> = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  schedule: z.string().optional(),
+  icon: z.string().optional(),
+});
+
+export const flagshipEventSchema: z.ZodType<FlagshipEvent> = z.object({
+  name: z.string(),
+  description: z.string().optional(),
+  frequency: z.string().optional(),
+  eventId: z.string().optional(),
+});
+
+export const projectItemSchema: z.ZodType<ProjectItem> = z.object({
+  name: z.string(),
+  role: z.string().optional(),
+  description: z.string().optional(),
+  date: z.string().optional(),
+  url: z.string().optional(),
+});
+
+export const milestoneItemSchema: z.ZodType<MilestoneItem> = z.object({
+  title: z.string(),
+  date: z.string().optional(),
+  description: z.string().optional(),
+  category: z.string().optional(),
+});
+
+export const organizationAchievementSchema: z.ZodType<OrganizationAchievement> = z.object({
+  title: z.string(),
+  date: z.string().optional(),
+  description: z.string().optional(),
+  category: z.enum(['award', 'recognition', 'milestone', 'project']).optional(),
+  imageUrl: z.string().optional(),
+});
+
 export const organizationMemberSchema: z.ZodType<OrganizationMember> = z.object({
   id: z.string(),
   name: z.string(),
@@ -1359,6 +1532,17 @@ export const organizationMemberSchema: z.ZodType<OrganizationMember> = z.object(
   status: z.enum(['active', 'inactive', 'alumni']).optional(),
   sortOrder: z.number().optional(),
   batch: z.string().optional(),
+  termStart: z.string().optional(),
+  termEnd: z.string().optional(),
+  leadershipStatus: z.enum(['current', 'past', 'emeritus']).optional(),
+  course: z.string().optional(),
+  department: z.string().optional(),
+  committee: z.string().optional(),
+  displayOrder: z.number().optional(),
+  isAdviser: z.boolean().optional(),
+  contactNumber: z.string().optional(),
+  projectItems: z.array(projectItemSchema).optional(),
+  milestoneItems: z.array(milestoneItemSchema).optional(),
 });
 
 export const organizationSchema: z.ZodType<Organization> = z.object({
@@ -1401,6 +1585,22 @@ export const organizationSchema: z.ZodType<Organization> = z.object({
   gallery: z.array(mediaAssetSchema).optional(),
   seoDescription: z.string().optional(),
   isActive: z.boolean().optional(),
+  tagline: z.string().optional(),
+  officialEmail: z.string().optional(),
+  socialLinks: z.array(socialLinkSchema).optional(),
+  adviserItems: z.array(adviserItemSchema).optional(),
+  officeLocation: officeLocationSchema.optional(),
+  meetingSchedule: z.string().optional(),
+  membershipSize: z.number().optional(),
+  joinRequirements: z.string().optional(),
+  joinSteps: z.array(z.string()).optional(),
+  joinUrl: z.string().optional(),
+  benefits: z.string().optional(),
+  programs: z.array(organizationProgramSchema).optional(),
+  flagshipEvents: z.array(flagshipEventSchema).optional(),
+  partnerItems: z.array(partnerItemSchema).optional(),
+  committeeItems: z.array(committeeItemSchema).optional(),
+  structuredAchievements: z.array(organizationAchievementSchema).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

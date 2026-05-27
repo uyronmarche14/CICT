@@ -88,7 +88,7 @@ export function RichTextEditor({
   };
 
   const toggleBulletList = () => {
-    console.log('Toggling bullet list');
+    // debug removed
 
     // Check if we're already in a bullet list
     if (editor.isActive('bulletList')) {
@@ -101,7 +101,7 @@ export function RichTextEditor({
   };
 
   const toggleOrderedList = () => {
-    console.log('Toggling ordered list');
+    // debug removed
 
     // Check if we're already in an ordered list
     if (editor.isActive('orderedList')) {

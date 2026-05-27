@@ -145,9 +145,10 @@ export default function UpdatesHubClient() {
               </CardHeader>
               <CardContent className="space-y-0.5 p-2">
                 {UPDATES_HUB_CATEGORY_OPTIONS.map((option) => (
-                  <button
+                  <Button
                     key={option.value}
-                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => updateFilters({ category: option.value })}
                     className={cn(
                       sidebarButtonClass,
@@ -157,7 +158,7 @@ export default function UpdatesHubClient() {
                     )}
                   >
                     {option.label}
-                  </button>
+                  </Button>
                 ))}
               </CardContent>
             </Card>
@@ -171,9 +172,10 @@ export default function UpdatesHubClient() {
               </CardHeader>
               <CardContent className="space-y-0.5 p-2">
                 {UPDATES_HUB_SCOPE_OPTIONS.map((option) => (
-                  <button
+                  <Button
                     key={option.value}
-                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() =>
                       updateFilters({
                         scope: option.value,
@@ -188,7 +190,7 @@ export default function UpdatesHubClient() {
                     )}
                   >
                     {option.label}
-                  </button>
+                  </Button>
                 ))}
               </CardContent>
             </Card>
@@ -202,8 +204,9 @@ export default function UpdatesHubClient() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-0.5 p-2">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => updateFilters({ org: undefined })}
                     className={cn(
                       sidebarButtonClass,
@@ -213,7 +216,7 @@ export default function UpdatesHubClient() {
                     )}
                   >
                     All organizations
-                  </button>
+                  </Button>
                   {organizationsLoading ? (
                     <div className="flex items-center gap-2 px-3 py-3 text-xs text-muted-foreground">
                       <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -225,9 +228,10 @@ export default function UpdatesHubClient() {
                     </p>
                   ) : (
                     availableOrganizations.map((organization) => (
-                      <button
+                      <Button
                         key={organization.id}
-                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => updateFilters({ org: organization.id, scope: 'community' })}
                         className={cn(
                           sidebarButtonClass,
@@ -237,7 +241,7 @@ export default function UpdatesHubClient() {
                         )}
                       >
                         {organization.name}
-                      </button>
+                      </Button>
                     ))
                   )}
                 </CardContent>
@@ -252,9 +256,10 @@ export default function UpdatesHubClient() {
               <CardContent className="space-y-3 px-4 py-4">
                 <div className="flex flex-wrap gap-1.5">
                   {UPDATES_HUB_SCOPE_OPTIONS.map((option) => (
-                    <button
+                    <Button
                       key={option.value}
-                      type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() =>
                         updateFilters({
                           scope: option.value,
@@ -269,15 +274,16 @@ export default function UpdatesHubClient() {
                       )}
                     >
                       {option.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
                 <div className="flex flex-wrap gap-1.5">
                   {UPDATES_HUB_CATEGORY_OPTIONS.map((option) => (
-                    <button
+                    <Button
                       key={option.value}
-                      type="button"
+                      variant="ghost"
+                      size="sm"
                       onClick={() => updateFilters({ category: option.value })}
                       className={cn(
                         mobileFilterButtonClass,
@@ -287,14 +293,15 @@ export default function UpdatesHubClient() {
                       )}
                     >
                       {option.label}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
                 {showOrganizationFilters && availableOrganizations.length > 0 ? (
                   <div className="flex flex-wrap gap-1.5">
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => updateFilters({ org: undefined })}
                       className={cn(
                         mobileFilterButtonClass,
@@ -304,11 +311,12 @@ export default function UpdatesHubClient() {
                       )}
                     >
                       All orgs
-                    </button>
+                    </Button>
                     {availableOrganizations.map((organization) => (
-                      <button
+                      <Button
                         key={organization.id}
-                        type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => updateFilters({ org: organization.id, scope: 'community' })}
                         className={cn(
                           mobileFilterButtonClass,
@@ -318,7 +326,7 @@ export default function UpdatesHubClient() {
                         )}
                       >
                         {organization.name}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 ) : null}
@@ -358,14 +366,15 @@ export default function UpdatesHubClient() {
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                   <span>{visibleCount} visible · {totalLoadedItems} loaded</span>
                   {hasActiveFilters ? (
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={clearAllFilters}
-                      className="inline-flex items-center gap-1 text-muted-foreground transition-colors hover:text-foreground"
+                      className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
                     >
                       <X className="h-3 w-3" />
                       Reset filters
-                    </button>
+                    </Button>
                   ) : null}
                 </div>
               </CardContent>

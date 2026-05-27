@@ -23,6 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
 import { eventAPI } from '@/lib/api/event';
 import { appToast } from '@/lib/app-toast';
 import { Plus, Loader2 } from 'lucide-react';
@@ -537,29 +539,25 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <h3 className="font-medium text-sm">Registration Settings</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="isRegistrationOpen"
                     checked={isRegistrationOpen}
-                    onChange={(e) => setIsRegistrationOpen(e.target.checked)}
-                    className="rounded border-gray-300"
+                    onCheckedChange={(checked) => setIsRegistrationOpen(!!checked)}
                   />
-                  <label htmlFor="isRegistrationOpen" className="text-sm cursor-pointer">Registration Open</label>
+                  <Label htmlFor="isRegistrationOpen" className="text-sm cursor-pointer">Registration Open</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="allowWalkIns"
                     checked={allowWalkIns}
-                    onChange={(e) => setAllowWalkIns(e.target.checked)}
-                    className="rounded border-gray-300"
+                    onCheckedChange={(checked) => setAllowWalkIns(!!checked)}
                   />
-                  <label htmlFor="allowWalkIns" className="text-sm cursor-pointer">Allow Walk-ins</label>
+                  <Label htmlFor="allowWalkIns" className="text-sm cursor-pointer">Allow Walk-ins</Label>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Registration Close</label>
+                  <Label className="text-sm font-medium">Registration Close</Label>
                   <Input
                     type="datetime-local"
                     value={registrationCloseAt}
@@ -573,7 +571,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <h3 className="font-medium text-sm">Additional Registration Fields</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Registration URL</label>
+                  <Label className="text-sm font-medium">Registration URL</Label>
                   <Input
                     placeholder="https://..."
                     value={registrationUrl}
@@ -581,7 +579,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Registration Deadline</label>
+                  <Label className="text-sm font-medium">Registration Deadline</Label>
                   <Input
                     type="datetime-local"
                     value={registrationDeadline}
@@ -590,7 +588,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                 </div>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Target Audience</label>
+                <Label className="text-sm font-medium">Target Audience</Label>
                 <textarea
                   className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="e.g. CICT students, faculty, and staff"
@@ -599,7 +597,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Eligibility Criteria</label>
+                <Label className="text-sm font-medium">Eligibility Criteria</Label>
                 <textarea
                   className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="e.g. Must be enrolled in CICT"
@@ -609,7 +607,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Fee Label</label>
+                  <Label className="text-sm font-medium">Fee Label</Label>
                   <Input
                     placeholder='e.g. "Free", "₱50"'
                     value={feeLabel}
@@ -617,7 +615,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Certificate Info</label>
+                  <Label className="text-sm font-medium">Certificate Info</Label>
                   <Input
                     placeholder="e.g. Certificate of Participation"
                     value={certificateInfo}
@@ -631,7 +629,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <h3 className="font-medium text-sm">Contact Information</h3>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Contact Name</label>
+                  <Label className="text-sm font-medium">Contact Name</Label>
                   <Input
                     placeholder="John Doe"
                     value={contactName}
@@ -639,7 +637,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Contact Email</label>
+                  <Label className="text-sm font-medium">Contact Email</Label>
                   <Input
                     type="email"
                     placeholder="john@example.com"
@@ -648,7 +646,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Contact Phone</label>
+                  <Label className="text-sm font-medium">Contact Phone</Label>
                   <Input
                     placeholder="+63 912 345 6789"
                     value={contactPhone}
@@ -662,7 +660,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <h3 className="font-medium text-sm">Venue Details</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Venue Name</label>
+                  <Label className="text-sm font-medium">Venue Name</Label>
                   <Input
                     placeholder="e.g. CICT Auditorium"
                     value={venueDetails?.name ?? ''}
@@ -670,7 +668,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Venue Address</label>
+                  <Label className="text-sm font-medium">Venue Address</Label>
                   <Input
                     placeholder="e.g. CICT Building, UPV"
                     value={venueDetails?.address ?? ''}
@@ -680,7 +678,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Room</label>
+                  <Label className="text-sm font-medium">Room</Label>
                   <Input
                     placeholder="e.g. Room 201"
                     value={venueDetails?.room ?? ''}
@@ -688,7 +686,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Capacity</label>
+                  <Label className="text-sm font-medium">Capacity</Label>
                   <Input
                     type="number"
                     placeholder="e.g. 200"
@@ -697,7 +695,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Accessibility Info</label>
+                  <Label className="text-sm font-medium">Accessibility Info</Label>
                   <Input
                     placeholder="e.g. Wheelchair accessible"
                     value={venueDetails?.accessibility ?? ''}
@@ -707,7 +705,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Map URL</label>
+                  <Label className="text-sm font-medium">Map URL</Label>
                   <Input
                     placeholder="https://maps.google.com/..."
                     value={mapUrl}
@@ -715,7 +713,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Meeting URL (for virtual)</label>
+                  <Label className="text-sm font-medium">Meeting URL (for virtual)</Label>
                   <Input
                     placeholder="https://meet.google.com/..."
                     value={meetingUrl}
@@ -728,7 +726,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
             <div className="rounded-xl border p-4 space-y-4">
               <h3 className="font-medium text-sm">Additional Info</h3>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Requirements / What to Bring</label>
+                <Label className="text-sm font-medium">Requirements / What to Bring</Label>
                 <textarea
                   className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   placeholder="e.g. Laptop, valid ID"
@@ -738,7 +736,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Poster Caption</label>
+                  <Label className="text-sm font-medium">Poster Caption</Label>
                   <Input
                     placeholder="Caption for the event poster"
                     value={posterCaption}
@@ -748,7 +746,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Host Organization IDs</label>
+                  <Label className="text-sm font-medium">Host Organization IDs</Label>
                   <Input
                     placeholder="Comma-separated IDs"
                     value={hostOrganizationIds.join(', ')}
@@ -756,7 +754,7 @@ export function EventForm({ onSuccess }: EventFormProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Co-Host Organization IDs</label>
+                  <Label className="text-sm font-medium">Co-Host Organization IDs</Label>
                   <Input
                     placeholder="Comma-separated IDs"
                     value={coHostOrganizationIds.join(', ')}
@@ -771,79 +769,73 @@ export function EventForm({ onSuccess }: EventFormProps) {
               <p className="text-xs text-muted-foreground">Leave empty to allow all students to register.</p>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Programs</label>
+                  <Label className="text-sm font-medium">Programs</Label>
                   <ScrollArea className="h-32 rounded-md border p-2">
                     {programs.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No programs available</p>
                     ) : (
                       programs.map((p) => (
-                        <label key={p._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
+                        <Label key={p._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <Checkbox
                             checked={targetProgramIds.includes(p._id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 setTargetProgramIds((prev) => [...prev, p._id]);
                               } else {
                                 setTargetProgramIds((prev) => prev.filter((id) => id !== p._id));
                               }
                             }}
-                            className="rounded border-gray-300"
                           />
                           {p.name}
-                        </label>
+                        </Label>
                       ))
                     )}
                   </ScrollArea>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Year Levels</label>
+                  <Label className="text-sm font-medium">Year Levels</Label>
                   <ScrollArea className="h-32 rounded-md border p-2">
                     {yearLevels.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No year levels available</p>
                     ) : (
                       yearLevels.map((yl) => (
-                        <label key={yl._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
+                        <Label key={yl._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <Checkbox
                             checked={targetYearLevelIds.includes(yl._id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 setTargetYearLevelIds((prev) => [...prev, yl._id]);
                               } else {
                                 setTargetYearLevelIds((prev) => prev.filter((id) => id !== yl._id));
                               }
                             }}
-                            className="rounded border-gray-300"
                           />
                           {yl.label}
-                        </label>
+                        </Label>
                       ))
                     )}
                   </ScrollArea>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Sections</label>
+                  <Label className="text-sm font-medium">Sections</Label>
                   <ScrollArea className="h-32 rounded-md border p-2">
                     {academicSections.length === 0 ? (
                       <p className="text-xs text-muted-foreground">No sections available</p>
                     ) : (
                       academicSections.map((s) => (
-                        <label key={s._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
+                        <Label key={s._id} className="flex items-center gap-2 py-1 text-sm cursor-pointer">
+                          <Checkbox
                             checked={targetSectionIds.includes(s._id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
+                            onCheckedChange={(checked) => {
+                              if (checked) {
                                 setTargetSectionIds((prev) => [...prev, s._id]);
                               } else {
                                 setTargetSectionIds((prev) => prev.filter((id) => id !== s._id));
                               }
                             }}
-                            className="rounded border-gray-300"
                           />
                           {s.displayName}
-                        </label>
+                        </Label>
                       ))
                     )}
                   </ScrollArea>

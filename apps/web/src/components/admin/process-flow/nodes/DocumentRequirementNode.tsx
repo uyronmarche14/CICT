@@ -2,6 +2,7 @@
 
 import { Handle, Position, NodeToolbar, type NodeProps } from '@xyflow/react';
 import { FileText, Upload, CheckCircle2, FileType } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function DocumentRequirementNode({ data, selected }: NodeProps) {
   const docs = data.requiredDocuments as string[] | undefined;
@@ -13,12 +14,12 @@ export function DocumentRequirementNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Bottom} className="!bg-purple-400" />
       <NodeToolbar isVisible={selected} position={Position.Top}>
         <div className="flex gap-1 bg-background border rounded-lg p-1 shadow-md">
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-purple-700 hover:bg-purple-50 rounded transition-colors">
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-purple-700 hover:text-purple-700 hover:bg-purple-50">
             <Upload className="h-3 w-3" /> Upload
-          </button>
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-green-700 hover:bg-green-50 rounded transition-colors">
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-green-700 hover:text-green-700 hover:bg-green-50">
             <CheckCircle2 className="h-3 w-3" /> Mark Complete
-          </button>
+          </Button>
         </div>
       </NodeToolbar>
 

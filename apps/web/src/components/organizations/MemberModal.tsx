@@ -5,6 +5,7 @@ import { X, Mail, Linkedin, Github } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import { OrganizationMember } from './organizationData';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 
 interface MemberModalProps {
   member: OrganizationMember | null;
@@ -78,13 +79,15 @@ export default function MemberModal({ member, isOpen, onClose, organizationColor
         )}
       >
         {/* Close Button */}
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
-          className="absolute top-4 right-4 z-10 p-2 rounded-full bg-background/90 hover:bg-background border border-border/40 transition-all duration-200 hover:scale-105"
+          className="absolute top-4 right-4 z-10 rounded-full bg-background/90 hover:bg-background border border-border/40"
           aria-label="Close modal"
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
 
         {/* Header Gradient */}
         <div 
@@ -185,13 +188,14 @@ export default function MemberModal({ member, isOpen, onClose, organizationColor
           )}
 
           {/* Close Action */}
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             className="w-full py-2.5 rounded-full text-sm font-semibold text-white transition-all duration-200 hover:opacity-90"
             style={{ backgroundColor: organizationColor.primary }}
           >
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>

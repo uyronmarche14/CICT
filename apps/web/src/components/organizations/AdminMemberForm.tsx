@@ -2,11 +2,13 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { OrganizationMember } from '@/types';
 import { organizationService } from '@/services/organizationService';
 import { X, Upload, Loader2 } from 'lucide-react';
@@ -22,7 +24,7 @@ interface AdminMemberFormProps {
 export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: AdminMemberFormProps) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<OrganizationMember>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<OrganizationMember>({
     defaultValues: member || {
       id: '',
       name: '',
@@ -86,12 +88,14 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className="relative w-full max-w-3xl bg-card rounded-lg shadow-xl p-6 max-h-[90vh] overflow-y-auto">
-        <button 
+        <Button 
+          variant="ghost"
+          size="icon"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-muted rounded-full"
+          className="absolute top-4 right-4 rounded-full"
         >
           <X className="w-5 h-5" />
-        </button>
+        </Button>
 
         <h2 className="text-2xl font-bold mb-6">
           {member ? 'Edit Member' : 'Add New Member'}
@@ -186,32 +190,58 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Member Type</Label>
-              <select {...register('memberType')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                <option value="general">General Member</option>
-                <option value="officer">Officer</option>
-                <option value="alumni">Alumni</option>
-                <option value="honorary">Honorary Member</option>
-                <option value="advisor">Advisor</option>
-              </select>
+              <Controller
+                control={control}
+                name="memberType"
+                render={({ field }) => (
+                  <Select value={field.value || 'general'} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General Member</SelectItem>
+                      <SelectItem value="officer">Officer</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                      <SelectItem value="honorary">Honorary Member</SelectItem>
+                      <SelectItem value="advisor">Advisor</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
             <div className="space-y-2">
               <Label>Status</Label>
-              <select {...register('status')} className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50">
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="alumni">Alumni</option>
-              </select>
+              <Controller
+                control={control}
+                name="status"
+                render={({ field }) => (
+                  <Select value={field.value || 'active'} onValueChange={field.onChange}>
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="alumni">Alumni</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Position Start Date</Label>
-              <Input {...register('startDate')} type="date" />
+              <Controller control={control} name="startDate" render={({ field }) => (
+                <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+              )} />
             </div>
             <div className="space-y-2">
               <Label>Position End Date</Label>
-              <Input {...register('endDate')} type="date" />
+              <Controller control={control} name="endDate" render={({ field }) => (
+                <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+              )} />
             </div>
           </div>
 
@@ -229,6 +259,70 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
           <div className="space-y-2">
             <Label>Joined Year</Label>
             <Input {...register('joinedDate')} placeholder="e.g. 2024" />
+          </div>
+
+          {/* Leadership Details */}
+          <div className="border-t pt-4 space-y-4">
+            <h3 className="text-sm font-semibold">Leadership Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Term Start</Label>
+                <Controller control={control} name="termStart" render={({ field }) => (
+                  <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+                )} />
+              </div>
+              <div className="space-y-2">
+                <Label>Term End</Label>
+                <Controller control={control} name="termEnd" render={({ field }) => (
+                  <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+                )} />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Leadership Status</Label>
+                <Controller
+                  control={control}
+                  name="leadershipStatus"
+                  render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className="h-10 text-sm">
+                        <SelectValue placeholder="Select..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="current">Current</SelectItem>
+                        <SelectItem value="past">Past</SelectItem>
+                        <SelectItem value="emeritus">Emeritus</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Input {...register('isAdviser')} type="checkbox" className="h-4 w-4" />
+                  Is Adviser
+                </Label>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Department</Label>
+                <Input {...register('department')} placeholder="e.g. Computer Science" />
+              </div>
+              <div className="space-y-2">
+                <Label>Committee</Label>
+                <Input {...register('committee')} placeholder="e.g. Finance Committee" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Contact Number</Label>
+              <Input {...register('contactNumber')} placeholder="+63 912 345 6789" />
+            </div>
+            <div className="space-y-2">
+              <Label>Display Order</Label>
+              <Input {...register('displayOrder')} type="number" placeholder="0" />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 pt-4">

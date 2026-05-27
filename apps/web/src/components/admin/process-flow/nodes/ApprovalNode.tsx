@@ -3,6 +3,8 @@
 import { useCallback, useState } from 'react';
 import { Handle, Position, NodeToolbar, type NodeProps } from '@xyflow/react';
 import { ThumbsUp, ThumbsDown, Calendar, MessageSquareText, CheckCircle2, XCircle, Clock, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export function ApprovalNode({ id, data, selected }: NodeProps) {
   const [actionLoading, setActionLoading] = useState<'approve' | 'reject' | null>(null);
@@ -59,29 +61,19 @@ export function ApprovalNode({ id, data, selected }: NodeProps) {
       <Handle type="source" position={Position.Bottom} className="!bg-amber-400" />
       <NodeToolbar isVisible={selected && status === 'pending' && isActive} position={Position.Top}>
         <div className="flex gap-1 bg-background border rounded-lg p-1 shadow-md">
-          <button
-            onClick={handleApprove}
-            disabled={!!actionLoading}
-            className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${
-              actionLoading === 'approve' ? 'opacity-50 cursor-not-allowed' : 'text-green-700 hover:bg-green-50'
-            }`}
-          >
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-green-700 hover:text-green-700 hover:bg-green-50"
+            onClick={handleApprove} disabled={!!actionLoading}>
             {actionLoading === 'approve' ? <Loader2 className="h-3 w-3 animate-spin" /> : <ThumbsUp className="h-3 w-3" />}
             {actionLoading === 'approve' ? 'Saving...' : 'Approve'}
-          </button>
-          <button
-            onClick={handleReject}
-            disabled={!!actionLoading}
-            className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${
-              actionLoading === 'reject' ? 'opacity-50 cursor-not-allowed' : 'text-red-700 hover:bg-red-50'
-            }`}
-          >
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-red-700 hover:text-red-700 hover:bg-red-50"
+            onClick={handleReject} disabled={!!actionLoading}>
             {actionLoading === 'reject' ? <Loader2 className="h-3 w-3 animate-spin" /> : <ThumbsDown className="h-3 w-3" />}
             {actionLoading === 'reject' ? 'Saving...' : 'Reject'}
-          </button>
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-indigo-700 hover:text-indigo-700 hover:bg-indigo-50">
             <MessageSquareText className="h-3 w-3" /> Comment
-          </button>
+          </Button>
         </div>
       </NodeToolbar>
 
@@ -139,11 +131,10 @@ export function ApprovalNode({ id, data, selected }: NodeProps) {
           <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">Checklist</p>
           {checklist.map((ci) => (
             <label key={ci.id} className="flex items-center gap-1.5 cursor-pointer py-0.5">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={!!ci.completed}
-                onChange={() => onChecklistToggle?.(id, ci.id, !ci.completed)}
-                className="h-3 w-3 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+                onCheckedChange={() => onChecklistToggle?.(id, ci.id, !ci.completed)}
+                className="h-3 w-3"
               />
               <span className={`text-[10px] ${ci.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                 {ci.label}

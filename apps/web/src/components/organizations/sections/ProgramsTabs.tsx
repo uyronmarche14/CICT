@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { OrganizationPage } from '@/lib/data/organizationPages';
 
 interface ProgramsTabsProps {
@@ -24,8 +25,9 @@ export default function ProgramsTabs({ programs, color }: ProgramsTabsProps) {
         {/* Left Side: Tabs */}
         <div className="w-full lg:w-1/3 space-y-2">
           {programs.map((program, idx) => (
-            <button
+            <Button
               key={idx}
+              variant="ghost"
               onClick={() => setActiveTab(idx)}
               className={cn(
                 "w-full text-left px-6 py-4 rounded-lg transition-all duration-300 group relative",
@@ -41,7 +43,6 @@ export default function ProgramsTabs({ programs, color }: ProgramsTabsProps) {
                     {program.title}
                   </h3>
                 </div>
-                {/* Active Indicator Dot */}
                 {activeTab === idx && (
                   <motion.div
                     layoutId="activeTabIndicator"
@@ -50,7 +51,7 @@ export default function ProgramsTabs({ programs, color }: ProgramsTabsProps) {
                   />
                 )}
               </div>
-            </button>
+            </Button>
           ))}
         </div>
 

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Menu, X, Newspaper, Calendar, Users, LayoutGrid } from "lucide-react";
 import Logo from "@/lib/CICT.png";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -164,26 +165,15 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden relative p-1 text-foreground/70 hover:text-foreground rounded-md hover:bg-primary/10 transition-all duration-300 ml-auto"
-              aria-label={isOpen ? "Close menu" : "Open menu"}
+              className="md:hidden"
+              aria-label="Open menu"
             >
-              <div className="relative w-5 h-5">
-                <Menu
-                  size={20}
-                  className={`absolute inset-0 transition-all duration-300 ${
-                    isOpen ? 'opacity-0 rotate-90' : 'opacity-100 rotate-0'
-                  }`}
-                />
-                <X
-                  size={20}
-                  className={`absolute inset-0 transition-all duration-300 ${
-                    isOpen ? 'opacity-100 rotate-0' : 'opacity-0 -rotate-90'
-                  }`}
-                />
-              </div>
-            </button>
+              {isOpen ? <X className="h-5 w-5" strokeWidth={1.5} /> : <Menu className="h-5 w-5" strokeWidth={1.5} />}
+            </Button>
           </div>
 
           {/* Mobile Navigation */}

@@ -3,6 +3,7 @@ import Image from "next/image";
 
 import PublicSectionHeader from "@/components/sections/landingpage/PublicSectionHeader";
 import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
 
 const features = [
   {
@@ -72,14 +73,13 @@ const CICTSection = () => {
                 const isActive = idx === activeFeature;
 
                 return (
-                  <button
+                  <Button
                     key={feature.title}
-                    type="button"
+                    variant="ghost"
                     onMouseEnter={() => setActiveFeature(idx)}
                     onFocus={() => setActiveFeature(idx)}
                     className={cn(
-                      "group flex rounded-[1.5rem] py-4 text-left transition-all duration-300 ",
-
+                      "group flex rounded-[1.5rem] py-4 text-left transition-all duration-300",
                     )}
                   >
                     <div className="flex w-full gap-4">
@@ -114,7 +114,7 @@ const CICTSection = () => {
                         </p>
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 );
               })}
             </div>

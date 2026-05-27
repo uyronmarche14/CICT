@@ -2,19 +2,33 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { X, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Organization, OrganizationInput } from '@/types';
 import { organizationService } from '@/services/organizationService';
 import { appToast } from '@/lib/app-toast';
 
-type OrganizationFormValues = Omit<OrganizationInput, 'values' | 'achievements' | 'tags'> & {
+type OrganizationFormValues = Omit<OrganizationInput, 'values' | 'achievements' | 'tags' | 'joinSteps' | 'officeLocation'> & {
   valuesText: string;
   achievementsText: string;
   tagsText: string;
+  joinStepsText: string;
+  tagline?: string;
+  officialEmail?: string;
+  meetingSchedule?: string;
+  membershipSize?: number;
+  joinRequirements?: string;
+  joinUrl?: string;
+  benefits?: string;
+  officeBuilding?: string;
+  officeRoom?: string;
+  officeCampus?: string;
+  officeMapUrl?: string;
 };
 
 interface AdminOrganizationFormProps {
@@ -29,7 +43,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const isEditing = Boolean(organization);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<OrganizationFormValues>({
+  const { register, handleSubmit, setValue, watch, control, formState: { errors } } = useForm<OrganizationFormValues>({
     defaultValues: {
       id: organization?.id ?? '',
       name: organization?.name ?? '',
@@ -67,6 +81,18 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
       tagsText: organization?.tags?.join(', ') ?? '',
       seoDescription: organization?.seoDescription ?? '',
       isActive: organization?.isActive ?? true,
+      tagline: organization?.tagline ?? '',
+      officialEmail: organization?.officialEmail ?? '',
+      meetingSchedule: organization?.meetingSchedule ?? '',
+      membershipSize: organization?.membershipSize ?? undefined,
+      joinRequirements: organization?.joinRequirements ?? '',
+      joinStepsText: organization?.joinSteps?.join('\n') ?? '',
+      joinUrl: organization?.joinUrl ?? '',
+      benefits: organization?.benefits ?? '',
+      officeBuilding: organization?.officeLocation?.building ?? '',
+      officeRoom: organization?.officeLocation?.room ?? '',
+      officeCampus: organization?.officeLocation?.campus ?? '',
+      officeMapUrl: organization?.officeLocation?.mapUrl ?? '',
     }
   });
 
@@ -136,6 +162,20 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           : undefined,
         seoDescription: data.seoDescription || undefined,
         isActive: data.isActive,
+        tagline: data.tagline || undefined,
+        officialEmail: data.officialEmail || undefined,
+        meetingSchedule: data.meetingSchedule || undefined,
+        membershipSize: data.membershipSize || undefined,
+        joinRequirements: data.joinRequirements || undefined,
+        joinSteps: data.joinStepsText ? data.joinStepsText.split('\n').map((s) => s.trim()).filter(Boolean) : undefined,
+        joinUrl: data.joinUrl || undefined,
+        benefits: data.benefits || undefined,
+        officeLocation: {
+          building: data.officeBuilding || undefined,
+          room: data.officeRoom || undefined,
+          campus: data.officeCampus || undefined,
+          mapUrl: data.officeMapUrl || undefined,
+        },
       };
 
       if (isEditing && organization) {
@@ -169,7 +209,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Organization Slug</label>
+              <Label className="text-sm font-medium">Organization Slug</Label>
               <Input
                 {...register('id', { required: 'Slug is required' })}
                 placeholder="e.g. ict-sf"
@@ -178,7 +218,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
               {errors.id && <p className="text-sm text-red-500">{errors.id.message}</p>}
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Short Name</label>
+              <Label className="text-sm font-medium">Short Name</Label>
               <Input
                 {...register('name', { required: 'Short name is required' })}
                 placeholder="e.g. ICT-SF"
@@ -190,7 +230,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           {/* Logo & Banner Uploads */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Logo</label>
+              <Label className="text-sm font-medium">Logo</Label>
               <div className="flex items-center gap-4">
                 {logoUrl && (
                   <Image src={logoUrl} alt="Logo" width={64} height={64} className="object-contain border rounded" />
@@ -205,17 +245,17 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
                     disabled={uploadingLogo}
                   />
                   <Button asChild variant="outline" size="sm" disabled={uploadingLogo}>
-                    <label htmlFor="logo-upload" className="cursor-pointer gap-2">
+                    <Label htmlFor="logo-upload" className="cursor-pointer gap-2">
                       {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       Upload Logo
-                    </label>
+                    </Label>
                   </Button>
                 </div>
               </div>
             </div>
             
             <div className="space-y-2">
-              <label className="text-sm font-medium">Banner</label>
+              <Label className="text-sm font-medium">Banner</Label>
               <div className="flex flex-col gap-2">
                 {bannerUrl && (
                   <Image
@@ -236,10 +276,10 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
                     disabled={uploadingBanner}
                   />
                   <Button asChild variant="outline" size="sm" disabled={uploadingBanner}>
-                    <label htmlFor="banner-upload" className="cursor-pointer gap-2">
+                    <Label htmlFor="banner-upload" className="cursor-pointer gap-2">
                       {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                       Upload Banner
-                    </label>
+                    </Label>
                   </Button>
                 </div>
               </div>
@@ -248,7 +288,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           {/* Full Name */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Full Organization Name</label>
+            <Label className="text-sm font-medium">Full Organization Name</Label>
             <Input
               {...register('fullName', { required: 'Full Name is required' })}
               placeholder="e.g. ICT Student Forum"
@@ -257,7 +297,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Established</label>
+            <Label className="text-sm font-medium">Established</Label>
             <Input
               {...register('established', { required: 'Established field is required' })}
               placeholder="e.g. 2010"
@@ -267,7 +307,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           {/* Mission */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Mission</label>
+            <Label className="text-sm font-medium">Mission</Label>
             <Textarea
               {...register('mission', { required: 'Mission is required' })}
               placeholder="Organization Mission"
@@ -278,7 +318,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           {/* Vision */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Vision</label>
+            <Label className="text-sm font-medium">Vision</Label>
             <Textarea
               {...register('vision', { required: 'Vision is required' })}
               placeholder="Organization Vision"
@@ -289,7 +329,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           {/* Description */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Description</label>
+            <Label className="text-sm font-medium">Description</Label>
             <Textarea
               {...register('description', { required: 'Description is required' })}
               placeholder="Brief description of the organization"
@@ -299,7 +339,7 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium">Long Description</label>
+            <Label className="text-sm font-medium">Long Description</Label>
             <Textarea
               {...register('longDescription', { required: 'Long description is required' })}
               placeholder="Full overview of the organization"
@@ -310,14 +350,14 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Values</label>
+              <Label className="text-sm font-medium">Values</Label>
               <Input
                 {...register('valuesText')}
                 placeholder="Leadership, Service, Excellence"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Achievements</label>
+              <Label className="text-sm font-medium">Achievements</Label>
               <Input
                 {...register('achievementsText')}
                 placeholder="Best Student Council 2023, Outreach Award"
@@ -327,15 +367,15 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
 
           <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Primary Color</label>
+              <Label className="text-sm font-medium">Primary Color</Label>
               <Input {...register('color.primary')} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Secondary Color</label>
+              <Label className="text-sm font-medium">Secondary Color</Label>
               <Input {...register('color.secondary')} />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Accent Color</label>
+              <Label className="text-sm font-medium">Accent Color</Label>
               <Input {...register('color.accent')} />
             </div>
           </div>
@@ -345,15 +385,15 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <h3 className="text-sm font-semibold mb-3">Contact Information</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Email</label>
+                <Label className="text-sm font-medium">Email</Label>
                 <Input {...register('email')} type="email" placeholder="org@example.com" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Phone</label>
+                <Label className="text-sm font-medium">Phone</Label>
                 <Input {...register('phone')} placeholder="+63..." />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Website</label>
+                <Label className="text-sm font-medium">Website</Label>
                 <Input {...register('website')} placeholder="https://..." />
               </div>
             </div>
@@ -364,25 +404,25 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <h3 className="text-sm font-semibold mb-3">Social Media</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Facebook URL</label>
+                <Label className="text-sm font-medium">Facebook URL</Label>
                 <Input {...register('facebookUrl')} placeholder="https://facebook.com/..." />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Twitter URL</label>
+                <Label className="text-sm font-medium">Twitter URL</Label>
                 <Input {...register('twitterUrl')} placeholder="https://twitter.com/..." />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Instagram URL</label>
+                <Label className="text-sm font-medium">Instagram URL</Label>
                 <Input {...register('instagramUrl')} placeholder="https://instagram.com/..." />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">TikTok URL</label>
+                <Label className="text-sm font-medium">TikTok URL</Label>
                 <Input {...register('tiktokUrl')} placeholder="https://tiktok.com/..." />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">LinkedIn URL</label>
+                <Label className="text-sm font-medium">LinkedIn URL</Label>
                 <Input {...register('linkedinUrl')} placeholder="https://linkedin.com/..." />
               </div>
             </div>
@@ -393,15 +433,15 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <h3 className="text-sm font-semibold mb-3">Location</h3>
             <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Building</label>
+                <Label className="text-sm font-medium">Building</Label>
                 <Input {...register('building')} placeholder="e.g. Arts Building" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Room</label>
+                <Label className="text-sm font-medium">Room</Label>
                 <Input {...register('room')} placeholder="e.g. Rm 201" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Campus</label>
+                <Label className="text-sm font-medium">Campus</Label>
                 <Input {...register('campus')} placeholder="e.g. Main Campus" />
               </div>
             </div>
@@ -412,21 +452,21 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <h3 className="text-sm font-semibold mb-3">Advisor & Moderator</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Advisor Name</label>
+                <Label className="text-sm font-medium">Advisor Name</Label>
                 <Input {...register('advisorName')} placeholder="Full name" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Advisor Email</label>
+                <Label className="text-sm font-medium">Advisor Email</Label>
                 <Input {...register('advisorEmail')} type="email" placeholder="advisor@example.com" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4 mt-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Moderator Name</label>
+                <Label className="text-sm font-medium">Moderator Name</Label>
                 <Input {...register('moderatorName')} placeholder="Full name" />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Moderator Email</label>
+                <Label className="text-sm font-medium">Moderator Email</Label>
                 <Input {...register('moderatorEmail')} type="email" placeholder="moderator@example.com" />
               </div>
             </div>
@@ -437,31 +477,111 @@ export default function AdminOrganizationForm({ organization, onClose, onSuccess
             <h3 className="text-sm font-semibold mb-3">Classification</h3>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-sm font-medium">Organization Type</label>
-                <select
-                  {...register('organizationType')}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <option value="">Select Type...</option>
-                  <option value="academic">Academic</option>
-                  <option value="cultural">Cultural</option>
-                  <option value="sports">Sports</option>
-                  <option value="special_interest">Special Interest</option>
-                  <option value="other">Other</option>
-                </select>
+                <Label className="text-sm font-medium">Organization Type</Label>
+                <Controller
+                  control={control}
+                  name="organizationType"
+                  render={({ field }) => (
+                    <Select value={field.value || ''} onValueChange={field.onChange}>
+                      <SelectTrigger className="h-10 text-sm">
+                        <SelectValue placeholder="Select Type..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="academic">Academic</SelectItem>
+                        <SelectItem value="cultural">Cultural</SelectItem>
+                        <SelectItem value="sports">Sports</SelectItem>
+                        <SelectItem value="special_interest">Special Interest</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium">Tags (comma-separated)</label>
+                <Label className="text-sm font-medium">Tags (comma-separated)</Label>
                 <Input {...register('tagsText')} placeholder="Leadership, Tech, Innovation" />
               </div>
             </div>
             <div className="space-y-2 mt-4">
-              <label className="text-sm font-medium">SEO Description</label>
+              <Label className="text-sm font-medium">SEO Description</Label>
               <Textarea
                 {...register('seoDescription')}
                 placeholder="Brief description for search engines"
                 rows={2}
               />
+            </div>
+          </div>
+
+          {/* Tagline & Official Email */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Profile</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Tagline</Label>
+                <Input {...register('tagline')} placeholder="Short tagline" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Official Email</Label>
+                <Input {...register('officialEmail')} type="email" placeholder="org@example.com" />
+              </div>
+            </div>
+          </div>
+
+          {/* Membership Info */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Membership</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Membership Size</Label>
+                <Input {...register('membershipSize')} type="number" min={0} placeholder="e.g. 50" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Meeting Schedule</Label>
+                <Input {...register('meetingSchedule')} placeholder="e.g. Every Friday, 3PM" />
+              </div>
+            </div>
+            <div className="space-y-2 mt-4">
+              <Label className="text-sm font-medium">Join Requirements</Label>
+              <Textarea {...register('joinRequirements')} placeholder="What's required to join?" rows={2} />
+            </div>
+            <div className="space-y-2 mt-4">
+              <Label className="text-sm font-medium">Join Steps (one per line)</Label>
+              <Textarea
+                {...register('joinStepsText')}
+                placeholder={"1. Submit application\n2. Attend orientation\n3. Pay membership fee"}
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2 mt-4">
+              <Label className="text-sm font-medium">Join URL</Label>
+              <Input {...register('joinUrl')} placeholder="https://..." />
+            </div>
+            <div className="space-y-2 mt-4">
+              <Label className="text-sm font-medium">Benefits</Label>
+              <Textarea {...register('benefits')} placeholder="What members get..." rows={2} />
+            </div>
+          </div>
+
+          {/* Location Details */}
+          <div className="border-t pt-4">
+            <h3 className="text-sm font-semibold mb-3">Location</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Building</Label>
+                <Input {...register('officeBuilding')} placeholder="e.g. Engineering Bldg" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Room</Label>
+                <Input {...register('officeRoom')} placeholder="e.g. Room 203" />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Campus</Label>
+                <Input {...register('officeCampus')} placeholder="e.g. Main Campus" />
+              </div>
+            </div>
+            <div className="space-y-2 mt-4">
+              <Label className="text-sm font-medium">Map URL</Label>
+              <Input {...register('officeMapUrl')} placeholder="https://maps.google.com/..." />
             </div>
           </div>
 

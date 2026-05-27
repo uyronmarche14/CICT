@@ -7,6 +7,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
+import { DatePicker } from '@/components/ui/DatePicker';
 
 interface NodeTypeConfigProps {
   nodeType: string;
@@ -47,11 +48,7 @@ export function NodeTypeConfig({ nodeType, data, onUpdate, allNodeIds, currentNo
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Due Date</Label>
-            <Input type="date"
-              value={String(data.dueDate || '')}
-              onChange={(e) => set('dueDate', e.target.value || undefined)}
-              className="h-8 text-xs"
-            />
+            <DatePicker value={String(data.dueDate || '')} onChange={(v) => set('dueDate', v)} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Instructions</Label>
@@ -68,7 +65,7 @@ export function NodeTypeConfig({ nodeType, data, onUpdate, allNodeIds, currentNo
     case 'approval':
       return (
         <div className="space-y-3">
-          <Separator />
+          <Separator className="mb-2" />
           <p className="text-xs font-medium text-muted-foreground">Approval Configuration</p>
           <div className="space-y-1.5">
             <Label className="text-xs">Approval Type</Label>
@@ -114,11 +111,7 @@ export function NodeTypeConfig({ nodeType, data, onUpdate, allNodeIds, currentNo
           )}
           <div className="space-y-1.5">
             <Label className="text-xs">Due Date</Label>
-            <Input type="date"
-              value={String(data.dueDate || '')}
-              onChange={(e) => set('dueDate', e.target.value || undefined)}
-              className="h-8 text-xs"
-            />
+            <DatePicker value={String(data.dueDate || '')} onChange={(v) => set('dueDate', v)} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Approval Instructions</Label>

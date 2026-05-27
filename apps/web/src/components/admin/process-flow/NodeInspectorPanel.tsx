@@ -8,8 +8,10 @@ import { Label } from '@/components/ui/label';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { AssigneeSelect } from './AssigneeSelect';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { Plus, Trash2 } from 'lucide-react';
 import type { AssigneeItem } from '@/types/nodes';
 
@@ -134,11 +136,7 @@ function NodeTypeConfigSection({
           </div>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Due Date</Label>
-            <Input type="date"
-              value={String(data.dueDate || '')}
-              onChange={(e) => set('dueDate', e.target.value || undefined)}
-              className="h-10 text-xs"
-            />
+            <DatePicker value={String(data.dueDate || '')} onChange={(v) => set('dueDate', v)} />
           </div>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Instructions</Label>
@@ -165,13 +163,16 @@ function NodeTypeConfigSection({
           <p className="text-xs font-medium text-muted-foreground">Approval Configuration</p>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Approval Type</Label>
-            <Select value={String(data.approvalType || 'all')} onValueChange={(v) => set('approvalType', v)}>
-              <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="any">Any (one approver)</SelectItem>
-                <SelectItem value="all">All (all must approve)</SelectItem>
-              </SelectContent>
-            </Select>
+            <RadioGroup value={String(data.approvalType || 'all')} onValueChange={(v) => set('approvalType', v)} className="gap-2">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="any" id="approval-any" />
+                <Label htmlFor="approval-any" className="text-xs font-normal cursor-pointer">Any (one approver)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="all" id="approval-all" />
+                <Label htmlFor="approval-all" className="text-xs font-normal cursor-pointer">All (all must approve)</Label>
+              </div>
+            </RadioGroup>
           </div>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Minimum Approvers</Label>
@@ -207,11 +208,7 @@ function NodeTypeConfigSection({
           )}
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Due Date</Label>
-            <Input type="date"
-              value={String(data.dueDate || '')}
-              onChange={(e) => set('dueDate', e.target.value || undefined)}
-              className="h-10 text-xs"
-            />
+            <DatePicker value={String(data.dueDate || '')} onChange={(v) => set('dueDate', v)} />
           </div>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Approval Instructions</Label>
@@ -312,14 +309,20 @@ function NodeTypeConfigSection({
           <p className="text-xs font-medium text-muted-foreground">Trigger Configuration</p>
           <div className="space-y-2.5">
             <Label className="text-xs font-medium">Trigger Type</Label>
-            <Select value={String(data.triggerType || 'manual')} onValueChange={(v) => set('triggerType', v)}>
-              <SelectTrigger className="h-10 text-xs"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="manual">Manual (admin starts)</SelectItem>
-                <SelectItem value="automatic">Automatic (on content publish)</SelectItem>
-                <SelectItem value="scheduled">Scheduled (cron)</SelectItem>
-              </SelectContent>
-            </Select>
+            <RadioGroup value={String(data.triggerType || 'manual')} onValueChange={(v) => set('triggerType', v)} className="gap-2">
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="manual" id="trigger-manual" />
+                <Label htmlFor="trigger-manual" className="text-xs font-normal cursor-pointer">Manual (admin starts)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="automatic" id="trigger-auto" />
+                <Label htmlFor="trigger-auto" className="text-xs font-normal cursor-pointer">Automatic (on content publish)</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value="scheduled" id="trigger-scheduled" />
+                <Label htmlFor="trigger-scheduled" className="text-xs font-normal cursor-pointer">Scheduled (cron)</Label>
+              </div>
+            </RadioGroup>
           </div>
         </div>
       );

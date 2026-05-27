@@ -4,8 +4,6 @@ import { useCallback, useMemo, useState, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
-  useNodesState,
-  useEdgesState,
   addEdge,
   applyNodeChanges,
   applyEdgeChanges,
@@ -146,10 +144,10 @@ interface ProcessFlowCanvasProps {
 }
 
 function Flow({ initialNodes, initialEdges, initialAssignments, onChange, instanceMode }: ProcessFlowCanvasProps) {
-  const [nodes, setNodes, onNodesStateChange] = useNodesState(
+  const [nodes, setNodes] = useState<Node[]>(() =>
     initialNodes.map((n) => ({ ...n, data: { ...n.data } } as Node))
   );
-  const [edges, setEdges, onEdgesStateChange] = useEdgesState(
+  const [edges, setEdges] = useState<Edge[]>(() =>
     initialEdges.map((e) => ({ ...e, data: e.data || {} }) as Edge)
   );
   const [assignments, setAssignments] = useState<NodeAssignment[]>(initialAssignments);
@@ -586,7 +584,7 @@ function Flow({ initialNodes, initialEdges, initialAssignments, onChange, instan
       </div>
 
       <Sheet open={sheetOpen} onOpenChange={(open) => { if (!open) closeSheet(); }}>
-        <SheetContent side="right" className="w-[420px] sm:w-[480px] overflow-y-auto">
+        <SheetContent side="right" className="w-[420px] sm:w-[480px] overflow-y-auto" aria-describedby={undefined}>
           <SheetHeader>
             <SheetTitle className="text-sm">{sheetTitle}</SheetTitle>
           </SheetHeader>

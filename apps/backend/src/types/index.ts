@@ -429,6 +429,17 @@ export interface IOrganizationMember {
   status?: string;
   sortOrder?: number;
   batch?: string;
+  termStart?: string;
+  termEnd?: string;
+  leadershipStatus?: 'current' | 'past' | 'emeritus';
+  course?: string;
+  department?: string;
+  committee?: string;
+  displayOrder?: number;
+  isAdviser?: boolean;
+  contactNumber?: string;
+  projectItems?: Array<{ name: string; role?: string; description?: string; date?: string; url?: string }>;
+  milestoneItems?: Array<{ title: string; date?: string; description?: string; category?: string }>;
 }
 
 export interface IMembershipHistoryEntry {
@@ -510,6 +521,22 @@ export interface IOrganization extends Document {
   isActive?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  tagline?: string;
+  officialEmail?: string;
+  socialLinks?: Array<{ platform: string; url: string; label?: string }>;
+  adviserItems?: Array<{ name: string; role?: string; email?: string; photo?: string }>;
+  officeLocation?: { building?: string; room?: string; campus?: string; mapUrl?: string };
+  meetingSchedule?: string;
+  membershipSize?: number;
+  joinRequirements?: string;
+  joinSteps?: string[];
+  joinUrl?: string;
+  benefits?: string;
+  programs?: Array<{ name: string; description?: string; schedule?: string; icon?: string }>;
+  flagshipEvents?: Array<{ name: string; description?: string; frequency?: string; eventId?: string }>;
+  partnerItems?: Array<{ name: string; logo?: string; website?: string; description?: string; partnershipType?: string }>;
+  committeeItems?: Array<{ name: string; description?: string; headName?: string; memberCount?: number; icon?: string }>;
+  structuredAchievements?: Array<{ title: string; date?: string; description?: string; category?: string; imageUrl?: string }>;
 }
 
 export interface IProgram extends Document {

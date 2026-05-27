@@ -281,12 +281,14 @@ export default function AnnouncementsCarousel({
         {/* Carousel Indicators */}
         <div className="flex justify-center gap-2 mt-6">
           {announcements.map((_, index) => (
-            <button
+            <Button
               key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+              variant="ghost"
+              size="sm"
+              className={`min-w-0 p-0 h-2 rounded-full transition-all duration-300 ${
                 index === currentAnnouncement
                   ? 'bg-primary w-6'
-                  : 'bg-primary/30 hover:bg-primary/50'
+                  : 'bg-primary/30 hover:bg-primary/50 w-2'
               }`}
               onClick={() => setCurrentAnnouncement(index)}
             />

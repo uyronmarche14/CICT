@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Loader2, Search } from 'lucide-react';
+import { DatePicker } from '@/components/ui/DatePicker';
 import { appToast } from '@/lib/app-toast';
 import api from '@/lib/api/axios';
 import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-membership';
@@ -71,6 +72,7 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
     register,
     handleSubmit,
     setValue,
+    control,
     formState: { errors },
   } = useForm<MembershipFormValues>({
     defaultValues: {
@@ -187,17 +189,18 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
               {showDropdown && searchResults.length > 0 && (
                 <div className="absolute z-50 w-full mt-1 rounded-md border bg-popover shadow-md max-h-48 overflow-y-auto">
                   {searchResults.map((student) => (
-                    <button
+                    <Button
                       key={student._id}
-                      type="button"
-                      className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground flex items-center gap-3"
+                      variant="ghost"
+                      size="sm"
+                      className="w-full px-3 py-2 text-left text-sm flex items-center gap-3"
                       onClick={() => selectStudent(student)}
                     >
                       <span className="font-medium">{student.studentNumber}</span>
                       <span>
                         {student.firstName} {student.lastName}
                       </span>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -234,11 +237,15 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Start Date</Label>
-              <Input type="date" {...register('startDate')} />
+              <Controller control={control} name="startDate" render={({ field }) => (
+                <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+              )} />
             </div>
             <div className="space-y-2">
               <Label>End Date</Label>
-              <Input type="date" {...register('endDate')} />
+              <Controller control={control} name="endDate" render={({ field }) => (
+                <DatePicker value={field.value || ''} onChange={(v) => field.onChange(v || '')} />
+              )} />
             </div>
           </div>
 

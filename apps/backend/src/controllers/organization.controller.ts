@@ -47,6 +47,22 @@ const ORGANIZATION_MUTABLE_FIELDS = [
   'gallery',
   'seoDescription',
   'isActive',
+  'tagline',
+  'officialEmail',
+  'socialLinks',
+  'adviserItems',
+  'officeLocation',
+  'meetingSchedule',
+  'membershipSize',
+  'joinRequirements',
+  'joinSteps',
+  'joinUrl',
+  'benefits',
+  'programs',
+  'flagshipEvents',
+  'partnerItems',
+  'committeeItems',
+  'structuredAchievements',
 ] as const;
 
 const buildOrganizationPayload = (body: Record<string, unknown>) => {

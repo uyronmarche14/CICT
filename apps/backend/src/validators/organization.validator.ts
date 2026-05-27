@@ -148,6 +148,34 @@ const organizationBaseValidator = [
     .optional()
     .isBoolean()
     .withMessage('isActive must be a boolean'),
+  body('tagline')
+    .optional()
+    .trim(),
+  body('officialEmail')
+    .optional()
+    .isEmail()
+    .withMessage('Official email must be valid'),
+  body('meetingSchedule')
+    .optional()
+    .trim(),
+  body('membershipSize')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Membership size must be a positive integer'),
+  body('joinRequirements')
+    .optional()
+    .trim(),
+  body('joinSteps')
+    .optional()
+    .isArray()
+    .withMessage('Join steps must be an array'),
+  body('joinUrl')
+    .optional()
+    .isURL()
+    .withMessage('Join URL must be valid'),
+  body('benefits')
+    .optional()
+    .trim(),
 ];
 
 export const createOrganizationValidator = [

@@ -3,6 +3,8 @@
 import { useCallback, useState } from 'react';
 import { Handle, Position, NodeToolbar, type NodeProps } from '@xyflow/react';
 import { ClipboardList, Calendar, Clock, CheckCircle2, MessageSquareText, CheckSquare, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const PRIORITY_STYLES: Record<string, { label: string; color: string }> = {
   low: { label: 'Low', color: 'bg-slate-100 text-slate-700 border-slate-300' },
@@ -40,19 +42,14 @@ export function TaskNode({ id, data, selected }: NodeProps) {
       <Handle type="source" position={Position.Bottom} className="!bg-blue-400" />
       <NodeToolbar isVisible={selected} position={Position.Top}>
         <div className="flex gap-1 bg-background border rounded-lg p-1 shadow-md">
-          <button
-            onClick={handleToggle}
-            disabled={actionLoading}
-            className={`flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded transition-colors ${
-              actionLoading ? 'opacity-50 cursor-not-allowed' : ''
-            } ${isCompleted ? 'text-green-700 bg-green-50' : 'text-slate-600 hover:bg-slate-50'}`}
-          >
+          <Button size="sm" variant="ghost" className={`h-6 px-1.5 text-[10px] gap-1 font-medium ${isCompleted ? 'text-green-700 bg-green-50 hover:bg-green-100' : 'text-slate-600 hover:bg-slate-50'}`}
+            onClick={handleToggle} disabled={actionLoading}>
             {actionLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : isCompleted ? <CheckCircle2 className="h-3 w-3" /> : <CheckSquare className="h-3 w-3" />}
             {actionLoading ? 'Saving...' : isCompleted ? 'Completed' : 'Mark Complete'}
-          </button>
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-indigo-700 hover:text-indigo-700 hover:bg-indigo-50">
             <MessageSquareText className="h-3 w-3" /> Comment
-          </button>
+          </Button>
         </div>
       </NodeToolbar>
 
@@ -72,11 +69,10 @@ export function TaskNode({ id, data, selected }: NodeProps) {
             <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${pStyle.color}`}>{pStyle.label}</span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <input
-              type="checkbox"
+            <Checkbox
               checked={isCompleted}
-              onChange={handleToggle}
-              className="h-3.5 w-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500 shrink-0 cursor-pointer"
+              onCheckedChange={handleToggle}
+              className="h-3.5 w-3.5"
             />
             {data.label ? (
               <p className={`text-xs font-medium truncate ${isCompleted ? 'text-green-700 line-through' : 'text-blue-900'}`}>
@@ -92,11 +88,10 @@ export function TaskNode({ id, data, selected }: NodeProps) {
           <p className="text-[9px] font-medium text-muted-foreground uppercase tracking-wide">Checklist</p>
           {checklist.map((ci) => (
             <label key={ci.id} className="flex items-center gap-1.5 cursor-pointer py-0.5">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={!!ci.completed}
-                onChange={() => onChecklistToggle?.(id, ci.id, !ci.completed)}
-                className="h-3 w-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                onCheckedChange={() => onChecklistToggle?.(id, ci.id, !ci.completed)}
+                className="h-3 w-3"
               />
               <span className={`text-[10px] ${ci.completed ? 'line-through text-muted-foreground' : 'text-foreground'}`}>
                 {ci.label}

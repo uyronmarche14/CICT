@@ -9,6 +9,8 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -786,12 +788,14 @@ export default function AdminEventDetailPage() {
                       className="pl-8 h-9"
                     />
                     {search && (
-                      <button
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={() => { setSearch(''); setPage(1); }}
-                        className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                        className="absolute right-2 top-2.5"
                       >
                         <X className="h-4 w-4" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                   <Select
@@ -825,7 +829,7 @@ export default function AdminEventDetailPage() {
                         </DialogHeader>
                         <div className="space-y-4 py-4">
                           <div className="space-y-2">
-                            <label className="text-sm font-medium">Student Number</label>
+                            <Label className="text-sm font-medium">Student Number</Label>
                             <Input
                               placeholder="Enter student number"
                               value={addRegStudentNo}
@@ -888,11 +892,9 @@ export default function AdminEventDetailPage() {
                           <TableRow className="hover:bg-transparent">
                             {canManageRegistrations && (
                               <TableHead className="w-10">
-                                <input
-                                  type="checkbox"
+                                <Checkbox
                                   checked={allSelectedOnPage}
-                                  onChange={(e) => handleSelectAll(e.target.checked)}
-                                  className="rounded border-gray-300"
+                                  onCheckedChange={(checked) => handleSelectAll(checked === true)}
                                 />
                               </TableHead>
                             )}
@@ -912,11 +914,9 @@ export default function AdminEventDetailPage() {
                             <TableRow key={reg._id} className={selectedIds.has(reg._id) ? 'bg-muted/50' : ''}>
                               {canManageRegistrations && (
                                 <TableCell>
-                                  <input
-                                    type="checkbox"
+                                  <Checkbox
                                     checked={selectedIds.has(reg._id)}
-                                    onChange={(e) => handleSelectOne(reg._id, e.target.checked)}
-                                    className="rounded border-gray-300"
+                                    onCheckedChange={(checked) => handleSelectOne(reg._id, checked === true)}
                                   />
                                 </TableCell>
                               )}
@@ -1191,12 +1191,14 @@ export default function AdminEventDetailPage() {
                         className="pl-8 h-9"
                       />
                       {logSearch && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => { setLogSearch(''); setLogPage(1); }}
-                          className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                          className="absolute right-2 top-2.5"
                         >
                           <X className="h-4 w-4" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                     <Select

@@ -8,6 +8,7 @@ import { ProcessFlowCanvas } from './ProcessFlowCanvas';
 import { appToast } from '@/lib/app-toast';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ArrowLeft, Play, CheckCircle2, Archive, Loader2, Clock, History, MessageSquare, ThumbsUp } from 'lucide-react';
 import Link from 'next/link';
@@ -111,6 +112,10 @@ export function ProcessFlowExecutor({ instance, instanceId }: ProcessFlowExecuto
     [completedNodeIds, approvalStepMap]
   );
 
+  const totalNodes = instance.nodesSnapshot?.length || 0;
+  const completedCount = (instance.nodesSnapshot || []).filter((n: ProcessNode) => isNodeCompleted(n.id)).length;
+  const progressValue = totalNodes > 0 ? Math.round((completedCount / totalNodes) * 100) : 0;
+
   const instanceMode = useMemo(() => ({
     isActive: isCurrentNode,
     isCompleted: isNodeCompleted,
@@ -142,6 +147,12 @@ export function ProcessFlowExecutor({ instance, instanceId }: ProcessFlowExecuto
               {instance.nodesSnapshot?.length || 0} nodes &middot; {instance.edgesSnapshot?.length || 0} edges
               {instance.startedAt && ` · Started ${format(new Date(instance.startedAt), 'MMM d, h:mm a')}`}
             </p>
+            {status === 'active' && totalNodes > 0 && (
+              <div className="flex items-center gap-2 mt-1">
+                <Progress value={progressValue} className="h-1.5 w-32" />
+                <span className="text-[10px] text-muted-foreground">{completedCount}/{totalNodes}</span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CldImage } from 'next-cloudinary';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface SlideData {
   image: string;
@@ -112,29 +113,35 @@ export default function AboutCarousel({ slides }: AboutCarouselProps) {
       </div>
 
       {/* Navigation Controls (Side Arrows) */}
-      <button 
+      <Button 
+        variant="ghost" 
+        size="icon"
         onClick={prevSlide} 
-        className="absolute left-2 md:left-8 z-20 p-2 md:p-3 rounded-full bg-background/20 backdrop-blur-md border border-white/10 text-white hover:bg-background/40 transition-colors pointer-events-auto"
+        className="absolute left-2 md:left-8 z-20 rounded-full bg-background/20 backdrop-blur-md border border-white/10 text-white hover:bg-background/40 pointer-events-auto"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-5 h-5 md:w-6 md:h-6" />
-      </button>
-      <button 
+      </Button>
+      <Button 
+        variant="ghost" 
+        size="icon"
         onClick={nextSlide} 
-        className="absolute right-2 md:right-8 z-20 p-2 md:p-3 rounded-full bg-background/20 backdrop-blur-md border border-white/10 text-white hover:bg-background/40 transition-colors pointer-events-auto"
+        className="absolute right-2 md:right-8 z-20 rounded-full bg-background/20 backdrop-blur-md border border-white/10 text-white hover:bg-background/40 pointer-events-auto"
         aria-label="Next slide"
       >
         <ChevronRight className="w-5 h-5 md:w-6 md:h-6" />
-      </button>
+      </Button>
 
       {/* Bottom Progress/Dots Indicators */}
       <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 z-20 pointer-events-auto">
         {slides.map((_, idx) => (
-          <button 
+          <Button 
             key={idx} 
+            variant="ghost" 
+            size="sm"
             onClick={() => setCurrentIndex(idx)}
             aria-label={`Go to slide ${idx + 1}`}
-            className={`h-1.5 transition-all duration-500 rounded-full ${
+            className={`min-w-0 p-0 h-1.5 transition-all duration-500 rounded-full ${
               idx === currentIndex ? "w-10 bg-primary" : "w-4 bg-white/40 hover:bg-white/60"
             }`}
           />

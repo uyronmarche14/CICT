@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Loader2, Clock, Search, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { getScanResultBadge } from '@/utils/badge-helpers';
@@ -78,12 +79,14 @@ export default function StudentAttendancePage() {
             className="pl-8 h-9"
           />
           {search && (
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={() => setSearch('')}
-              className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+              className="absolute right-2 top-2.5"
             >
               <X className="h-4 w-4" />
-            </button>
+            </Button>
           )}
         </div>
         <Select value={resultFilter} onValueChange={setResultFilter}>

@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -11,10 +12,12 @@ import api from '@/lib/api/axios';
 import { getApiErrorMessage } from '@/lib/api/errors';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
 import type { AuthProfile } from '@/types';
+
+type InputFieldProps = React.ComponentProps<typeof Input>;
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -35,11 +38,7 @@ export default function AdminLoginPage() {
     }
   }, [isAuthenticated, authLoading, router]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormValues>({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -61,7 +60,6 @@ export default function AdminLoginPage() {
           return;
         }
         
-        // Handle role checking safely
         if (!canAccessAdmin) {
           setError('Access denied. Admin privileges required.');
           setLoading(false);
@@ -93,52 +91,54 @@ export default function AdminLoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
-                {error}
-              </div>
-            )}
-            
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="admin@example.com"
-                {...register('email')}
-                className={errors.email ? 'border-red-500' : ''}
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
+                  {error}
+                </div>
+              )}
+              
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="admin@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-                className={errors.password ? 'border-red-500' : ''}
+              
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }: { field: InputFieldProps }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.password && (
-                <p className="text-xs text-red-500">{errors.password.message}</p>
-              )}
-            </div>
-            
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Logging in...
-                </>
-              ) : (
-                'Login'
-              )}
-            </Button>
-          </form>
+              
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  'Login'
+                )}
+              </Button>
+            </form>
+          </Form>
         </CardContent>
         <CardFooter className="justify-center">
           <p className="text-xs text-gray-500 dark:text-gray-400">

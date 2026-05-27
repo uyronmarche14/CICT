@@ -2,6 +2,7 @@
 
 import { Handle, Position, NodeToolbar, type NodeProps } from '@xyflow/react';
 import { MessageSquareText, ThumbsUp, MessageSquarePlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export function CommentReviewNode({ data, selected }: NodeProps) {
   const minReviewers = data.minApprovers as number | undefined;
@@ -12,12 +13,12 @@ export function CommentReviewNode({ data, selected }: NodeProps) {
       <Handle type="source" position={Position.Bottom} className="!bg-indigo-400" />
       <NodeToolbar isVisible={selected} position={Position.Top}>
         <div className="flex gap-1 bg-background border rounded-lg p-1 shadow-md">
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-green-700 hover:bg-green-50 rounded transition-colors">
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-green-700 hover:text-green-700 hover:bg-green-50">
             <ThumbsUp className="h-3 w-3" /> Approve
-          </button>
-          <button className="flex items-center gap-1 px-2 py-1 text-[10px] font-medium text-indigo-700 hover:bg-indigo-50 rounded transition-colors">
+          </Button>
+          <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] gap-1 font-medium text-indigo-700 hover:text-indigo-700 hover:bg-indigo-50">
             <MessageSquarePlus className="h-3 w-3" /> Add Review
-          </button>
+          </Button>
         </div>
       </NodeToolbar>
 

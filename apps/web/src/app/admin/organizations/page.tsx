@@ -6,6 +6,8 @@ import { Permission } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Loader2, ArrowRight, Plus } from 'lucide-react';
 import { CldImage } from 'next-cloudinary';
 import AdminOrganizationForm from '@/components/organizations/AdminOrganizationForm';
@@ -14,7 +16,7 @@ import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { useAdminOrganizations } from '@/hooks/useOrganizations';
 
 const orgTypeOptions = [
-  { value: '', label: 'All Types' },
+  { value: 'all', label: 'All Types' },
   { value: 'academic', label: 'Academic' },
   { value: 'cultural', label: 'Cultural' },
   { value: 'sports', label: 'Sports' },
@@ -24,7 +26,7 @@ const orgTypeOptions = [
 
 export default function AdminOrganizationsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [orgTypeFilter, setOrgTypeFilter] = useState('');
+  const [orgTypeFilter, setOrgTypeFilter] = useState('all');
   const {
     canAccessOrganizationsModule,
     canCreateOrganization,
@@ -41,7 +43,7 @@ export default function AdminOrganizationsPage() {
       const filtered = canViewAllOrganizations
         ? organizations
         : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
-      if (!orgTypeFilter) return filtered;
+      if (orgTypeFilter === 'all') return filtered;
       return filtered.filter((org) => org.organizationType === orgTypeFilter);
     },
     [canViewAllOrganizations, organizations, scopedOrganizationIds, orgTypeFilter]
@@ -80,16 +82,17 @@ export default function AdminOrganizationsPage() {
       </div>
 
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium">Type:</label>
-        <select
-          value={orgTypeFilter}
-          onChange={(e) => setOrgTypeFilter(e.target.value)}
-          className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          {orgTypeOptions.map((opt) => (
-            <option key={opt.value} value={opt.value}>{opt.label}</option>
-          ))}
-        </select>
+        <Label className="text-sm font-medium">Type:</Label>
+        <Select value={orgTypeFilter} onValueChange={setOrgTypeFilter}>
+          <SelectTrigger className="h-10 w-44">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {orgTypeOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

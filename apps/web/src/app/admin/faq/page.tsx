@@ -8,6 +8,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -354,7 +355,7 @@ export default function FAQAdminPage() {
               </CardHeader>
               <CardContent className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Title</label>
+                  <Label className="text-sm font-medium">Title</Label>
                   <Input
                     value={form.title}
                     onChange={(e) => {
@@ -368,7 +369,7 @@ export default function FAQAdminPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Subtitle</label>
+                  <Label className="text-sm font-medium">Subtitle</Label>
                   <Textarea
                     rows={3}
                     value={form.subtitle}
@@ -421,22 +422,22 @@ export default function FAQAdminPage() {
                       className="flex items-start gap-2 rounded-lg border p-3"
                     >
                       <div className="flex flex-col gap-0.5 pt-1">
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => moveTopic(index, 'up')}
                           disabled={index === 0}
-                          className="text-muted-foreground hover:text-foreground disabled:opacity-30"
                         >
                           <ChevronUp className="h-3 w-3" />
-                        </button>
-                        <button
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => moveTopic(index, 'down')}
                           disabled={index === form.topics.length - 1}
-                          className="text-muted-foreground hover:text-foreground disabled:opacity-30"
                         >
                           <ChevronDown className="h-3 w-3" />
-                        </button>
+                        </Button>
                       </div>
                       <div className="flex flex-1 flex-col gap-2 sm:flex-row">
                         <div className="flex-1 space-y-1">
@@ -580,22 +581,22 @@ export default function FAQAdminPage() {
                                         </SelectContent>
                                       </Select>
                                       <div className="flex items-center gap-0.5">
-                                        <button
-                                          type="button"
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
                                           onClick={() => moveQuestion(originalIndex, 'up')}
                                           disabled={originalIndex === 0}
-                                          className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                                         >
                                           <ChevronUp className="h-3 w-3" />
-                                        </button>
-                                        <button
-                                          type="button"
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
                                           onClick={() => moveQuestion(originalIndex, 'down')}
                                           disabled={originalIndex === form.questions.length - 1}
-                                          className="p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-30"
                                         >
                                           <ChevronDown className="h-3 w-3" />
-                                        </button>
+                                        </Button>
                                       </div>
                                       <Button
                                         variant="ghost"

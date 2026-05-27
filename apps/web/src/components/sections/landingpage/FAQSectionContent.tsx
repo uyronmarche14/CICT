@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/accordion';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import PublicSectionHeader from '@/components/sections/landingpage/PublicSectionHeader';
 import { FAQContent } from '@/types';
 
@@ -85,7 +86,9 @@ const FAQSectionContent = ({ data, previewLabel }: FAQSectionContentProps) => {
             <div className="sticky top-8 space-y-4">
               <h3 className="text-lg font-semibold text-foreground">Topics</h3>
               <div className="space-y-1">
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleTopicClick(null)}
                   className={`flex w-full items-center justify-between rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-colors ${
                     activeTopic === null
@@ -95,12 +98,14 @@ const FAQSectionContent = ({ data, previewLabel }: FAQSectionContentProps) => {
                 >
                   <span>All</span>
                   <span className="text-xs opacity-70">{questions.length}</span>
-                </button>
+                </Button>
                 {topics
                   .filter((t) => t.id.trim() && t.label.trim())
                   .map((topic) => (
-                    <button
+                    <Button
                       key={topic.id}
+                      variant="ghost"
+                      size="sm"
                       onClick={() => handleTopicClick(topic.id)}
                       className={`flex w-full items-center justify-between rounded-lg border px-4 py-2.5 text-left text-sm font-medium transition-colors ${
                         activeTopic === topic.id
@@ -117,7 +122,7 @@ const FAQSectionContent = ({ data, previewLabel }: FAQSectionContentProps) => {
                       >
                         {questionCountByTopic[topic.id] ?? 0}
                       </Badge>
-                    </button>
+                    </Button>
                   ))}
               </div>
             </div>

@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Loader2, AlertTriangle } from 'lucide-react';
 
 interface RejectionReasonDialogProps {
@@ -81,9 +82,9 @@ export function RejectionReasonDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <label htmlFor="rejection-reason" className="text-sm font-medium">
+            <Label htmlFor="rejection-reason" className="text-sm font-medium">
               Reason <span className="text-destructive">*</span>
-            </label>
+            </Label>
             <Textarea
               id="rejection-reason"
               placeholder="Explain why this content is being rejected..."
@@ -102,9 +103,9 @@ export function RejectionReasonDialog({
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="rejection-comment" className="text-sm font-medium">
+            <Label htmlFor="rejection-comment" className="text-sm font-medium">
               Additional comment
-            </label>
+            </Label>
             <Input
               id="rejection-comment"
               placeholder="Optional — additional notes for the content creator..."

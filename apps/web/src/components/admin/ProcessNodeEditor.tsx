@@ -174,7 +174,7 @@ export function ProcessNodeEditor({ nodes, edges, onChange }: ProcessNodeEditorP
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editingIndex !== null ? 'Edit Node' : 'Add Node'}</DialogTitle>
           </DialogHeader>

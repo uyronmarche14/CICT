@@ -190,9 +190,11 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
 
       <div className="flex gap-1 border-b">
         {TAB_FILTERS.map((tab) => (
-          <button
+          <Button
             key={tab.value}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+            variant="ghost"
+            size="sm"
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors rounded-none ${
               activeTab === tab.value
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -200,7 +202,7 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
             onClick={() => setActiveTab(tab.value)}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
 
