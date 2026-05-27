@@ -4,12 +4,11 @@ import News from '../models/News';
 import Announcement from '../models/Announcement';
 import ContentApprovalAction from '../models/ContentApprovalAction';
 import { AuthRequest } from '../middleware/auth';
-import { asyncHandler } from '../utils/asyncHandler';
 import { getAccessibleOrganizationIdsForAuthenticatedUser } from '../utils/organizationScope';
 import { hasGlobalPermission } from '../utils/rbac';
 import { ContentOwnerType, Permission } from '../types';
 
-export const getPendingApprovals = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getPendingApprovals = async (req: AuthRequest, res: Response) => {
   const page = Math.max(1, parseInt(req.query.page as string) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit as string) || 20));
   const type = (req.query.type as string) || 'all';
@@ -139,9 +138,9 @@ export const getPendingApprovals = asyncHandler(async (req: AuthRequest, res: Re
       pagination: { page, limit, total, pages: Math.max(1, totalPages) },
     },
   });
-});
+};
 
-export const getApprovalStats = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getApprovalStats = async (req: AuthRequest, res: Response) => {
   const user = req.user!;
   const isGlobalApprover = hasGlobalPermission(user, Permission.APPROVE_CONTENT) || hasGlobalPermission(user, Permission.REJECT_CONTENT);
   const accessibleOrgIds = [...new Set([
@@ -174,9 +173,9 @@ export const getApprovalStats = asyncHandler(async (req: AuthRequest, res: Respo
       byType: { events, news, announcements },
     },
   });
-});
+};
 
-export const getApprovalHistory = asyncHandler(async (req: AuthRequest, res: Response) => {
+export const getApprovalHistory = async (req: AuthRequest, res: Response) => {
   const { contentType, contentId } = req.params;
 
   const validTypes = ['news', 'announcement', 'event'];
@@ -209,4 +208,4 @@ export const getApprovalHistory = asyncHandler(async (req: AuthRequest, res: Res
     success: true,
     data: { actions: mappedActions },
   });
-});
+};

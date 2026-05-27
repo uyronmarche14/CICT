@@ -96,7 +96,17 @@ async function sendToAll(payload: PushPayload): Promise<void> {
     const allTokens = await PushToken.find().lean();
     const studentIds = [...new Set(allTokens.map((t) => t.studentId.toString()))];
 
-    await Promise.all(studentIds.map((studentId) => sendToStudent(studentId, payload)));
+    const results = await Promise.allSettled(
+      studentIds.map((studentId) => sendToStudent(studentId, payload))
+    );
+
+    const failures = results.filter(
+      (r): r is PromiseRejectedResult => r.status === 'rejected'
+    );
+
+    if (failures.length > 0) {
+      logger.error(`[PushNotification] ${failures.length}/${results.length} notifications failed`);
+    }
   } catch (error) {
     logger.error('Failed to send push notification to all students:', error);
   }

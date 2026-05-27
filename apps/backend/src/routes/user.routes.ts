@@ -1,5 +1,11 @@
 import { Router } from 'express';
 import * as userController from '../controllers/user.controller';
+import {
+  getUserOrgAssignments,
+  createUserOrgAssignment,
+  updateUserOrgAssignment,
+  deleteUserOrgAssignment,
+} from '../controllers/organization-assignment.controller';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/permissions';
 import { logActivity } from '../middleware/activityLogger';
@@ -118,7 +124,7 @@ router.get(
   authenticate,
   authorize(Permission.ASSIGN_ROLE),
   validate(getOrganizationAssignmentsValidator),
-  userController.getUserOrgAssignments
+  getUserOrgAssignments
 );
 
 router.post(
@@ -127,7 +133,7 @@ router.post(
   authorize(Permission.ASSIGN_ROLE),
   validate(createOrganizationAssignmentValidator),
   logActivity('assign_org_role', 'user'),
-  userController.createUserOrgAssignment
+  createUserOrgAssignment
 );
 
 router.put(
@@ -136,7 +142,7 @@ router.put(
   authorize(Permission.ASSIGN_ROLE),
   validate(updateOrganizationAssignmentValidator),
   logActivity('update_org_role', 'user'),
-  userController.updateUserOrgAssignment
+  updateUserOrgAssignment
 );
 
 router.delete(
@@ -145,7 +151,7 @@ router.delete(
   authorize(Permission.ASSIGN_ROLE),
   validate(deleteOrganizationAssignmentValidator),
   logActivity('remove_org_role', 'user'),
-  userController.deleteUserOrgAssignment
+  deleteUserOrgAssignment
 );
 
 export default router;

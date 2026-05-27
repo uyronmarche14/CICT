@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { ContentOwnerType, NewsStatus, Permission } from '../types';
 import logger from '../utils/logger';
+import { sanitizeSearchInput } from '../utils/escapeRegex';
 import { deleteFromCloudinary } from '../middleware/upload';
 import { pushNotificationService } from '../services/push-notification.service';
 import {
@@ -28,6 +29,7 @@ import {
 } from '../utils/contentApproval';
 import { buildOwnershipFilter, buildUpdatePayload, canViewUnpublishedContent } from '../services/content.service';
 import * as approvalService from '../services/content-approval.service';
+import { parsePagination } from '../utils/pagination';
 
 const NEWS_EDITABLE_FIELDS = [
   'title',
@@ -153,7 +155,7 @@ export const createNews = async (req: AuthRequest, res: Response): Promise<void>
  * Get all news articles
  */
 export const getAllNews = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, page = 1, limit = 10, search, ownerType, organizationId } = req.query;
+  const { status, search, ownerType, organizationId } = req.query;
 
   const conditions: Record<string, unknown>[] = [];
   const requestedOwnerType =
@@ -210,25 +212,26 @@ export const getAllNews = async (req: AuthRequest, res: Response): Promise<void>
     }
   }
 
-  if (search) {
+  const safeSearch = sanitizeSearchInput(search);
+  if (safeSearch) {
     conditions.push({
       $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { bodyHtml: { $regex: search, $options: 'i' } },
+        { title: { $regex: safeSearch, $options: 'i' } },
+        { content: { $regex: safeSearch, $options: 'i' } },
+        { bodyHtml: { $regex: safeSearch, $options: 'i' } },
       ],
     });
   }
   const query = conditions.length <= 1 ? conditions[0] ?? {} : { $and: conditions };
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   const [news, total] = await Promise.all([
     News.find(query)
       .populate('author', 'firstName lastName email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(lim),
     News.countDocuments(query),
   ]);
   const serializedNews = await attachOrganizationNames(news);
@@ -238,10 +241,10 @@ export const getAllNews = async (req: AuthRequest, res: Response): Promise<void>
     data: {
       news: serializedNews,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / lim),
       },
     },
   });

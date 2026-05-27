@@ -5,6 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import logger from '../utils/logger';
 import { sanitizeHtmlContent } from '../utils/sanitize';
+import { parsePagination } from '../utils/pagination';
 import { Permission, INodeAssignment } from '../types';
 import {
   createInstanceFromTemplate,
@@ -14,7 +15,7 @@ import {
 
 function canActOnNode(userId: string, nodeId: string, assignments: INodeAssignment[], permissions: string[]): boolean {
   const hasGlobal = permissions.includes(Permission.VIEW_PROCESS) || permissions.includes(Permission.APPROVE_PROCESS_STEP);
-  if (hasGlobal) return true;
+  if (hasGlobal) {return true;}
   return assignments.some((a) => a.nodeId === nodeId && a.assigneeType === 'user' && a.assigneeId === userId);
 }
 
@@ -47,10 +48,8 @@ export const createProcessTemplate = async (req: AuthRequest, res: Response): Pr
   });
 };
 
-const MAX_PAGE_SIZE = 100;
-
 export const getAllProcessTemplates = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, processType, organizationScope, isActive, search } = req.query;
+  const { processType, organizationScope, isActive, search } = req.query;
 
   const conditions: Record<string, unknown> = {};
 
@@ -70,15 +69,14 @@ export const getAllProcessTemplates = async (req: AuthRequest, res: Response): P
     conditions.title = { $regex: search, $options: 'i' };
   }
 
-  const pageSize = Math.min(Number(limit), MAX_PAGE_SIZE);
-  const skip = (Number(page) - 1) * pageSize;
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   const [templates, total] = await Promise.all([
     ProcessTemplate.find(conditions)
       .populate('createdBy', 'firstName lastName email')
       .sort({ updatedAt: -1 })
       .skip(skip)
-      .limit(pageSize),
+      .limit(lim),
     ProcessTemplate.countDocuments(conditions),
   ]);
 
@@ -87,10 +85,10 @@ export const getAllProcessTemplates = async (req: AuthRequest, res: Response): P
     data: {
       templates,
       pagination: {
-        page: Number(page),
-        limit: pageSize,
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / pageSize),
+        pages: Math.ceil(total / lim),
       },
     },
   });
@@ -220,8 +218,9 @@ export const createProcessInstance = async (req: AuthRequest, res: Response): Pr
 };
 
 export const getAllProcessInstances = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
   const {
-    page = 1, limit = 10, status, linkedContentType, linkedContentId,
+    status, linkedContentType, linkedContentId,
     organizationId, assignedTo, search,
   } = req.query;
 
@@ -251,16 +250,13 @@ export const getAllProcessInstances = async (req: AuthRequest, res: Response): P
     conditions.title = { $regex: search, $options: 'i' };
   }
 
-  const pageSize = Math.min(Number(limit), MAX_PAGE_SIZE);
-  const skip = (Number(page) - 1) * pageSize;
-
   const [instances, total] = await Promise.all([
     ProcessInstance.find(conditions)
       .populate('createdBy', 'firstName lastName email')
       .populate('templateId', 'title')
       .sort({ updatedAt: -1 })
       .skip(skip)
-      .limit(pageSize),
+      .limit(lim),
     ProcessInstance.countDocuments(conditions),
   ]);
 
@@ -269,10 +265,10 @@ export const getAllProcessInstances = async (req: AuthRequest, res: Response): P
     data: {
       instances,
       pagination: {
-        page: Number(page),
-        limit: pageSize,
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / pageSize),
+        pages: Math.ceil(total / lim),
       },
     },
   });

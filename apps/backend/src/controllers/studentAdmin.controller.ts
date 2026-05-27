@@ -6,6 +6,7 @@ import Section from '../models/Section';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { StudentStatus } from '../types';
+import { sanitizeSearchInput } from '../utils/escapeRegex';
 
 const ensureAcademicReferences = async (
   programId: string,
@@ -61,12 +62,13 @@ export const getStudents = async (req: AuthRequest, res: Response): Promise<void
   if (typeof isActive === 'string' && isActive) {
     query.isActive = isActive === 'true';
   }
-  if (typeof search === 'string' && search.trim()) {
+  const safeSearch = sanitizeSearchInput(search);
+  if (safeSearch) {
     query.$or = [
-      { studentNumber: { $regex: search.trim(), $options: 'i' } },
-      { email: { $regex: search.trim(), $options: 'i' } },
-      { firstName: { $regex: search.trim(), $options: 'i' } },
-      { lastName: { $regex: search.trim(), $options: 'i' } },
+      { studentNumber: { $regex: safeSearch, $options: 'i' } },
+      { email: { $regex: safeSearch, $options: 'i' } },
+      { firstName: { $regex: safeSearch, $options: 'i' } },
+      { lastName: { $regex: safeSearch, $options: 'i' } },
     ];
   }
 
@@ -232,35 +234,40 @@ export const updateStudent = async (req: AuthRequest, res: Response): Promise<vo
   const nextSectionId = req.body.sectionId ?? String(existingStudent.sectionId);
   await ensureAcademicReferences(nextProgramId, nextYearLevelId, nextSectionId);
 
-  const updates: Record<string, unknown> = {
-    studentNumber: req.body.studentNumber,
-    email: req.body.email,
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    middleName: req.body.middleName,
-    programId: req.body.programId,
-    yearLevelId: req.body.yearLevelId,
-    sectionId: req.body.sectionId,
-    status: req.body.status,
-    isActive: req.body.isActive,
-    profilePhoto: req.body.profilePhoto,
-    phone: req.body.phone,
-    address: req.body.address,
-    birthDate: req.body.birthDate,
-    aboutMe: req.body.aboutMe,
-    enrollmentDate: req.body.enrollmentDate,
-    expectedGraduationYear: req.body.expectedGraduationYear,
-    previousSchool: req.body.previousSchool,
-    guardianName: req.body.guardianName,
-    guardianContact: req.body.guardianContact,
-    guardianRelationship: req.body.guardianRelationship,
-    emergencyContactName: req.body.emergencyContactName,
-    emergencyContactPhone: req.body.emergencyContactPhone,
-    emergencyContactRelationship: req.body.emergencyContactRelationship,
-    notificationPreferences: req.body.notificationPreferences,
-  };
+  const STUDENT_EDITABLE_FIELDS = [
+    'firstName', 'lastName', 'middleName',
+    'email',
+    'programId', 'yearLevelId', 'sectionId',
+    'profilePhoto', 'phone', 'address', 'birthDate', 'aboutMe',
+    'enrollmentDate', 'expectedGraduationYear', 'previousSchool',
+    'guardianName', 'guardianContact', 'guardianRelationship',
+    'emergencyContactName', 'emergencyContactPhone', 'emergencyContactRelationship',
+    'notificationPreferences',
+  ] as const;
+
+  const NEVER_EDITABLE = ['status', 'isActive', 'studentNumber', 'role'] as const;
+
+  for (const field of NEVER_EDITABLE) {
+    if (req.body[field] !== undefined) {
+      throw new AppError(`Field '${field}' cannot be modified through this endpoint. Use the status update endpoint instead.`, 400);
+    }
+  }
+
+  const updates: Record<string, unknown> = {};
+  for (const field of STUDENT_EDITABLE_FIELDS) {
+    if (req.body[field] !== undefined) {
+      updates[field] = req.body[field];
+    }
+  }
 
   if (typeof req.body.password === 'string' && req.body.password.trim().length >= 8) {
+    if (!req.body.currentPassword) {
+      throw new AppError('Current password is required to set a new password', 400);
+    }
+    const isMatch = await existingStudent.comparePassword(req.body.currentPassword);
+    if (!isMatch) {
+      throw new AppError('Current password is incorrect', 400);
+    }
     updates.passwordHash = req.body.password;
   }
 

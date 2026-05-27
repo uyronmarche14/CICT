@@ -6,9 +6,9 @@ import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { handleImageUpload, upload } from '../middleware/upload';
 import {
-  createNewsValidator, 
-  updateNewsValidator, 
-  newsIdValidator 
+  createNewsValidator,
+  updateNewsValidator,
+  newsIdValidator
 } from '../validators/news.validator';
 import {
   contentApprovalCommentValidator,
@@ -17,13 +17,8 @@ import {
 
 const router: Router = Router();
 
-/**
- * @route   POST /api/news
- * @desc    Create new news article
- * @access  Private (requires CREATE_NEWS permission)
- */
 router.post(
- '/',
+  '/',
   authenticate,
   requireAdminAccess,
   upload.single('image'),
@@ -33,22 +28,12 @@ router.post(
   newsController.createNews
 );
 
-/**
- * @route   GET /api/news
- * @desc    Get all news articles
- * @access  Public (Published only) or Private (All with filtering)
- */
 router.get(
   '/',
   optionalAuthenticate,
   newsController.getAllNews
 );
 
-/**
- * @route   GET /api/news/:id
- * @desc    Get single news article
- * @access  Public (Published only) or Private (Any)
- */
 router.get(
   '/:id',
   optionalAuthenticate,
@@ -56,13 +41,8 @@ router.get(
   newsController.getNewsById
 );
 
-/**
- * @route   PUT /api/news/:id
- * @desc    Update news article
- * @access  Private (requires EDIT_NEWS permission)
- */
 router.put(
- '/:id',
+  '/:id',
   authenticate,
   requireAdminAccess,
   upload.single('image'),
@@ -72,13 +52,8 @@ router.put(
   newsController.updateNews
 );
 
-/**
- * @route   DELETE /api/news/:id
- * @desc    Delete news article
- * @access  Private (requires DELETE_NEWS permission)
- */
 router.delete(
- '/:id',
+  '/:id',
   authenticate,
   requireAdminAccess,
   validate(newsIdValidator),
@@ -86,13 +61,8 @@ router.delete(
   newsController.deleteNews
 );
 
-/**
- * @route   PATCH /api/news/:id/publish
- * @desc    Publish news article
- * @access  Private (requires PUBLISH_NEWS permission)
- */
 router.patch(
- '/:id/submit',
+  '/:id/submit',
   authenticate,
   requireAdminAccess,
   validate([...newsIdValidator, ...contentApprovalCommentValidator]),
@@ -101,7 +71,7 @@ router.patch(
 );
 
 router.patch(
- '/:id/approve',
+  '/:id/approve',
   authenticate,
   requireAdminAccess,
   validate([...newsIdValidator, ...contentApprovalCommentValidator]),
@@ -110,7 +80,7 @@ router.patch(
 );
 
 router.patch(
- '/:id/reject',
+  '/:id/reject',
   authenticate,
   requireAdminAccess,
   validate([...newsIdValidator, ...contentRejectionValidator]),
@@ -119,7 +89,7 @@ router.patch(
 );
 
 router.patch(
- '/:id/publish',
+  '/:id/publish',
   authenticate,
   requireAdminAccess,
   validate(newsIdValidator),
@@ -127,13 +97,8 @@ router.patch(
   newsController.publishNews
 );
 
-/**
- * @route   PATCH /api/news/:id/archive
- * @desc    Archive news article
- * @access  Private (requires ARCHIVE_NEWS permission)
- */
 router.patch(
- '/:id/archive',
+  '/:id/archive',
   authenticate,
   requireAdminAccess,
   validate(newsIdValidator),

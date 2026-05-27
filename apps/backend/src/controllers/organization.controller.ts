@@ -1,9 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
+import crypto from 'crypto';
 import Organization from '../models/Organization';
+import OrganizationMember from '../models/OrganizationMember';
 import OrganizationAssignment from '../models/OrganizationAssignment';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { IOrganizationMember, Permission } from '../types';
+import { Permission } from '../types';
 import {
   canAccessOrganizationScope,
 } from '../utils/organizationScope';
@@ -151,378 +153,319 @@ const getAdminVisibleOrganizationIds = (req: AuthRequest): string[] => {
   );
 };
 
-// @desc    Get all organizations
-// @route   GET /api/organizations
-// @access  Public
-export const getOrganizations = async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const organizations = await Organization.find().lean();
-    
-    res.status(200).json({
-      success: true,
-      data: organizations,
-    });
-  } catch (err) {
-    next(err);
-  }
+export const getOrganizations = async (_req: Request, res: Response) => {
+  const organizations = await Organization.find().lean();
+
+  res.status(200).json({
+    success: true,
+    data: organizations,
+  });
 };
 
-// @desc    Get organization by ID (slug)
-// @route   GET /api/organizations/:id
-// @access  Public
-export const getOrganization = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const organization = await Organization.findOne({ id: req.params.id }).lean();
+export const getOrganization = async (req: Request, res: Response) => {
+  const organization = await Organization.findOne({ id: req.params.id }).lean();
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    res.status(200).json({
-      success: true,
-      data: organization,
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    data: organization,
+  });
 };
 
 export const getAdminOrganizations = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
 ) => {
-  try {
-    if (!req.user) {
-      return next(new AppError('User not authenticated', 401));
-    }
-
-    const scopedOrganizationIds = getAdminVisibleOrganizationIds(req);
-    const hasOrganizationManagementAccess =
-      hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
-      scopedOrganizationIds.length > 0;
-
-    if (!hasOrganizationManagementAccess) {
-      return next(new AppError('You do not have access to organization administration', 403));
-    }
-
-    const query = hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS)
-      ? {}
-      : scopedOrganizationIds.length > 0
-        ? { id: { $in: scopedOrganizationIds } }
-        : { _id: null };
-
-    const organizations = await Organization.find(query).lean();
-    const organizationsWithAssignments = await attachOrganizationAdminAssignments(organizations);
-
-    res.status(200).json({
-      success: true,
-      data: organizationsWithAssignments,
-    });
-  } catch (err) {
-    next(err);
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+
+  const scopedOrganizationIds = getAdminVisibleOrganizationIds(req);
+  const hasOrganizationManagementAccess =
+    hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
+    scopedOrganizationIds.length > 0;
+
+  if (!hasOrganizationManagementAccess) {
+    throw new AppError('You do not have access to organization administration', 403);
+  }
+
+  const query = hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS)
+    ? {}
+    : scopedOrganizationIds.length > 0
+      ? { id: { $in: scopedOrganizationIds } }
+      : { _id: null };
+
+  const organizations = await Organization.find(query).lean();
+  const organizationsWithAssignments = await attachOrganizationAdminAssignments(organizations);
+
+  res.status(200).json({
+    success: true,
+    data: organizationsWithAssignments,
+  });
 };
 
 export const getAdminOrganization = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
 ) => {
-  try {
-    if (!req.user) {
-      return next(new AppError('User not authenticated', 401));
-    }
-
-    const organization = await Organization.findOne({ id: req.params.id }).lean();
-
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    const canViewOrganization =
-      hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
-      getAdminVisibleOrganizationIds(req).includes(organization.id);
-
-    if (!canViewOrganization) {
-      return next(new AppError('You do not have access to this organization scope', 403));
-    }
-
-    const [organizationWithAssignments] = await attachOrganizationAdminAssignments([organization]);
-
-    res.status(200).json({
-      success: true,
-      data: organizationWithAssignments,
-    });
-  } catch (err) {
-    next(err);
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+
+  const organization = await Organization.findOne({ id: req.params.id }).lean();
+
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  const canViewOrganization =
+    hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
+    getAdminVisibleOrganizationIds(req).includes(organization.id);
+
+  if (!canViewOrganization) {
+    throw new AppError('You do not have access to this organization scope', 403);
+  }
+
+  const [organizationWithAssignments] = await attachOrganizationAdminAssignments([organization]);
+
+  res.status(200).json({
+    success: true,
+    data: organizationWithAssignments,
+  });
 };
 
 export const getAdminOrganizationAssignments = async (
   req: AuthRequest,
   res: Response,
-  next: NextFunction
 ) => {
-  try {
-    if (!req.user) {
-      return next(new AppError('User not authenticated', 401));
-    }
-
-    const organization = await Organization.findOne({ id: req.params.id })
-      .select('id')
-      .lean();
-
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    const canViewAssignments =
-      hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
-      getAdminVisibleOrganizationIds(req).includes(organization.id);
-
-    if (!canViewAssignments) {
-      return next(new AppError('You do not have access to this organization scope', 403));
-    }
-
-    const [organizationWithAssignments] = await attachOrganizationAdminAssignments([
-      { id: organization.id },
-    ]);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        assignments: organizationWithAssignments?.adminAssignments ?? [],
-      },
-    });
-  } catch (err) {
-    next(err);
+  if (!req.user) {
+    throw new AppError('User not authenticated', 401);
   }
+
+  const organization = await Organization.findOne({ id: req.params.id })
+    .select('id')
+    .lean();
+
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
+  }
+
+  const canViewAssignments =
+    hasAnyGlobalPermission(req.user, ORGANIZATION_MANAGEMENT_PERMISSIONS) ||
+    getAdminVisibleOrganizationIds(req).includes(organization.id);
+
+  if (!canViewAssignments) {
+    throw new AppError('You do not have access to this organization scope', 403);
+  }
+
+  const [organizationWithAssignments] = await attachOrganizationAdminAssignments([
+    { id: organization.id },
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: {
+      assignments: organizationWithAssignments?.adminAssignments ?? [],
+    },
+  });
 };
 
-// @desc    Create organization
-// @route   POST /api/organizations
-// @access  Private
-export const createOrganization = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const payload = buildOrganizationPayload(req.body);
-    const organizationId = payload.id as string | undefined;
+export const createOrganization = async (req: Request, res: Response) => {
+  const payload = buildOrganizationPayload(req.body);
+  const organizationId = payload.id as string | undefined;
 
-    if (!organizationId) {
-      return next(new AppError('Organization slug is required', 400));
-    }
-
-    const existingOrganization = await Organization.findOne({ id: organizationId });
-    if (existingOrganization) {
-      return next(new AppError('Organization slug already exists', 409));
-    }
-
-    const organization = await Organization.create({
-      ...(payload as Record<string, unknown>),
-      members: [],
-    });
-
-    res.status(201).json({
-      success: true,
-      data: organization,
-    });
-  } catch (err) {
-    next(err);
+  if (!organizationId) {
+    throw new AppError('Organization slug is required', 400);
   }
+
+  const existingOrganization = await Organization.findOne({ id: organizationId });
+  if (existingOrganization) {
+    throw new AppError('Organization slug already exists', 409);
+  }
+
+  const organization = await Organization.create({
+    ...(payload as Record<string, unknown>),
+    members: [],
+  });
+
+  res.status(201).json({
+    success: true,
+    data: organization,
+  });
 };
 
-// @desc    Update organization details
-// @route   PUT /api/organizations/:id
-// @access  Private (Admin/Semi Admin)
-export const updateOrganization = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    
-    // Find first to make sure it exists
-    const organization = await Organization.findOne({ id });
+export const updateOrganization = async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
+  const organization = await Organization.findOne({ id });
 
-    ensureCanManageOrganization(req, organization.id, Permission.EDIT_ORGANIZATION);
-
-    const updates = buildOrganizationPayload(req.body);
-    const requestedSlug = updates.id as string | undefined;
-
-    if (requestedSlug && requestedSlug !== organization.id) {
-      const slugConflict = await Organization.findOne({ id: requestedSlug });
-      if (slugConflict) {
-        return next(new AppError('Organization slug already exists', 409));
-      }
-    }
-
-    // Update fields
-    const updatedOrg = await Organization.findOneAndUpdate(
-      { id },
-      { $set: updates },
-      { new: true, runValidators: true }
-    );
-
-    res.status(200).json({
-      success: true,
-      data: updatedOrg,
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  ensureCanManageOrganization(req, organization.id, Permission.EDIT_ORGANIZATION);
+
+  const updates = buildOrganizationPayload(req.body);
+  const requestedSlug = updates.id as string | undefined;
+
+  if (requestedSlug && requestedSlug !== organization.id) {
+    const slugConflict = await Organization.findOne({ id: requestedSlug });
+    if (slugConflict) {
+      throw new AppError('Organization slug already exists', 409);
+    }
+  }
+
+  const updatedOrg = await Organization.findOneAndUpdate(
+    { id },
+    { $set: updates },
+    { new: true, runValidators: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    data: updatedOrg,
+  });
 };
 
-// @desc    Delete organization
-// @route   DELETE /api/organizations/:id
-// @access  Private
-export const deleteOrganization = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    ensureCanManageOrganization(req, req.params.id, Permission.DELETE_ORGANIZATION);
-    const organization = await Organization.findOneAndDelete({ id: req.params.id });
+export const deleteOrganization = async (req: AuthRequest, res: Response) => {
+  ensureCanManageOrganization(req, req.params.id, Permission.DELETE_ORGANIZATION);
+  const organization = await Organization.findOneAndDelete({ id: req.params.id });
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    res.status(200).json({
-      success: true,
-      message: 'Organization deleted successfully',
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    message: 'Organization deleted successfully',
+  });
 };
 
-// @desc    Add a member to an organization
-// @route   POST /api/organizations/:id/members
-// @access  Private (Admin/Semi Admin)
-export const addMember = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { id } = req.params;
-    const memberData: IOrganizationMember = req.body;
+export const addMember = async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const body = req.body;
 
-    const organization = await Organization.findOne({ id });
+  const organization = await Organization.findOne({ id });
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    ensureCanManageOrganization(req, organization.id, Permission.CREATE_MEMBER);
-
-    // Generate a simple ID if not provided (timestamp based)
-    if (!memberData.id) {
-      memberData.id = Date.now().toString();
-    }
-
-    // Check if member ID collision (unlikely with timestamp but good practice)
-    if (organization.members.some(m => m.id === memberData.id)) {
-      memberData.id = Date.now().toString() + Math.random().toString(36).substr(2, 5);
-    }
-
-    organization.members.push(memberData);
-    await organization.save();
-
-    res.status(201).json({
-      success: true,
-      data: organization,
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  ensureCanManageOrganization(req, organization.id, Permission.CREATE_MEMBER);
+
+  const member = await OrganizationMember.create({
+    organizationId: organization._id,
+    id: body.id || crypto.randomUUID(),
+    name: body.name,
+    position: body.position,
+    photo: body.photo,
+    bio: body.bio,
+    joinedDate: body.joinedDate,
+    achievements: body.achievements || [],
+    responsibilities: body.responsibilities || [],
+    skills: body.skills || [],
+    timeline: body.timeline || [],
+    gallery: body.gallery || [],
+    social: body.social || {},
+    phone: body.phone,
+    personalEmail: body.personalEmail,
+    program: body.program,
+    yearLevel: body.yearLevel,
+    startDate: body.startDate,
+    endDate: body.endDate,
+    memberType: body.memberType,
+    status: body.status || 'active',
+    sortOrder: body.sortOrder ?? 0,
+    batch: body.batch,
+    termStart: body.termStart,
+    termEnd: body.termEnd,
+    leadershipStatus: body.leadershipStatus,
+    course: body.course,
+    department: body.department,
+    committee: body.committee,
+    displayOrder: body.displayOrder,
+    isAdviser: body.isAdviser,
+    contactNumber: body.contactNumber,
+    projectItems: body.projectItems || [],
+    milestoneItems: body.milestoneItems || [],
+  });
+
+  res.status(201).json({
+    success: true,
+    data: member,
+  });
 };
 
-// @desc    Update a member in an organization
-// @route   PUT /api/organizations/:orgId/members/:memberId
-// @access  Private (Admin/Semi Admin)
-export const updateMember = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { orgId, memberId } = req.params;
-    const memberUpdate = req.body;
+export const updateMember = async (req: AuthRequest, res: Response) => {
+  const { orgId, memberId } = req.params;
+  const memberUpdate = req.body;
 
-    const organization = await Organization.findOne({ id: orgId });
+  const organization = await Organization.findOne({ id: orgId });
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    ensureCanManageOrganization(req, organization.id, Permission.EDIT_MEMBER);
-
-    const memberIndex = organization.members.findIndex(m => m.id === memberId);
-
-    if (memberIndex === -1) {
-      return next(new AppError('Member not found', 404));
-    }
-
-    // Update member fields
-    // We merge existing member data with updates
-    organization.members[memberIndex] = { ...organization.members[memberIndex], ...memberUpdate };
-    
-    // Mongoose sometimes doesn't detect deep changes in arrays of objects unless marked
-    organization.markModified('members');
-    
-    await organization.save();
-
-    res.status(200).json({
-      success: true,
-      data: organization,
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  ensureCanManageOrganization(req, organization.id, Permission.EDIT_MEMBER);
+
+  const member = await OrganizationMember.findOne({
+    organizationId: organization._id,
+    id: memberId,
+  });
+
+  if (!member) {
+    throw new AppError('Member not found', 404);
+  }
+
+  Object.assign(member, memberUpdate);
+  await member.save();
+
+  res.status(200).json({
+    success: true,
+    data: member,
+  });
 };
 
-// @desc    Delete a member from an organization
-// @route   DELETE /api/organizations/:orgId/members/:memberId
-// @access  Private (Admin/Semi Admin)
-export const deleteMember = async (req: AuthRequest, res: Response, next: NextFunction) => {
-  try {
-    const { orgId, memberId } = req.params;
+export const deleteMember = async (req: AuthRequest, res: Response) => {
+  const { orgId, memberId } = req.params;
 
-    const organization = await Organization.findOne({ id: orgId });
+  const organization = await Organization.findOne({ id: orgId });
 
-    if (!organization) {
-      return next(new AppError('Organization not found', 404));
-    }
-
-    ensureCanManageOrganization(req, organization.id, Permission.DELETE_MEMBER);
-
-    const memberIndex = organization.members.findIndex(m => m.id === memberId);
-
-    if (memberIndex === -1) {
-      return next(new AppError('Member not found', 404));
-    }
-
-    organization.members.splice(memberIndex, 1);
-    await organization.save();
-
-    res.status(200).json({
-      success: true,
-      message: 'Member removed',
-      data: organization
-    });
-  } catch (err) {
-    next(err);
+  if (!organization) {
+    throw new AppError('Organization not found', 404);
   }
+
+  ensureCanManageOrganization(req, organization.id, Permission.DELETE_MEMBER);
+
+  const member = await OrganizationMember.findOneAndDelete({
+    organizationId: organization._id,
+    id: memberId,
+  });
+
+  if (!member) {
+    throw new AppError('Member not found', 404);
+  }
+
+  res.status(200).json({
+    success: true,
+    message: 'Member removed',
+    data: member,
+  });
 };
 
-// @desc    Upload an image (returns URL)
-// @route   POST /api/organizations/upload
-// @access  Private (Admin/Semi Admin)
-export const uploadImage = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    if (!req.body.imageUrl) {
-      return next(new AppError('No image uploaded', 400));
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        imageUrl: req.body.imageUrl,
-        imageId: req.body.imageId
-      }
-    });
-  } catch (err) {
-    next(err);
+export const uploadImage = async (req: Request, res: Response) => {
+  if (!req.body.imageUrl) {
+    throw new AppError('No image uploaded', 400);
   }
+
+  res.status(200).json({
+    success: true,
+    data: {
+      imageUrl: req.body.imageUrl,
+      imageId: req.body.imageId
+    }
+  });
 };

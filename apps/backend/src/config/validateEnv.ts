@@ -43,6 +43,18 @@ export const validateEnv = () => {
     missing.push('JWT_SECRET');
   }
 
+  if (!process.env.STUDENT_JWT_SECRET) {
+    missing.push('STUDENT_JWT_SECRET');
+  }
+
+  if (!process.env.STUDENT_REFRESH_SECRET) {
+    missing.push('STUDENT_REFRESH_SECRET');
+  }
+
+  if (!process.env.STUDENT_QR_SECRET) {
+    missing.push('STUDENT_QR_SECRET');
+  }
+
   if (NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
     missing.push('CORS_ORIGIN');
   }

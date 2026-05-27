@@ -6,14 +6,16 @@ import { eventIdValidator, eventRegIdValidator } from '../validators/event.valid
 import {
   getEventRegistrationsForAdmin,
   searchEventRegistrations,
+  adminCreateRegistration,
+  adminCancelRegistration,
+  adminUpdateRegistrationStatus,
+  adminUndoCheckIn,
+} from '../controllers/admin-event-registration.controller';
+import {
   getEventAttendanceLogs,
   exportEventAttendanceLogs,
   scanEventAttendance,
-  adminCancelRegistration,
-  adminUpdateRegistrationStatus,
-  adminCreateRegistration,
-  adminUndoCheckIn,
-} from '../controllers/eventRegistration.controller';
+} from '../controllers/admin-event-attendance.controller';
 
 const router = Router();
 

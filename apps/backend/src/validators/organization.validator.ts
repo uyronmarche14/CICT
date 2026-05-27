@@ -199,5 +199,91 @@ export const updateOrganizationValidator = [
 ];
 
 export const organizationIdValidator = [
-  param('id').notEmpty().withMessage('Organization id is required'),
+  param('id').isMongoId().withMessage('Invalid organization ID'),
+];
+
+export const createMemberValidator = [
+  param('id').isMongoId().withMessage('Invalid organization ID'),
+  body('name')
+    .trim()
+    .notEmpty().withMessage('Member name is required')
+    .isLength({ max: 200 }).withMessage('Member name must be at most 200 characters'),
+  body('role')
+    .optional()
+    .trim()
+    .isIn(['adviser', 'president', 'vp', 'secretary', 'treasurer', 'auditor', 'pio', 'member'])
+    .withMessage('Invalid member role'),
+  body('email')
+    .optional()
+    .isEmail().withMessage('Invalid email'),
+  body('phone')
+    .optional()
+    .trim(),
+  body('position')
+    .optional()
+    .trim()
+    .isLength({ max: 200 }).withMessage('Position must be at most 200 characters'),
+  body('photoUrl')
+    .optional()
+    .isURL().withMessage('Photo URL must be valid'),
+  body('isPublic')
+    .optional()
+    .isBoolean().withMessage('isPublic must be a boolean'),
+  body('sortOrder')
+    .optional()
+    .isInt({ min: 0 }).withMessage('Sort order must be a non-negative integer'),
+  body('startYear')
+    .optional()
+    .isInt({ min: 1900, max: 2100 }).withMessage('Invalid start year'),
+  body('endYear')
+    .optional()
+    .isInt({ min: 1900, max: 2100 }).withMessage('Invalid end year'),
+  body('timeline')
+    .optional()
+    .isArray().withMessage('Timeline must be an array'),
+];
+
+export const updateMemberValidator = [
+  param('orgId').isMongoId().withMessage('Invalid organization ID'),
+  param('memberId').isMongoId().withMessage('Invalid member ID'),
+  body('name')
+    .optional()
+    .trim()
+    .notEmpty().withMessage('Member name cannot be empty')
+    .isLength({ max: 200 }).withMessage('Member name must be at most 200 characters'),
+  body('role')
+    .optional()
+    .trim()
+    .isIn(['adviser', 'president', 'vp', 'secretary', 'treasurer', 'auditor', 'pio', 'member'])
+    .withMessage('Invalid member role'),
+  body('email')
+    .optional()
+    .isEmail().withMessage('Invalid email'),
+  body('phone')
+    .optional()
+    .trim(),
+  body('position')
+    .optional()
+    .trim()
+    .isLength({ max: 200 }).withMessage('Position must be at most 200 characters'),
+  body('photoUrl')
+    .optional()
+    .isURL().withMessage('Photo URL must be valid'),
+  body('isPublic')
+    .optional()
+    .isBoolean().withMessage('isPublic must be a boolean'),
+  body('sortOrder')
+    .optional()
+    .isInt({ min: 0 }).withMessage('Sort order must be a non-negative integer'),
+  body('startYear')
+    .optional()
+    .isInt({ min: 1900, max: 2100 }).withMessage('Invalid start year'),
+  body('endYear')
+    .optional()
+    .isInt({ min: 1900, max: 2100 }).withMessage('Invalid end year'),
+];
+
+export const memberIdValidator = [
+  param('orgId').isMongoId().withMessage('Invalid organization ID'),
+  param('memberId').isMongoId().withMessage('Invalid member ID'),
 ];

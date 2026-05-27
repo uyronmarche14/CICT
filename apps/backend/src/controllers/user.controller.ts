@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import User from '../models/User';
 import Role from '../models/Role';
-import Organization from '../models/Organization';
 import OrganizationAssignment from '../models/OrganizationAssignment';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
@@ -27,6 +26,9 @@ import {
 } from '../utils/rbac';
 import { getResolvedOrganizationAssignmentsForUser } from '../utils/organizationScope';
 import { invalidateUserCache } from '../utils/rbac';
+import { sanitizeSearchInput } from '../utils/escapeRegex';
+import { parsePagination } from '../utils/pagination';
+import { validateOrganizationAssignments, ensurePermissionSetWithinActorScope } from '../utils/organizationAssignment';
 
 const PROTECTED_USER_FIELDS = ['role', 'customRole', 'customRoleId', 'isActive'];
 
@@ -59,20 +61,6 @@ type SerializedUser = {
 };
 
 const getSystemRoleLabel = (role: UserRole): string => getSystemRoleDefinition(role).name;
-
-const ensurePermissionSetWithinActorScope = (
-  actorPermissions: Permission[],
-  requestedPermissions: Permission[],
-  errorMessage: string
-) => {
-  const unauthorizedPermissions = requestedPermissions.filter(
-    (permission) => !actorPermissions.includes(permission)
-  );
-
-  if (unauthorizedPermissions.length > 0) {
-    throw new AppError(`${errorMessage}: ${unauthorizedPermissions.join(', ')}`, 403);
-  }
-};
 
 const serializeUser = async (user: any): Promise<SerializedUser> => {
   const customRole =
@@ -124,11 +112,6 @@ const serializeUser = async (user: any): Promise<SerializedUser> => {
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
-};
-
-type OrganizationAssignmentInput = {
-  organizationId: string;
-  roleId: string;
 };
 
 const ensureProtectedFieldsAbsent = (body: Record<string, unknown>) => {
@@ -203,64 +186,6 @@ const validateAssignableRole = async (
   };
 };
 
-const validateOrganizationAssignments = async (
-  assignments: OrganizationAssignmentInput[] | undefined,
-  req: AuthRequest
-) => {
-  if (!assignments || assignments.length === 0) {
-    return [];
-  }
-
-  if (!req.user || !hasGlobalPermission(req.user, Permission.ASSIGN_ROLE)) {
-    throw new AppError('You do not have permission to assign organization-scoped roles', 403);
-  }
-  const actor = req.user;
-
-  const seenOrganizations = new Set<string>();
-
-  return Promise.all(
-    assignments.map(async (assignment) => {
-      const organizationId = assignment.organizationId?.trim().toLowerCase();
-      if (!organizationId) {
-        throw new AppError('organizationId is required for organization assignments', 400);
-      }
-
-      if (seenOrganizations.has(organizationId)) {
-        throw new AppError('Each organization can only be assigned once per user', 400);
-      }
-      seenOrganizations.add(organizationId);
-
-      const [organization, role] = await Promise.all([
-        Organization.findOne({ id: organizationId }).select('id'),
-        Role.findById(assignment.roleId),
-      ]);
-
-      if (!organization) {
-        throw new AppError(`Organization not found: ${organizationId}`, 404);
-      }
-
-      if (!role) {
-        throw new AppError('Organization assignment role not found', 404);
-      }
-
-      if (role.isSystemRole) {
-        throw new AppError('Built-in system roles cannot be used for organization assignments', 400);
-      }
-
-      ensurePermissionSetWithinActorScope(
-        actor.permissions,
-        role.permissions ?? [],
-        'You cannot assign an organization-scoped role with permissions beyond your own global scope'
-      );
-
-      return {
-        organizationId,
-        roleId: String(role._id),
-      };
-    })
-  );
-};
-
 /**
  * Create a new admin CMS user
  */
@@ -269,7 +194,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
   const role = req.body.role as UserRole | undefined;
   const customRoleId = req.body.customRoleId as string | null | undefined;
   const organizationAssignments = req.body.organizationAssignments as
-    | OrganizationAssignmentInput[]
+    | import('../utils/organizationAssignment').OrganizationAssignmentInput[]
     | undefined;
 
   const existingUser = await User.findOne({ email });
@@ -322,7 +247,7 @@ export const createUser = async (req: AuthRequest, res: Response): Promise<void>
  * Get all users
  */
 export const getAllUsers = async (req: Request, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, search, role, isActive, customRoleId } = req.query;
+  const { search, role, isActive, customRoleId } = req.query;
 
   const query: any = {};
   const normalizedRole =
@@ -334,11 +259,12 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
       ? customRoleId.trim()
       : null;
 
-  if (search) {
+  const safeSearch = sanitizeSearchInput(search);
+  if (safeSearch) {
     query.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
+      { firstName: { $regex: safeSearch, $options: 'i' } },
+      { lastName: { $regex: safeSearch, $options: 'i' } },
+      { email: { $regex: safeSearch, $options: 'i' } },
     ];
   }
 
@@ -354,7 +280,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     query.customRole = normalizedCustomRoleId;
   }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   const [users, total] = await Promise.all([
     User.find(query)
@@ -362,7 +288,7 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
       .populate('customRole', 'name description permissions')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(lim),
     User.countDocuments(query),
   ]);
 
@@ -371,10 +297,10 @@ export const getAllUsers = async (req: Request, res: Response): Promise<void> =>
     data: {
       users: await Promise.all(users.map((user) => serializeUser(user))),
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / lim),
       },
     },
   });
@@ -545,118 +471,5 @@ export const deleteUser = async (req: AuthRequest, res: Response): Promise<void>
   res.status(200).json({
     success: true,
     message: 'User deleted successfully',
-  });
-};
-
-export const getUserOrgAssignments = async (
-  req: Request<Record<string, string>>,
-  res: Response
-): Promise<void> => {
-  const { id } = req.params;
-  const user = await User.findById(id).select('_id');
-
-  if (!user) {
-    throw new AppError('User not found', 404);
-  }
-
-  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-
-  res.status(200).json({
-    success: true,
-    data: { assignments },
-  });
-};
-
-export const createUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id } = req.params;
-  const user = await User.findById(id).select('_id');
-
-  if (!user) {
-    throw new AppError('User not found', 404);
-  }
-
-  const [assignment] = await validateOrganizationAssignments([req.body], req);
-
-  const existingAssignment = await OrganizationAssignment.findOne({
-    user: id,
-    organizationId: assignment.organizationId,
-  });
-  if (existingAssignment) {
-    throw new AppError('This user already has an assignment for that organization', 409);
-  }
-
-  const createdAssignment = await OrganizationAssignment.create({
-    user: id,
-    organizationId: assignment.organizationId,
-    role: assignment.roleId,
-  });
-
-  invalidateUserCache(id);
-  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-  const created = assignments.find((item) => item.id === String(createdAssignment._id));
-
-  logger.info(`Organization assignment created for user: ${id} by user ${req.user?.userId}`);
-
-  res.status(201).json({
-    success: true,
-    message: 'Organization assignment created successfully',
-    data: { assignment: created ?? null, assignments },
-  });
-};
-
-export const updateUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id, assignmentId } = req.params;
-  const assignment = await OrganizationAssignment.findOne({ _id: assignmentId, user: id });
-
-  if (!assignment) {
-    throw new AppError('Organization assignment not found', 404);
-  }
-
-  const [validatedAssignment] = await validateOrganizationAssignments([req.body], req);
-
-  if (validatedAssignment.organizationId !== assignment.organizationId) {
-    const existingAssignment = await OrganizationAssignment.findOne({
-      user: id,
-      organizationId: validatedAssignment.organizationId,
-    });
-    if (existingAssignment) {
-      throw new AppError('This user already has an assignment for that organization', 409);
-    }
-  }
-
-  assignment.organizationId = validatedAssignment.organizationId;
-  assignment.role = validatedAssignment.roleId;
-  await assignment.save();
-  invalidateUserCache(id);
-
-  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-  const updated = assignments.find((item) => item.id === assignmentId);
-
-  logger.info(`Organization assignment updated for user: ${id} by user ${req.user?.userId}`);
-
-  res.status(200).json({
-    success: true,
-    message: 'Organization assignment updated successfully',
-    data: { assignment: updated ?? null, assignments },
-  });
-};
-
-export const deleteUserOrgAssignment = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { id, assignmentId } = req.params;
-  const assignment = await OrganizationAssignment.findOneAndDelete({ _id: assignmentId, user: id });
-
-  if (!assignment) {
-    throw new AppError('Organization assignment not found', 404);
-  }
-
-  invalidateUserCache(id);
-  const assignments = await getResolvedOrganizationAssignmentsForUser(id);
-
-  logger.info(`Organization assignment deleted for user: ${id} by user ${req.user?.userId}`);
-
-  res.status(200).json({
-    success: true,
-    message: 'Organization assignment deleted successfully',
-    data: { assignments },
   });
 };

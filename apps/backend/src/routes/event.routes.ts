@@ -5,10 +5,10 @@ import { requireAdminAccess } from '../middleware/permissions';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { handleImageUpload, upload } from '../middleware/upload';
-import { 
-  createEventValidator, 
-  updateEventValidator, 
-  eventIdValidator 
+import {
+  createEventValidator,
+  updateEventValidator,
+  eventIdValidator
 } from '../validators/event.validator';
 import {
   contentApprovalCommentValidator,
@@ -17,11 +17,6 @@ import {
 
 const router: Router = Router();
 
-/**
- * @route   POST /api/events
- * @desc    Create new event
- * @access  Private (requires CREATE_EVENT permission)
- */
 router.post(
   '/',
   authenticate,
@@ -33,22 +28,12 @@ router.post(
   eventController.createEvent
 );
 
-/**
- * @route   GET /api/events
- * @desc    Get all events
- * @access  Public (Published only) or Private (All with filtering)
- */
 router.get(
   '/',
   optionalAuthenticate,
   eventController.getAllEvents
 );
 
-/**
- * @route   GET /api/events/:id
- * @desc    Get single event
- * @access  Public (Published only) or Private (Any)
- */
 router.get(
   '/:id',
   optionalAuthenticate,
@@ -56,11 +41,6 @@ router.get(
   eventController.getEventById
 );
 
-/**
- * @route   PUT /api/events/:id
- * @desc    Update event
- * @access  Private (requires EDIT_EVENT permission)
- */
 router.put(
   '/:id',
   authenticate,
@@ -72,11 +52,6 @@ router.put(
   eventController.updateEvent
 );
 
-/**
- * @route   DELETE /api/events/:id
- * @desc    Delete event
- * @access  Private (requires DELETE_EVENT permission)
- */
 router.delete(
   '/:id',
   authenticate,
@@ -140,11 +115,6 @@ router.patch(
   eventController.completeEvent
 );
 
-/**
- * @route   POST /api/events/:id/join
- * @desc    Join an event
- * @access  Private
- */
 router.post(
     '/:id/join',
     authenticate,
@@ -152,17 +122,11 @@ router.post(
     eventController.joinEvent
 );
 
-/**
- * @route   POST /api/events/:id/leave
- * @desc    Leave an event
- * @access  Private
- */
 router.post(
     '/:id/leave',
     authenticate,
     validate(eventIdValidator),
     eventController.leaveEvent
 );
-
 
 export default router;

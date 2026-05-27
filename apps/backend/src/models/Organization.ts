@@ -54,86 +54,7 @@ const organizationSchema = new Schema<IOrganization>(
     achievements: [{
       type: String,
     }],
-    members: [{
-      id: {
-        type: String,
-      },
-      name: {
-        type: String,
-        required: true,
-      },
-      position: {
-        type: String,
-        required: true,
-      },
-      photo: {
-        type: String,
-        required: true,
-      },
-      bio: {
-        type: String,
-        required: true,
-      },
-      joinedDate: String,
-      achievements: [String],
-      responsibilities: [String],
-      skills: [String],
-      timeline: [{
-        year: String,
-        title: String,
-        description: String,
-        category: {
-          type: String,
-          enum: ['achievement', 'project', 'milestone', 'award', 'education'],
-        },
-        details: [String],
-      }],
-      gallery: [String],
-      social: {
-        linkedin: String,
-        github: String,
-        email: String,
-      },
-      phone: { type: String, trim: true },
-      personalEmail: { type: String, trim: true },
-      program: { type: String, trim: true },
-      yearLevel: { type: String, trim: true },
-      startDate: { type: String },
-      endDate: { type: String },
-      memberType: {
-        type: String,
-        enum: ['officer', 'general', 'alumni', 'honorary', 'advisor'],
-      },
-      status: {
-        type: String,
-        enum: ['active', 'inactive', 'alumni'],
-        default: 'active',
-      },
-      sortOrder: { type: Number, default: 0 },
-      batch: { type: String, trim: true },
-      termStart: { type: String },
-      termEnd: { type: String },
-      leadershipStatus: { type: String, enum: ['current', 'past', 'emeritus'] },
-      course: { type: String, trim: true },
-      department: { type: String, trim: true },
-      committee: { type: String, trim: true },
-      displayOrder: { type: Number },
-      isAdviser: { type: Boolean },
-      contactNumber: { type: String, trim: true },
-      projectItems: [{
-        name: { type: String },
-        role: { type: String },
-        description: { type: String },
-        date: { type: String },
-        url: { type: String },
-      }],
-      milestoneItems: [{
-        title: { type: String },
-        date: { type: String },
-        description: { type: String },
-        category: { type: String },
-      }],
-    }],
+    members: [{ type: Schema.Types.Mixed }],
     color: {
       primary: { type: String, required: true },
       secondary: { type: String, required: true },
@@ -231,8 +152,5 @@ const organizationSchema = new Schema<IOrganization>(
     timestamps: true,
   }
 );
-
-// Prevent duplicate members with same ID within an organization (though schema validation for arrays is tricky, we'll handle in controller logic mostly, or we could add specific validators)
-// But since member ID is just a string, we assume it's unique enough or managed by the frontend/controller.
 
 export default mongoose.model<IOrganization>('Organization', organizationSchema);

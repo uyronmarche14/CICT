@@ -8,18 +8,18 @@ import { AppError } from '../middleware/errorHandler';
 import { IStudentJWTPayload, StudentStatus } from '../types';
 
 const getStudentJwtSecret = (): string => {
-  const secret = process.env.STUDENT_JWT_SECRET || process.env.JWT_SECRET;
+  const secret = process.env.STUDENT_JWT_SECRET;
   if (!secret) {
-    throw new Error('Student JWT secret is not configured');
+    throw new Error('STUDENT_JWT_SECRET is not configured');
   }
 
   return secret;
 };
 
 const getStudentRefreshSecret = (): string => {
-  const secret = process.env.STUDENT_REFRESH_SECRET || process.env.JWT_SECRET;
+  const secret = process.env.STUDENT_REFRESH_SECRET;
   if (!secret) {
-    throw new Error('Student refresh secret is not configured');
+    throw new Error('STUDENT_REFRESH_SECRET is not configured');
   }
 
   return secret;

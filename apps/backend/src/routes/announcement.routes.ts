@@ -17,11 +17,6 @@ import {
 
 const router: Router = Router();
 
-/**
- * @route   POST /api/announcements
- * @desc    Create new announcement
- * @access  Private (requires CREATE_ANNOUNCEMENT permission)
- */
 router.post(
   '/',
   authenticate,
@@ -33,11 +28,6 @@ router.post(
   announcementController.createAnnouncement
 );
 
-/**
- * @route   GET /api/announcements
- * @desc    Get all announcements
- * @access  Private (requires VIEW_ANNOUNCEMENT permission)
- */
 router.get(
   '/',
   authenticate,
@@ -45,11 +35,6 @@ router.get(
   announcementController.getAllAnnouncements
 );
 
-/**
- * @route   GET /api/announcements/:id
- * @desc    Get single announcement
- * @access  Private (requires VIEW_ANNOUNCEMENT permission)
- */
 router.get(
   '/:id',
   authenticate,
@@ -58,11 +43,6 @@ router.get(
   announcementController.getAnnouncementById
 );
 
-/**
- * @route   PUT /api/announcements/:id
- * @desc    Update announcement
- * @access  Private (requires EDIT_ANNOUNCEMENT permission)
- */
 router.put(
   '/:id',
   authenticate,
@@ -74,11 +54,6 @@ router.put(
   announcementController.updateAnnouncement
 );
 
-/**
- * @route   DELETE /api/announcements/:id
- * @desc    Delete announcement
- * @access  Private (requires DELETE_ANNOUNCEMENT permission)
- */
 router.delete(
   '/:id',
   authenticate,
@@ -88,11 +63,6 @@ router.delete(
   announcementController.deleteAnnouncement
 );
 
-/**
- * @route   PATCH /api/announcements/:id/publish
- * @desc    Publish announcement
- * @access  Private (requires PUBLISH_ANNOUNCEMENT permission)
- */
 router.patch(
   '/:id/submit',
   authenticate,
@@ -129,11 +99,6 @@ router.patch(
   announcementController.publishAnnouncement
 );
 
-/**
- * @route   PATCH /api/announcements/:id/archive
- * @desc    Archive announcement
- * @access  Private (requires ARCHIVE_ANNOUNCEMENT permission)
- */
 router.patch(
   '/:id/archive',
   authenticate,

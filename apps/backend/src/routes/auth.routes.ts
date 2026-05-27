@@ -54,6 +54,7 @@ router.get(
  */
 router.put(
   '/password',
+  createAuthSessionRateLimiter(),
   authenticate,
   validate(updatePasswordValidator),
   authController.updatePassword

@@ -3,7 +3,9 @@ import * as roleController from '../controllers/role.controller';
 import { authenticate } from '../middleware/auth';
 import { authorize, authorizeAny } from '../middleware/permissions';
 import { logActivity } from '../middleware/activityLogger';
+import { validate } from '../middleware/validate';
 import { Permission } from '../types';
+import { createRoleValidator, updateRoleValidator } from '../validators/role.validator';
 
 const router: Router = Router();
 
@@ -16,6 +18,7 @@ router.post(
   '/',
   authenticate,
   authorize(Permission.CREATE_ROLE),
+  validate(createRoleValidator),
   logActivity('create', 'role'),
   roleController.createRole
 );
@@ -53,6 +56,7 @@ router.put(
   '/:id',
   authenticate,
   authorize(Permission.EDIT_ROLE),
+  validate(updateRoleValidator),
   logActivity('update', 'role'),
   roleController.updateRole
 );

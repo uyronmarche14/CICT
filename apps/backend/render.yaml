@@ -31,6 +31,12 @@ services:
         value: "900000"
       - key: RATE_LIMIT_MAX_REQUESTS
         value: "100"
+      - key: STUDENT_JWT_SECRET
+        generateValue: true
+      - key: STUDENT_REFRESH_SECRET
+        generateValue: true
+      - key: STUDENT_QR_SECRET
+        generateValue: true
       - key: LOG_LEVEL
         value: info
       - key: LOG_TO_FILES

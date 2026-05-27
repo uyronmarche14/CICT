@@ -18,10 +18,14 @@ import { authorize, requireAdminAccess } from '../middleware/permissions';
 import { Permission } from '../types';
 import { upload, handleImageUpload } from '../middleware/upload';
 import { validate } from '../middleware/validate';
+import { logActivity } from '../middleware/activityLogger';
 import {
   createOrganizationValidator,
   organizationIdValidator,
   updateOrganizationValidator,
+  createMemberValidator,
+  updateMemberValidator,
+  memberIdValidator,
 } from '../validators/organization.validator';
 
 const router = express.Router();
@@ -50,20 +54,25 @@ router.post(
   '/',
   authorize(Permission.CREATE_ORGANIZATION),
   validate(createOrganizationValidator),
+  logActivity('create', 'organization'),
   createOrganization
 );
 
 router.put(
   '/:id',
   requireAdminAccess,
+  authorize(Permission.EDIT_ORGANIZATION),
   validate(updateOrganizationValidator),
+  logActivity('update', 'organization'),
   updateOrganization
 );
 
 router.delete(
   '/:id',
   requireAdminAccess,
+  authorize(Permission.DELETE_ORGANIZATION),
   validate(organizationIdValidator),
+  logActivity('delete', 'organization'),
   deleteOrganization
 );
 
@@ -71,18 +80,27 @@ router.delete(
 router.post(
   '/:id/members',
   requireAdminAccess,
+  authorize(Permission.CREATE_MEMBER),
+  validate(createMemberValidator),
+  logActivity('create', 'organization_member'),
   addMember
 );
 
 router.put(
   '/:orgId/members/:memberId',
   requireAdminAccess,
+  authorize(Permission.EDIT_MEMBER),
+  validate(updateMemberValidator),
+  logActivity('update', 'organization_member'),
   updateMember
 );
 
 router.delete(
   '/:orgId/members/:memberId',
   requireAdminAccess,
+  authorize(Permission.DELETE_MEMBER),
+  validate(memberIdValidator),
+  logActivity('delete', 'organization_member'),
   deleteMember
 );
 

@@ -1,10 +1,10 @@
 export default {
-  'cict-backend/src/**/*.ts': [
-    'eslint --fix --c cict-backend/eslint.config.mjs',
-    () => 'tsc --noEmit -p cict-backend/tsconfig.json',
+  'apps/backend/src/**/*.ts': [
+    'pnpm --prefix apps/backend exec eslint --fix',
+    () => 'tsc --noEmit -p apps/backend/tsconfig.json',
   ],
-  'cictv4/src/**/*.{ts,tsx}': [
-    'eslint --fix --c cictv4/eslint.config.mjs',
-    () => 'tsc --noEmit -p cictv4/tsconfig.json',
+  'apps/web/src/**/*.{ts,tsx}': [
+    'pnpm --prefix apps/web exec eslint --fix',
+    () => 'tsc --noEmit -p apps/web/tsconfig.json',
   ],
 };

@@ -46,6 +46,7 @@ export interface SerializedAuthUser {
 }
 
 import { getCachedUser, setCachedUser, invalidateCachedUser } from './userCache';
+import { hasAnyGlobalPermission } from './permission-constants';
 
 export const invalidateUserCache = invalidateCachedUser;
 
@@ -229,26 +230,6 @@ const assignmentHasAnyPermission = (
   assignment: Pick<IResolvedOrganizationAssignment, 'permissions'>,
   permissionsToCheck: Permission[]
 ): boolean => assignment.permissions.some((permission) => permissionsToCheck.includes(permission));
-
-const hasPermissionFromList = (
-  permissions: Permission[],
-  permission: Permission
-): boolean => permissions.includes(permission);
-
-export const hasGlobalPermission = (
-  userOrPermissions: Pick<IAuthenticatedUser, 'permissions'> | Permission[],
-  permission: Permission
-): boolean =>
-  hasPermissionFromList(
-    Array.isArray(userOrPermissions) ? userOrPermissions : userOrPermissions.permissions,
-    permission
-  );
-
-export const hasAnyGlobalPermission = (
-  userOrPermissions: Pick<IAuthenticatedUser, 'permissions'> | Permission[],
-  permissionsToCheck: Permission[]
-): boolean =>
-  permissionsToCheck.some((permission) => hasGlobalPermission(userOrPermissions, permission));
 
 export const deriveAdminScopes = (
   permissions: Permission[],
@@ -574,3 +555,5 @@ export const serializeAuthUser = async (
 
 export const findActiveFullAdminCount = async (): Promise<number> =>
   User.countDocuments({ role: UserRole.FULL_ADMIN, isActive: true });
+
+export { hasGlobalPermission, hasAnyGlobalPermission } from './permission-constants';

@@ -4,20 +4,20 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
   allowedTags: sanitizeHtml.defaults.allowedTags.concat([
     'img', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'figure', 'figcaption', 'span', 'div', 'br', 'hr',
-    'u', 's', 'sub', 'sup', 'pre', 'code', 'iframe',
+    'u', 's', 'sub', 'sup', 'pre', 'code',
   ]),
   allowedAttributes: {
-    '*': ['style', 'class', 'id'],
-    'a': ['href', 'target', 'rel'],
-    'img': ['src', 'alt', 'width', 'height'],
+    '*': ['style'],
+    'a': ['href', 'target', 'rel', 'name', 'aria-label'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'loading'],
     'td': ['colspan', 'rowspan'],
     'th': ['colspan', 'rowspan'],
     'table': ['border', 'cellpadding', 'cellspacing'],
-    'iframe': ['src', 'width', 'height', 'frameborder', 'allowfullscreen'],
+    'ol': ['start', 'type'],
+    'li': ['value'],
   },
   allowedSchemes: ['http', 'https', 'mailto'],
   allowedSchemesByTag: {
-    iframe: ['https'],
     img: ['http', 'https', 'data'],
   },
   disallowedTagsMode: 'discard',
@@ -33,9 +33,6 @@ const SANITIZE_OPTIONS: sanitizeHtml.IOptions = {
     },
   },
   allowVulnerableTags: false,
-  exclusiveFilter: (frame) => {
-    return frame.tag === 'iframe' && !frame.attribs?.src?.startsWith('https://');
-  },
 };
 
 export const sanitizeHtmlContent = (html: string): string => {

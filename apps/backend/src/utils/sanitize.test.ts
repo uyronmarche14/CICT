@@ -19,15 +19,8 @@ describe('sanitizeHtmlContent', () => {
     expect(result).toContain('Click me');
   });
 
-  it('allows iframe from trusted sources', () => {
+  it('removes all iframes (no longer allowed)', () => {
     const input = '<iframe src="https://www.youtube.com/embed/abc123"></iframe>';
-    const result = sanitizeHtmlContent(input);
-    expect(result).toContain('iframe');
-    expect(result).toContain('youtube.com');
-  });
-
-  it('removes non-https iframes', () => {
-    const input = '<iframe src="http://evil.com"></iframe>';
     const result = sanitizeHtmlContent(input);
     expect(result).not.toContain('iframe');
   });

@@ -30,6 +30,8 @@ import {
 } from '../utils/organizationScope';
 import { attachOrganizationName, attachOrganizationNames } from '../utils/ownedContent';
 import { hasGlobalPermission } from '../utils/rbac';
+import { sanitizeSearchInput } from '../utils/escapeRegex';
+import { parsePagination } from '../utils/pagination';
 import {
   shouldResetApprovalOnEdit,
 } from '../utils/contentApproval';
@@ -173,7 +175,7 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
  * Get all announcements
  */
 export const getAllAnnouncements = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, priority, page = 1, limit = 10, search, ownerType, organizationId } = req.query;
+  const { status, priority, search, ownerType, organizationId } = req.query;
 
   const conditions: Record<string, unknown>[] = [];
   const requestedOwnerType =
@@ -234,25 +236,26 @@ export const getAllAnnouncements = async (req: AuthRequest, res: Response): Prom
     conditions.push({ priority });
   }
 
-  if (search) {
+  const safeSearch = sanitizeSearchInput(search);
+  if (safeSearch) {
     conditions.push({
       $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { bodyHtml: { $regex: search, $options: 'i' } },
+        { title: { $regex: safeSearch, $options: 'i' } },
+        { content: { $regex: safeSearch, $options: 'i' } },
+        { bodyHtml: { $regex: safeSearch, $options: 'i' } },
       ],
     });
   }
   const query = conditions.length <= 1 ? conditions[0] ?? {} : { $and: conditions };
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   const [announcements, total] = await Promise.all([
     Announcement.find(query)
       .populate('author', 'firstName lastName email')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(lim),
     Announcement.countDocuments(query),
   ]);
   const serializedAnnouncements = await attachOrganizationNames(announcements);
@@ -262,10 +265,10 @@ export const getAllAnnouncements = async (req: AuthRequest, res: Response): Prom
     data: {
       announcements: serializedAnnouncements,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / lim),
       },
     },
   });
@@ -275,7 +278,7 @@ export const getAllAnnouncements = async (req: AuthRequest, res: Response): Prom
  * Public announcements
  */
 export const getPublicAnnouncements = async (req: Request, res: Response): Promise<void> => {
-  const { page = 1, limit = 10, search, type, ownerType, organizationId } = req.query;
+  const { search, type, ownerType, organizationId } = req.query;
   const conditions: Record<string, unknown>[] = [getPublicAnnouncementQuery()];
   const requestedOwnerType =
     ownerType === ContentOwnerType.ORGANIZATION
@@ -287,7 +290,7 @@ export const getPublicAnnouncements = async (req: Request, res: Response): Promi
     typeof organizationId === 'string' && organizationId.trim().length > 0
       ? organizationId.trim().toLowerCase()
       : null;
-  const skip = (Number(page) - 1) * Number(limit);
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   if (type) {
     conditions.push({ type });
@@ -297,12 +300,13 @@ export const getPublicAnnouncements = async (req: Request, res: Response): Promi
     conditions.push(buildOwnershipFilter(requestedOwnerType, requestedOrganizationId));
   }
 
-  if (search) {
+  const safeSearch = sanitizeSearchInput(search);
+  if (safeSearch) {
     conditions.push({
       $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { content: { $regex: search, $options: 'i' } },
-        { bodyHtml: { $regex: search, $options: 'i' } },
+        { title: { $regex: safeSearch, $options: 'i' } },
+        { content: { $regex: safeSearch, $options: 'i' } },
+        { bodyHtml: { $regex: safeSearch, $options: 'i' } },
       ],
     });
   }
@@ -314,7 +318,7 @@ export const getPublicAnnouncements = async (req: Request, res: Response): Promi
       .populate('author', 'firstName lastName email')
       .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(lim),
     Announcement.countDocuments(finalQuery),
   ]);
   const serializedAnnouncements = await attachOrganizationNames(announcements);
@@ -324,10 +328,10 @@ export const getPublicAnnouncements = async (req: Request, res: Response): Promi
     data: {
       announcements: serializedAnnouncements,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / lim),
       },
     },
   });

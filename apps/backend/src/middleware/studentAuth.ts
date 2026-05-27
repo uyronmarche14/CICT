@@ -34,9 +34,9 @@ export const authenticateStudent = async (
       return;
     }
 
-    const jwtSecret = process.env.STUDENT_JWT_SECRET || process.env.JWT_SECRET;
+    const jwtSecret = process.env.STUDENT_JWT_SECRET;
     if (!jwtSecret) {
-      logger.error('Student JWT secret is not configured');
+      logger.error('STUDENT_JWT_SECRET is not configured');
       res.status(500).json({
         success: false,
         message: 'Server configuration error',

@@ -29,7 +29,8 @@ import {
   shouldResetApprovalOnEdit,
 } from '../utils/contentApproval';
 import { buildOwnershipFilter, buildUpdatePayload, canViewUnpublishedContent } from '../services/content.service';
-import * as approvalService from '../services/content-approval.service';
+import * as eventWorkflow from '../services/event-workflow.service';
+import { parsePagination } from '../utils/pagination';
 
 const EVENT_EDITABLE_FIELDS = [
   'title',
@@ -203,7 +204,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
  * Get all events
  */
 export const getAllEvents = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, page = 1, limit = 10, search, upcoming, ownerType, organizationId } = req.query;
+  const { status, search, upcoming, ownerType, organizationId } = req.query;
 
   const conditions: Record<string, unknown>[] = [];
   const requestedOwnerType =
@@ -276,14 +277,14 @@ export const getAllEvents = async (req: AuthRequest, res: Response): Promise<voi
   }
   const query = conditions.length <= 1 ? conditions[0] ?? {} : { $and: conditions };
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
 
   const [events, total] = await Promise.all([
     Event.find(query)
       .populate('organizer', 'firstName lastName email')
       .sort({ startDate: 1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(lim),
     Event.countDocuments(query),
   ]);
   const serializedEvents = await attachOrganizationNames(events);
@@ -293,10 +294,10 @@ export const getAllEvents = async (req: AuthRequest, res: Response): Promise<voi
     data: {
       events: serializedEvents,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: p,
+        limit: lim,
         total,
-        pages: Math.ceil(total / Number(limit)),
+        pages: Math.ceil(total / lim),
       },
     },
   });
@@ -516,12 +517,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const submitEventForApproval = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-  const updated = await approvalService.submitForApproval(
-    id, req.user, event, 'event', Permission.SUBMIT_CONTENT_FOR_APPROVAL,
-    EventStatus.DRAFT, EventStatus.PENDING_APPROVAL,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await eventWorkflow.submitForApproval(id, req);
 
   res.status(200).json({
     success: true,
@@ -532,12 +528,7 @@ export const submitEventForApproval = async (req: AuthRequest, res: Response): P
 
 export const approveEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-  const updated = await approvalService.approve(
-    id, req.user, event, 'event',
-    EventStatus.PENDING_APPROVAL, EventStatus.APPROVED,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await eventWorkflow.approve(id, req);
 
   res.status(200).json({
     success: true,
@@ -548,13 +539,7 @@ export const approveEvent = async (req: AuthRequest, res: Response): Promise<voi
 
 export const rejectEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-  const updated = await approvalService.reject(
-    id, req.user, event, 'event',
-    EventStatus.PENDING_APPROVAL, EventStatus.REJECTED, reason,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await eventWorkflow.reject(id, req);
 
   res.status(200).json({
     success: true,
@@ -565,17 +550,7 @@ export const rejectEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const publishEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-  const updated = await approvalService.publish(
-    id, req.user, event, 'event', Permission.PUBLISH_EVENT, EventStatus.PUBLISHED,
-    (item) => {
-      const e = item as Record<string, unknown>;
-      e.cancelledAt = undefined;
-      e.completedAt = undefined;
-    }
-  );
-
-  logger.info(`Event published: ${id} by user ${req.user?.userId}`);
+  const updated = await eventWorkflow.publish(id, req);
 
   res.status(200).json({
     success: true,
@@ -586,28 +561,7 @@ export const publishEvent = async (req: AuthRequest, res: Response): Promise<voi
 
 export const cancelEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-
-  if (!event) {
-    throw new AppError('Event not found', 404);
-  }
-
-  if (event.status !== EventStatus.PUBLISHED) {
-    throw new AppError('Only published events can be cancelled', 400);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.CANCEL_EVENT,
-    event.ownerType,
-    event.organizationId ?? null
-  );
-
-  event.status = EventStatus.CANCELLED;
-  event.cancelledAt = new Date();
-  await event.save();
-
-  logger.info(`Event cancelled: ${id} by user ${req.user?.userId}`);
+  const event = await eventWorkflow.cancel(id, req);
 
   res.status(200).json({
     success: true,
@@ -618,28 +572,7 @@ export const cancelEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const completeEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await Event.findById(id).populate('organizer', 'firstName lastName email');
-
-  if (!event) {
-    throw new AppError('Event not found', 404);
-  }
-
-  if (event.status !== EventStatus.PUBLISHED) {
-    throw new AppError('Only published events can be completed', 400);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.COMPLETE_EVENT,
-    event.ownerType,
-    event.organizationId ?? null
-  );
-
-  event.status = EventStatus.COMPLETED;
-  event.completedAt = new Date();
-  await event.save();
-
-  logger.info(`Event completed: ${id} by user ${req.user?.userId}`);
+  const event = await eventWorkflow.complete(id, req);
 
   res.status(200).json({
     success: true,

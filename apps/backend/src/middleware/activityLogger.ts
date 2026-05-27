@@ -3,6 +3,39 @@ import { AuthRequest } from './auth';
 import ActivityLog from '../models/ActivityLog';
 import logger from '../utils/logger';
 
+const SENSITIVE_FIELDS = [
+  'password',
+  'token',
+  'secret',
+  'apiKey',
+  'refreshToken',
+  'accessToken',
+  'qrToken',
+  'currentPassword',
+  'newPassword',
+  'authorization',
+  'studentNumber',
+];
+
+function sanitizeDeep(obj: unknown, depth = 0): unknown {
+  if (depth > 10) {return '[MAX_DEPTH]';}
+  if (typeof obj !== 'object' || obj === null) {return obj;}
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => sanitizeDeep(item, depth + 1));
+  }
+
+  const sanitized: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (SENSITIVE_FIELDS.some(f => key.toLowerCase().includes(f.toLowerCase()))) {
+      sanitized[key] = '[REDACTED]';
+    } else {
+      sanitized[key] = sanitizeDeep(value, depth + 1);
+    }
+  }
+  return sanitized;
+}
+
 /**
  * Middleware to log admin activities
  */
@@ -13,16 +46,12 @@ export const logActivity = (action: string, resource: string) => {
     next: NextFunction
   ): Promise<void> => {
     try {
-      // Store original send function
       const originalSend = res.send;
-      
-      // Override send function to log after response
+
       res.send = function (data: any): Response {
-        // Only log if request was successful (2xx status)
         if (res.statusCode >= 200 && res.statusCode < 300 && req.user) {
           const resourceId = req.params.id || req.body?.id || undefined;
-          
-          // Log activity asynchronously
+
           ActivityLog.create({
             user: req.user.userId,
             action,
@@ -31,7 +60,7 @@ export const logActivity = (action: string, resource: string) => {
             details: {
               method: req.method,
               path: req.path,
-              body: sanitizeBody(req.body),
+              body: sanitizeDeep(req.body),
               query: req.query,
             },
             ipAddress: req.ip || req.socket.remoteAddress,
@@ -40,33 +69,14 @@ export const logActivity = (action: string, resource: string) => {
             logger.error('Failed to log activity:', error);
           });
         }
-        
-        // Call original send
+
         return originalSend.call(this, data);
       };
-      
+
       next();
     } catch (error) {
       logger.error('Activity logging middleware error:', error);
-      next(); // Don't block request if logging fails
+      next();
     }
   };
-};
-
-/**
- * Sanitize request body to remove sensitive information
- */
-const sanitizeBody = (body: any): any => {
-  if (!body) {return body;}
-  
-  const sanitized = { ...body };
-  const sensitiveFields = ['password', 'token', 'secret', 'apiKey'];
-  
-  for (const field of sensitiveFields) {
-    if (sanitized[field]) {
-      sanitized[field] = '[REDACTED]';
-    }
-  }
-  
-  return sanitized;
 };

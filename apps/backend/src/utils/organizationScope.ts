@@ -7,7 +7,7 @@ import {
   IResolvedOrganizationAssignment,
   Permission,
 } from '../types';
-import { hasGlobalPermission } from './rbac';
+import { hasGlobalPermission } from './permission-constants';
 
 type OwnershipInput = {
   ownerType?: unknown;
