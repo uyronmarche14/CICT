@@ -32,6 +32,8 @@ import settingsRoutes from "./routes/settings.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 import { createGeneralApiRateLimiter } from "./middleware/rateLimiters";
 import { maintenanceMode } from "./middleware/maintenanceMode";
+import { csrfProtection } from "./middleware/csrf";
+import { requestId } from "./middleware/requestId";
 
 // Import utilities
 import logger from "./utils/logger";
@@ -42,6 +44,9 @@ import { validateEnv } from "./config/validateEnv";
 const app: Application = express();
 app.set("trust proxy", 1);
 
+// Request ID middleware (first — sets ID for all downstream logging)
+app.use(requestId);
+
 validateEnv();
 
 // Connect to database
@@ -50,7 +55,7 @@ connectDB();
 // Security middleware
 app.use(helmet());
 
-const configuredOrigins = (process.env.CORS_ORIGIN || "")
+const configuredOrigins = (process.env.CORS_ORIGIN ?? "")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -95,6 +100,9 @@ app.use("/api", createGeneralApiRateLimiter());
 
 // Cookie parser middleware
 app.use(cookieParser());
+
+// CSRF protection for mutating requests
+app.use(csrfProtection);
 
 // Body parser middleware
 app.use(express.json({ limit: "10mb" }));

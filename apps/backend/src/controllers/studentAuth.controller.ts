@@ -3,10 +3,19 @@ import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import Student from '../models/Student';
 import StudentSession from '../models/StudentSession';
+import Program from '../models/Program';
+import YearLevel from '../models/YearLevel';
+import Section from '../models/Section';
 import { StudentAuthRequest } from '../middleware/studentAuth';
 import { AppError } from '../middleware/errorHandler';
 import { IStudentJWTPayload, StudentStatus } from '../types';
 import { getAuthCookieOptions } from '../utils/authCookies';
+import { setCsrfCookie } from '../middleware/csrf';
+import logger from '../utils/logger';
+import {
+  forgotStudentPassword as forgotStudentPasswordService,
+  resetStudentPassword as resetStudentPasswordService,
+} from '../services/password-reset.service';
 
 const getStudentJwtSecret = (): string => {
   const secret = process.env.STUDENT_JWT_SECRET;
@@ -46,12 +55,12 @@ const buildStudentPayload = (
 
 const generateStudentAccessToken = (payload: IStudentJWTPayload): string =>
   jwt.sign(payload, getStudentJwtSecret(), {
-    expiresIn: process.env.STUDENT_JWT_EXPIRE || '15m',
+    expiresIn: process.env.STUDENT_JWT_EXPIRE ?? '15m',
   } as jwt.SignOptions);
 
 const generateStudentRefreshToken = (payload: IStudentJWTPayload): string =>
   jwt.sign(payload, getStudentRefreshSecret(), {
-    expiresIn: process.env.STUDENT_REFRESH_EXPIRE || '30d',
+    expiresIn: process.env.STUDENT_REFRESH_EXPIRE ?? '30d',
   } as jwt.SignOptions);
 
 const serializeStudent = (student: {
@@ -81,6 +90,68 @@ const serializeStudent = (student: {
   yearLevelId: String(student.yearLevelId),
   sectionId: String(student.sectionId),
 });
+
+/**
+ * Register a new student (self-registration)
+ * Creates a pending account that must be activated by an admin
+ */
+export const registerStudent = async (req: Request, res: Response): Promise<void> => {
+  const { studentNumber, email, password, firstName, lastName, middleName, programId, yearLevelId, sectionId } = req.body;
+
+  if (!studentNumber || !password || !firstName || !lastName || !programId || !yearLevelId || !sectionId) {
+    throw new AppError('Student number, password, first name, last name, program, year level, and section are required', 400);
+  }
+
+  if (password.length < 8) {
+    throw new AppError('Password must be at least 8 characters', 400);
+  }
+
+  const [studentNumberConflict, emailConflict] = await Promise.all([
+    Student.findOne({ studentNumber: String(studentNumber).trim().toUpperCase() }),
+    email ? Student.findOne({ email: String(email).trim().toLowerCase() }) : Promise.resolve(null),
+  ]);
+
+  if (studentNumberConflict) {throw new AppError('Student number already exists', 409);}
+  if (emailConflict) {throw new AppError('Email already exists', 409);}
+
+  const [program, yearLevel, section] = await Promise.all([
+    Program.findById(programId),
+    YearLevel.findById(yearLevelId),
+    Section.findById(sectionId),
+  ]);
+
+  if (!program) {throw new AppError('Program not found', 404);}
+  if (!yearLevel) {throw new AppError('Year level not found', 404);}
+  if (!section) {throw new AppError('Section not found', 404);}
+
+  const student = await Student.create({
+    studentNumber: String(studentNumber).trim().toUpperCase(),
+    email: email?.trim().toLowerCase(),
+    passwordHash: password,
+    firstName,
+    lastName,
+    middleName,
+    programId,
+    yearLevelId,
+    sectionId,
+    status: 'pending',
+    isActive: false,
+    qrVersion: 1,
+  });
+
+  const populatedStudent = await Student.findById(student._id)
+    .populate('programId', 'code name')
+    .populate('yearLevelId', 'code label numericLevel')
+    .populate('sectionId', 'name displayName');
+
+  logger.info(`Student self-registered: ${studentNumber}`);
+
+  res.status(201).json({
+    success: true,
+    message: 'Registration successful. Your account must be activated by an administrator.',
+    data: { student: populatedStudent },
+  });
+};
 
 export const loginStudent = async (req: Request, res: Response): Promise<void> => {
   const { identifier, password, deviceLabel, platform } = req.body;
@@ -122,7 +193,8 @@ export const loginStudent = async (req: Request, res: Response): Promise<void> =
   student.lastLoginAt = new Date();
   await student.save();
 
-  res.cookie('token', accessToken, getAuthCookieOptions());
+  res.cookie('student_token', accessToken, getAuthCookieOptions());
+  setCsrfCookie(res);
   res.cookie('refreshToken', refreshToken, {
     ...getAuthCookieOptions(),
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -168,7 +240,7 @@ export const refreshStudentToken = async (req: Request, res: Response): Promise<
   session.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   await session.save();
 
-  res.cookie('token', nextAccessToken, getAuthCookieOptions());
+  res.cookie('student_token', nextAccessToken, getAuthCookieOptions());
   res.cookie('refreshToken', nextRefreshToken, {
     ...getAuthCookieOptions(),
     maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -199,7 +271,7 @@ export const logoutStudent = async (req: Request, res: Response): Promise<void> 
     }
   }
 
-  res.clearCookie('token', getAuthCookieOptions());
+  res.clearCookie('student_token', getAuthCookieOptions());
   res.clearCookie('refreshToken', getAuthCookieOptions());
 
   res.status(200).json({
@@ -230,5 +302,37 @@ export const getStudentProfile = async (
     data: {
       student,
     },
+  });
+};
+
+export const forgotStudentPassword = async (req: Request, res: Response): Promise<void> => {
+  const { studentNumber, email } = req.body;
+  if (!studentNumber) {
+    throw new AppError('Student number is required', 400);
+  }
+
+  await forgotStudentPasswordService(studentNumber, email);
+
+  res.status(200).json({
+    success: true,
+    message: 'If the student exists, a password reset link has been sent.',
+  });
+};
+
+export const resetStudentPasswordCtrl = async (req: Request, res: Response): Promise<void> => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    throw new AppError('Token and password are required', 400);
+  }
+
+  if (password.length < 8) {
+    throw new AppError('Password must be at least 8 characters', 400);
+  }
+
+  await resetStudentPasswordService(token, password);
+
+  res.status(200).json({
+    success: true,
+    message: 'Password reset successfully',
   });
 };

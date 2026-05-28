@@ -168,16 +168,58 @@ export const exportEventAttendanceLogs = async (
     .sort({ scannedAt: -1 })
     .limit(10000);
 
+  const format = (req.query.format as string || '').toLowerCase();
+
+  if (format === 'csv') {
+    const header = 'Student Number,First Name,Last Name,Scan Type,Result,Scanned At,Scanned By,Notes\n';
+    const rows = logs.map((log: any) => {
+      const studentNumber = log.studentId?.studentNumber ?? '';
+      const firstName = log.studentId?.firstName ?? '';
+      const lastName = log.studentId?.lastName ?? '';
+      const scannedByName = log.scannedByAdminId
+        ? `${log.scannedByAdminId.firstName} ${log.scannedByAdminId.lastName}`.trim()
+        : '';
+      return [
+        escapeCsv(studentNumber),
+        escapeCsv(firstName),
+        escapeCsv(lastName),
+        escapeCsv(log.scanType),
+        escapeCsv(log.result),
+        log.scannedAt?.toISOString() ?? '',
+        escapeCsv(scannedByName),
+        escapeCsv(log.notes ?? ''),
+      ].join(',') + '\n';
+    });
+
+    const filename = `attendance-${event.title.replace(/\s+/g, '-').toLowerCase().slice(0, 40)}-${Date.now()}.csv`;
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(header + rows.join(''));
+    return;
+  }
+
   res.status(200).json({
     success: true,
     data: { logs },
   });
 };
 
+const escapeCsv = (val: string): string => {
+  if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+    return `"${val.replace(/"/g, '""')}"`;
+  }
+  return val;
+};
+
 export const scanEventAttendance = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
+  if (!req.user?.userId) {
+    throw new AppError('User not authenticated', 401);
+  }
+  const adminUserId: string = req.user.userId;
+
   const event = await Event.findById(req.params.id);
   if (!event) {
     throw new AppError('Event not found', 404);
@@ -230,7 +272,7 @@ export const scanEventAttendance = async (
       });
 
       await logAdminAttendanceActivity({
-        adminUserId: req.user!.userId,
+        adminUserId,
         action: 'scan_event_attendance',
         eventId: req.params.id,
         outcome: 'failure',
@@ -319,7 +361,7 @@ export const scanEventAttendance = async (
     });
 
     await logAdminAttendanceActivity({
-      adminUserId: req.user!.userId,
+      adminUserId,
       action: 'scan_event_attendance',
       eventId: req.params.id,
       outcome: 'failure',
@@ -361,7 +403,7 @@ export const scanEventAttendance = async (
     });
 
     await logAdminAttendanceActivity({
-      adminUserId: req.user!.userId,
+      adminUserId,
       action: 'scan_event_attendance',
       eventId: req.params.id,
       resourceId: String(registration._id),
@@ -394,7 +436,7 @@ export const scanEventAttendance = async (
   });
 
   await logAdminAttendanceActivity({
-    adminUserId: req.user!.userId,
+    adminUserId,
     action: 'scan_event_attendance',
     eventId: req.params.id,
     resourceId: String(registration._id),

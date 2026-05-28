@@ -8,13 +8,15 @@ import { AuthRequest } from '../middleware/auth';
 import { buildAuthenticatedUser, serializeAuthUser } from '../utils/rbac';
 import { getAuthCookieOptions } from '../utils/authCookies';
 import { getPermissionMetadata as getPermissionMetadataCatalog } from '../utils/permissionMetadata';
+import { setCsrfCookie } from '../middleware/csrf';
+import { forgotPassword as forgotPasswordService, resetPassword as resetPasswordService } from '../services/password-reset.service';
 
 /**
  * Generate JWT token
  */
 const generateToken = (payload: IJWTPayload): string => {
   const jwtSecret = process.env.JWT_SECRET;
-  const jwtExpire = process.env.JWT_EXPIRE || '7d';
+  const jwtExpire = process.env.JWT_EXPIRE ?? '7d';
   
   if (!jwtSecret) {
     throw new Error('JWT_SECRET is not defined');
@@ -73,7 +75,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
   const serializedUser = await serializeAuthUser(authenticatedUser);
 
   res.cookie('token', token, getAuthCookieOptions());
-  
+  setCsrfCookie(res);
+
   logger.info(`User logged in: ${user.email}`);
   
   res.status(200).json({
@@ -125,6 +128,44 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       visibleAdminModules: req.user.visibleAdminModules,
       scopedAdminModulesByOrganization: req.user.scopedAdminModulesByOrganization,
     },
+  });
+};
+
+/**
+ * Forgot password - generates reset token
+ */
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  const { email } = req.body;
+  if (!email) {
+    throw new AppError('Email is required', 400);
+  }
+
+  await forgotPasswordService(email);
+
+  res.status(200).json({
+    success: true,
+    message: 'If the email exists, a password reset link has been sent.',
+  });
+};
+
+/**
+ * Reset password using token
+ */
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  const { token, password } = req.body;
+  if (!token || !password) {
+    throw new AppError('Token and password are required', 400);
+  }
+
+  if (password.length < 8) {
+    throw new AppError('Password must be at least 8 characters', 400);
+  }
+
+  await resetPasswordService(token, password);
+
+  res.status(200).json({
+    success: true,
+    message: 'Password reset successfully',
   });
 };
 

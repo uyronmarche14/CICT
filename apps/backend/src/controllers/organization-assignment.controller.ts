@@ -51,7 +51,7 @@ export const createUserOrgAssignment = async (req: AuthRequest, res: Response): 
     role: assignment.roleId,
   });
 
-  invalidateUserCache(id);
+  await invalidateUserCache(id);
   const assignments = await getResolvedOrganizationAssignmentsForUser(id);
   const created = assignments.find((item) => item.id === String(createdAssignment._id));
 
@@ -87,7 +87,7 @@ export const updateUserOrgAssignment = async (req: AuthRequest, res: Response): 
   assignment.organizationId = validatedAssignment.organizationId;
   assignment.role = validatedAssignment.roleId;
   await assignment.save();
-  invalidateUserCache(id);
+  await invalidateUserCache(id);
 
   const assignments = await getResolvedOrganizationAssignmentsForUser(id);
   const updated = assignments.find((item) => item.id === assignmentId);
@@ -109,7 +109,7 @@ export const deleteUserOrgAssignment = async (req: AuthRequest, res: Response): 
     throw new AppError('Organization assignment not found', 404);
   }
 
-  invalidateUserCache(id);
+  await invalidateUserCache(id);
   const assignments = await getResolvedOrganizationAssignmentsForUser(id);
 
   logger.info(`Organization assignment deleted for user: ${id} by user ${req.user?.userId}`);

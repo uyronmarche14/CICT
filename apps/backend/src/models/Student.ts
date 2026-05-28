@@ -87,6 +87,8 @@ const studentSchema = new Schema<IStudent>(
     emergencyContactName: { type: String, trim: true },
     emergencyContactPhone: { type: String, trim: true },
     emergencyContactRelationship: { type: String, trim: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
     notificationPreferences: {
       email: { type: Boolean, default: true },
       push: { type: Boolean, default: true },
@@ -105,7 +107,7 @@ studentSchema.pre('save', async function () {
     return;
   }
 
-  const rounds = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
+  const rounds = parseInt(process.env.BCRYPT_ROUNDS ?? '10', 10);
   this.passwordHash = await bcrypt.hash(this.passwordHash, rounds);
 });
 

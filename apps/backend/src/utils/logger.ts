@@ -3,7 +3,7 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import path from 'path';
 import fs from 'fs';
 
-const logLevel = process.env.LOG_LEVEL || 'info';
+const logLevel = process.env.LOG_LEVEL ?? 'info';
 const isProduction = process.env.NODE_ENV === 'production';
 const logToFiles = process.env.LOG_TO_FILES === 'true';
 

@@ -35,6 +35,8 @@ export interface IUser extends Document {
   customRole?: Types.ObjectId;
   isActive: boolean;
   lastLogin?: Date;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -218,7 +220,7 @@ export interface IActivityLog extends Document {
   severity?: 'info' | 'warn' | 'critical';
   reasonCode?: string;
   correlationId?: string;
-  details?: any;
+  details?: Record<string, unknown>;
   ipAddress?: string;
   userAgent?: string;
   createdAt: Date;
@@ -601,6 +603,8 @@ export interface IStudent extends Document {
     push: boolean;
     sms: boolean;
   };
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;

@@ -12,6 +12,7 @@
     "backend:seed": "pnpm --filter @cict/contracts build && pnpm --filter @cict/backend seed",
     "backend:mongo:up": "pnpm --filter @cict/backend docker:mongo:up",
     "backend:mongo:down": "pnpm --filter @cict/backend docker:mongo:down",
+    "backend:migrate": "pnpm --filter @cict/contracts build && pnpm --filter @cict/backend migrate",
     "web:dev": "pnpm --filter @cict/contracts build && pnpm --filter @cict/web dev",
     "web:build": "pnpm --filter @cict/contracts build && pnpm --filter @cict/web build",
     "web:lint": "pnpm --filter @cict/contracts build && pnpm --filter @cict/web lint",

@@ -2,13 +2,15 @@ import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
 import { requireAdminAccess } from '../middleware/permissions';
 import { validate } from '../middleware/validate';
-import { body, param } from 'express-validator';
 import {
   getAllSettings,
   getSettingsGroup,
   updateSettingsGroup,
 } from '../controllers/settings.controller';
-import { SETTINGS_GROUPS } from '../config/settings';
+import {
+  settingsGroupValidator,
+  updateSettingsValidator,
+} from '../validators/settings.validator';
 
 const router = Router();
 
@@ -19,16 +21,13 @@ router.get('/', getAllSettings);
 
 router.get(
   '/:group',
-  param('group').isIn(SETTINGS_GROUPS).withMessage('Invalid settings group'),
-  validate,
+  validate(settingsGroupValidator),
   getSettingsGroup
 );
 
 router.put(
   '/:group',
-  param('group').isIn(SETTINGS_GROUPS).withMessage('Invalid settings group'),
-  body().isObject().withMessage('Body must be an object'),
-  validate,
+  validate(updateSettingsValidator),
   updateSettingsGroup
 );
 

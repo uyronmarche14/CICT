@@ -15,7 +15,7 @@ const getStudentTokenFromRequest = (req: Request): string | null => {
     return authHeader.substring(7);
   }
 
-  const token = req.cookies?.token;
+  const token = req.cookies?.student_token;
   return typeof token === 'string' ? token : null;
 };
 

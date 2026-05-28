@@ -57,3 +57,22 @@ export const createAuthSessionRateLimiter = () =>
       'Too many authentication requests from this IP, please try again later.'
     ),
   });
+
+/**
+ * Rate limiter keyed by identifier (student number or email) to prevent
+ * brute-force attacks across different accounts from a single IP.
+ */
+export const createStudentLoginRateLimiter = () =>
+  rateLimit({
+    windowMs: parsePositiveInt(process.env.AUTH_LOGIN_RATE_LIMIT_WINDOW_MS, 900000),
+    max: parsePositiveInt(process.env.AUTH_LOGIN_RATE_LIMIT_MAX_REQUESTS, 10),
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      const identifier = req.body?.identifier as string | undefined;
+      return identifier ? `student_login:${identifier.trim().toLowerCase()}` : req.ip ?? 'unknown';
+    },
+    handler: createJsonRateLimitHandler(
+      'Too many login attempts for this account, please try again later.'
+    ),
+  });

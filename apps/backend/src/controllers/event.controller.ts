@@ -1,91 +1,19 @@
 import { Response } from 'express';
-import Event from '../models/Event';
-import News from '../models/News';
-import Announcement from '../models/Announcement';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
-import { ContentOwnerType, EventStatus, Permission } from '../types';
-import logger from '../utils/logger';
-import { deleteFromCloudinary } from '../middleware/upload';
 import {
-  buildLegacyPlainText,
-  normalizeGalleryExcludingCover,
-  normalizeMediaAsset,
-  normalizeSchedule,
-  normalizeSections,
-  normalizeSpeakerItems,
-  normalizeAttachmentItems,
-} from '../utils/content';
-import {
-  canReassignOwnership,
-  ensureCanManageOwnedContent,
-  getAccessibleOrganizationIdsForAuthenticatedUser,
-  resolveOwnershipInput,
-  validateOwnershipPair,
-} from '../utils/organizationScope';
-import { attachOrganizationName, attachOrganizationNames } from '../utils/ownedContent';
-import { hasGlobalPermission } from '../utils/rbac';
-import {
-  shouldResetApprovalOnEdit,
-} from '../utils/contentApproval';
-import { buildOwnershipFilter, buildUpdatePayload, canViewUnpublishedContent } from '../services/content.service';
-import * as eventWorkflow from '../services/event-workflow.service';
-import { parsePagination } from '../utils/pagination';
-
-const EVENT_EDITABLE_FIELDS = [
-  'title',
-  'bodyHtml',
-  'excerpt',
-  'startDate',
-  'endDate',
-  'location',
-  'maxAttendees',
-  'tags',
-  'coverImage',
-  'gallery',
-  'sections',
-  'schedule',
-  'imageUrl',
-  'imageId',
-  'isRegistrationOpen',
-  'registrationUrl',
-  'registrationDeadline',
-  'contactName',
-  'contactEmail',
-  'contactPhone',
-  'hostOrganizationIds',
-  'coHostOrganizationIds',
-  'speakerItems',
-  'audience',
-  'eligibility',
-  'feeLabel',
-  'certificateInfo',
-  'venueDetails',
-  'mapUrl',
-  'meetingUrl',
-  'requirements',
-  'attachmentItems',
-  'posterCaption',
-] as const;
-
-const parseEventDateInput = (value: unknown, fieldLabel: string): Date => {
-  const parsedDate = new Date(String(value));
-
-  if (Number.isNaN(parsedDate.getTime())) {
-    throw new AppError(`${fieldLabel} must be a valid date`, 400);
-  }
-
-  return parsedDate;
-};
-
-const ensureValidEventDateRange = (startDateValue: unknown, endDateValue: unknown): void => {
-  const startDate = parseEventDateInput(startDateValue, 'Start date');
-  const endDate = parseEventDateInput(endDateValue, 'End date');
-
-  if (startDate.getTime() > endDate.getTime()) {
-    throw new AppError('Start date cannot be after end date', 400);
-  }
-};
+  createEvent as createEventService,
+  getAllEvents as getAllEventsService,
+  getEventById as getEventByIdService,
+  updateEvent as updateEventService,
+  deleteEvent as deleteEventService,
+  submitEventForApproval as submitEventForApprovalService,
+  approveEvent as approveEventService,
+  rejectEvent as rejectEventService,
+  publishEvent as publishEventService,
+  cancelEvent as cancelEventService,
+  completeEvent as completeEventService,
+} from '../services/event.service';
 
 /**
  * Create new event
@@ -95,103 +23,7 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
     throw new AppError('User not authenticated', 401);
   }
 
-  const {
-    title,
-    description,
-    bodyHtml: rawBodyHtml,
-    excerpt,
-    startDate,
-    endDate,
-    location,
-    maxAttendees,
-    tags,
-    imageUrl,
-    imageId,
-    isRegistrationOpen,
-    coverImage,
-    gallery,
-    sections,
-    schedule,
-    registrationUrl,
-    registrationDeadline,
-    contactName,
-    contactEmail,
-    contactPhone,
-    hostOrganizationIds,
-    coHostOrganizationIds,
-    speakerItems,
-    audience,
-    eligibility,
-    feeLabel,
-    certificateInfo,
-    venueDetails,
-    mapUrl,
-    meetingUrl,
-    requirements,
-    attachmentItems,
-    posterCaption,
-  } = req.body;
-  const ownership = resolveOwnershipInput(req.body);
-  await validateOwnershipPair(ownership.ownerType, ownership.organizationId);
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.CREATE_EVENT,
-    ownership.ownerType,
-    ownership.organizationId
-  );
-
-  const bodyHtml =
-    typeof rawBodyHtml === 'string' && rawBodyHtml.trim().length > 0
-      ? rawBodyHtml
-      : typeof description === 'string'
-        ? description
-        : '';
-  const resolvedCoverImage = normalizeMediaAsset(coverImage, { imageUrl, imageId });
-
-  ensureValidEventDateRange(startDate, endDate);
-
-  const event = await Event.create({
-    title,
-    description: buildLegacyPlainText(bodyHtml),
-    bodyHtml,
-    excerpt,
-    organizer: req.user.userId,
-    ownerType: ownership.ownerType,
-    organizationId: ownership.organizationId,
-    startDate,
-    endDate,
-    location,
-    maxAttendees,
-    tags: tags || [],
-    sections: normalizeSections(sections),
-    schedule: normalizeSchedule(schedule),
-    coverImage: resolvedCoverImage,
-    gallery: normalizeGalleryExcludingCover(gallery, resolvedCoverImage),
-    imageUrl,
-    imageId,
-    status: EventStatus.DRAFT,
-    isRegistrationOpen: isRegistrationOpen ?? false,
-    registrationUrl,
-    registrationDeadline,
-    contactName,
-    contactEmail,
-    contactPhone,
-    hostOrganizationIds: hostOrganizationIds || [],
-    coHostOrganizationIds: coHostOrganizationIds || [],
-    speakerItems: normalizeSpeakerItems(speakerItems),
-    audience,
-    eligibility,
-    feeLabel,
-    certificateInfo,
-    venueDetails,
-    mapUrl,
-    meetingUrl,
-    requirements,
-    attachmentItems: normalizeAttachmentItems(attachmentItems),
-    posterCaption,
-  });
-
-  logger.info(`Event created: ${event._id} by user ${req.user.userId}`);
+  const event = await createEventService(req);
 
   res.status(201).json({
     success: true,
@@ -204,102 +36,11 @@ export const createEvent = async (req: AuthRequest, res: Response): Promise<void
  * Get all events
  */
 export const getAllEvents = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, search, upcoming, ownerType, organizationId } = req.query;
-
-  const conditions: Record<string, unknown>[] = [];
-  const requestedOwnerType =
-    ownerType === ContentOwnerType.ORGANIZATION
-      ? ContentOwnerType.ORGANIZATION
-      : ownerType === ContentOwnerType.SYSTEM
-        ? ContentOwnerType.SYSTEM
-        : undefined;
-  const requestedOrganizationId =
-    typeof organizationId === 'string' && organizationId.trim().length > 0
-      ? organizationId.trim().toLowerCase()
-      : null;
-
-  if (!req.user) {
-    conditions.push({
-      status: EventStatus.PUBLISHED,
-      ...buildOwnershipFilter(requestedOwnerType, requestedOrganizationId),
-    });
-  } else if (hasGlobalPermission(req.user, Permission.VIEW_EVENT)) {
-    const adminCondition: Record<string, unknown> = {
-      ...buildOwnershipFilter(requestedOwnerType, requestedOrganizationId),
-    };
-    if (status) {
-      adminCondition.status = status;
-    }
-    conditions.push(adminCondition);
-  } else if (req.user) {
-    const accessibleOrganizationIds = getAccessibleOrganizationIdsForAuthenticatedUser(
-      req.user,
-      Permission.VIEW_EVENT
-    );
-
-    if (accessibleOrganizationIds.length > 0 && requestedOwnerType !== ContentOwnerType.SYSTEM) {
-      const allowedOrganizationIds = requestedOrganizationId
-        ? accessibleOrganizationIds.filter((id) => id === requestedOrganizationId)
-        : accessibleOrganizationIds;
-
-      if (allowedOrganizationIds.length > 0) {
-        const scopedCondition: Record<string, unknown> = {
-          ownerType: ContentOwnerType.ORGANIZATION,
-          organizationId: { $in: allowedOrganizationIds },
-        };
-
-        if (status) {
-          scopedCondition.status = status;
-        }
-
-        conditions.push(scopedCondition);
-      } else {
-        conditions.push({ _id: null });
-      }
-    } else {
-      conditions.push({ _id: null });
-    }
-  }
-
-  if (search) {
-    conditions.push({
-      $or: [
-        { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { bodyHtml: { $regex: search, $options: 'i' } },
-        { location: { $regex: search, $options: 'i' } },
-      ],
-    });
-  }
-
-  if (upcoming === 'true') {
-    conditions.push({ endDate: { $gte: new Date() } });
-  }
-  const query = conditions.length <= 1 ? conditions[0] ?? {} : { $and: conditions };
-
-  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
-
-  const [events, total] = await Promise.all([
-    Event.find(query)
-      .populate('organizer', 'firstName lastName email')
-      .sort({ startDate: 1 })
-      .skip(skip)
-      .limit(lim),
-    Event.countDocuments(query),
-  ]);
-  const serializedEvents = await attachOrganizationNames(events);
+  const result = await getAllEventsService(req);
 
   res.status(200).json({
     success: true,
-    data: {
-      events: serializedEvents,
-      pagination: {
-        page: p,
-        limit: lim,
-        total,
-        pages: Math.ceil(total / lim),
-      },
-    },
+    data: result,
   });
 };
 
@@ -308,48 +49,11 @@ export const getAllEvents = async (req: AuthRequest, res: Response): Promise<voi
  */
 export const getEventById = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-
-  const event = await Event.findById(id)
-    .populate('organizer', 'firstName lastName email')
-    .populate('attendees', 'firstName lastName email');
-
-  if (!event) {
-    throw new AppError('Event not found', 404);
-  }
-
-    if (!canViewUnpublishedContent(req, Permission.VIEW_EVENT)) {
-    if (event.status !== EventStatus.PUBLISHED) {
-      await ensureCanManageOwnedContent(
-        req.user,
-        Permission.VIEW_EVENT,
-        event.ownerType,
-        event.organizationId ?? null
-      );
-    }
-  }
-
-  const serializedEvent = await attachOrganizationName(event);
-
-  const [relatedNews, relatedAnnouncements] = await Promise.all([
-    News.find({ associatedEventId: id, status: 'published' })
-      .select('title excerpt publishedAt coverImage slug')
-      .sort({ publishedAt: -1 })
-      .limit(3)
-      .lean(),
-    Announcement.find({ relatedEventId: id, status: 'published', isActive: true })
-      .select('title content publishedAt subtype')
-      .sort({ publishedAt: -1 })
-      .limit(3)
-      .lean(),
-  ]);
+  const result = await getEventByIdService(id, req);
 
   res.status(200).json({
     success: true,
-    data: {
-      event: serializedEvent,
-      relatedNews,
-      relatedAnnouncements,
-    },
+    data: result,
   });
 };
 
@@ -358,119 +62,7 @@ export const getEventById = async (req: AuthRequest, res: Response): Promise<voi
  */
 export const updateEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const existingEvent = await Event.findById(id);
-  if (!existingEvent) {
-    throw new AppError('Event not found', 404);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.EDIT_EVENT,
-    existingEvent.ownerType,
-    existingEvent.organizationId ?? null
-  );
-
-  const currentOwnership = {
-    ownerType: existingEvent.ownerType,
-    organizationId: existingEvent.organizationId ?? null,
-  };
-  const nextOwnership = resolveOwnershipInput({
-    ownerType: req.body.ownerType ?? currentOwnership.ownerType,
-    organizationId:
-      req.body.organizationId !== undefined
-        ? req.body.organizationId
-        : currentOwnership.organizationId,
-  });
-  await validateOwnershipPair(nextOwnership.ownerType, nextOwnership.organizationId);
-
-  const canMoveOwnership = await canReassignOwnership(
-    req.user!,
-    currentOwnership.ownerType,
-    currentOwnership.organizationId,
-    nextOwnership.ownerType,
-    nextOwnership.organizationId,
-    Permission.EDIT_EVENT
-  );
-
-  if (!canMoveOwnership) {
-    throw new AppError('You cannot reassign ownership for this event', 403);
-  }
-
-    const updates = buildUpdatePayload(req.body, EVENT_EDITABLE_FIELDS);
-  const bodyHtml =
-    typeof updates.bodyHtml === 'string'
-      ? updates.bodyHtml
-      : typeof req.body.description === 'string'
-        ? req.body.description
-        : undefined;
-  const imageUrl = typeof req.body.imageUrl === 'string' ? req.body.imageUrl : undefined;
-  const imageId = typeof req.body.imageId === 'string' ? req.body.imageId : undefined;
-
-  if (updates.startDate && updates.endDate) {
-    ensureValidEventDateRange(updates.startDate, updates.endDate);
-  } else if (updates.startDate || updates.endDate) {
-    ensureValidEventDateRange(
-      updates.startDate ?? existingEvent.startDate,
-      updates.endDate ?? existingEvent.endDate
-    );
-  }
-
-  if (bodyHtml !== undefined) {
-    updates.bodyHtml = bodyHtml;
-    (updates as Record<string, unknown>).description = buildLegacyPlainText(bodyHtml);
-  }
-
-  if (
-    req.body.coverImage !== undefined ||
-    req.body.imageUrl !== undefined ||
-    req.body.imageId !== undefined
-  ) {
-    updates.coverImage = normalizeMediaAsset(req.body.coverImage, { imageUrl, imageId });
-    updates.imageUrl = imageUrl;
-    updates.imageId = imageId;
-  }
-
-  if (req.body.gallery !== undefined) {
-    const effectiveCoverImage =
-      (updates.coverImage as typeof existingEvent.coverImage | undefined) ?? existingEvent.coverImage;
-    updates.gallery = normalizeGalleryExcludingCover(req.body.gallery, effectiveCoverImage);
-  }
-
-  if (req.body.sections !== undefined) {
-    updates.sections = normalizeSections(req.body.sections);
-  }
-
-  if (req.body.schedule !== undefined) {
-    updates.schedule = normalizeSchedule(req.body.schedule);
-  }
-
-  if (req.body.speakerItems !== undefined) {
-    updates.speakerItems = normalizeSpeakerItems(req.body.speakerItems);
-  }
-
-  if (req.body.attachmentItems !== undefined) {
-    updates.attachmentItems = normalizeAttachmentItems(req.body.attachmentItems);
-  }
-
-  (updates as Record<string, unknown>).ownerType = nextOwnership.ownerType;
-  (updates as Record<string, unknown>).organizationId = nextOwnership.organizationId;
-
-  if (shouldResetApprovalOnEdit(existingEvent.status)) {
-    (updates as Record<string, unknown>).status = EventStatus.DRAFT;
-    (updates as Record<string, unknown>).approvalSummary = undefined;
-  }
-
-  const event = await Event.findByIdAndUpdate(
-    id,
-    { $set: updates },
-    { new: true, runValidators: true }
-  ).populate('organizer', 'firstName lastName email');
-
-  if (!event) {
-    throw new AppError('Event not found', 404);
-  }
-
-  logger.info(`Event updated: ${id} by user ${req.user?.userId}`);
+  const event = await updateEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -484,30 +76,7 @@ export const updateEvent = async (req: AuthRequest, res: Response): Promise<void
  */
 export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-
-  const existingEvent = await Event.findById(id);
-  if (!existingEvent) {
-    throw new AppError('Event not found', 404);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.DELETE_EVENT,
-    existingEvent.ownerType,
-    existingEvent.organizationId ?? null
-  );
-
-  const event = await Event.findByIdAndDelete(id);
-
-  if (!event) {
-    throw new AppError('Event not found', 404);
-  }
-
-  if (event.imageId) {
-    await deleteFromCloudinary(event.imageId);
-  }
-
-  logger.info(`Event deleted: ${id} by user ${req.user?.userId}`);
+  await deleteEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -517,7 +86,7 @@ export const deleteEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const submitEventForApproval = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const updated = await eventWorkflow.submitForApproval(id, req);
+  const updated = await submitEventForApprovalService(id, req);
 
   res.status(200).json({
     success: true,
@@ -528,7 +97,7 @@ export const submitEventForApproval = async (req: AuthRequest, res: Response): P
 
 export const approveEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const updated = await eventWorkflow.approve(id, req);
+  const updated = await approveEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -539,7 +108,7 @@ export const approveEvent = async (req: AuthRequest, res: Response): Promise<voi
 
 export const rejectEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const updated = await eventWorkflow.reject(id, req);
+  const updated = await rejectEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -550,7 +119,7 @@ export const rejectEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const publishEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const updated = await eventWorkflow.publish(id, req);
+  const updated = await publishEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -561,7 +130,7 @@ export const publishEvent = async (req: AuthRequest, res: Response): Promise<voi
 
 export const cancelEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await eventWorkflow.cancel(id, req);
+  const event = await cancelEventService(id, req);
 
   res.status(200).json({
     success: true,
@@ -572,7 +141,7 @@ export const cancelEvent = async (req: AuthRequest, res: Response): Promise<void
 
 export const completeEvent = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const event = await eventWorkflow.complete(id, req);
+  const event = await completeEventService(id, req);
 
   res.status(200).json({
     success: true,

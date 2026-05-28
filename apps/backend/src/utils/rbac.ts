@@ -400,7 +400,7 @@ export const buildAuthenticatedUser = async (
   const userId = String(user._id);
 
   if (!skipCache) {
-    const cached = getCachedUser(userId);
+    const cached = await getCachedUser(userId);
     if (cached) {
       return cached;
     }
@@ -447,7 +447,7 @@ export const buildAuthenticatedUser = async (
     isActive: user.isActive,
   };
 
-  setCachedUser(userId, result);
+  await setCachedUser(userId, result);
   return result;
 };
 

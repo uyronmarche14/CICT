@@ -1,19 +1,20 @@
 import SystemConfig from '../models/SystemConfig';
 import { DEFAULT_SETTINGS } from '../config/settings';
+import { TypedCache } from './cache';
 
-const cache = new Map<string, { data: Record<string, unknown>; timestamp: number }>();
-const CACHE_TTL = 10_000;
+const featureCache = new TypedCache<Record<string, unknown>>({
+  namespace: 'features',
+  ttlMs: 10_000,
+});
 
 export const getFeatureFlags = async (): Promise<Record<string, unknown>> => {
-  const cached = cache.get('features');
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.data;
-  }
+  const cached = await featureCache.get('flags');
+  if (cached) {return cached;}
 
   try {
     const doc = await SystemConfig.findOne({ group: 'features' }).select('value').lean();
     const flags = { ...DEFAULT_SETTINGS.features, ...((doc?.value as object) || {}) };
-    cache.set('features', { data: flags, timestamp: Date.now() });
+    await featureCache.set('flags', flags);
     return flags;
   } catch {
     return { ...DEFAULT_SETTINGS.features };
@@ -25,6 +26,6 @@ export const isFeatureEnabled = async (key: string): Promise<boolean> => {
   return (flags as Record<string, unknown>)[key] !== false;
 };
 
-export const invalidateFeatureCache = () => {
-  cache.delete('features');
+export const invalidateFeatureCache = async () => {
+  await featureCache.clear();
 };

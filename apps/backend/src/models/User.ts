@@ -44,6 +44,12 @@ const userSchema = new Schema<IUser>(
     lastLogin: {
       type: Date,
     },
+    resetPasswordToken: {
+      type: String,
+    },
+    resetPasswordExpires: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -54,7 +60,7 @@ const userSchema = new Schema<IUser>(
 userSchema.pre('save', async function () {
   if (!this.isModified('password')) {return;}
   
-  const rounds = parseInt(process.env.BCRYPT_ROUNDS || '10', 10);
+  const rounds = parseInt(process.env.BCRYPT_ROUNDS ?? '10', 10);
   this.password = await bcrypt.hash(this.password, rounds);
 });
 

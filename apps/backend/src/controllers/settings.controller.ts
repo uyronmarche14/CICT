@@ -13,7 +13,7 @@ const loadSettings = async (group: SettingsGroup): Promise<Record<string, unknow
   try {
     const doc = await SystemConfig.findOne({ group }).select('value').lean();
     const defaults = (DEFAULT_SETTINGS[group] as Record<string, unknown>) || {};
-    if (!doc?.value) return { ...defaults };
+    if (!doc?.value) {return { ...defaults };}
     return { ...defaults, ...(doc.value as Record<string, unknown>) };
   } catch {
     return { ...(DEFAULT_SETTINGS[group] as Record<string, unknown>) };
@@ -21,7 +21,7 @@ const loadSettings = async (group: SettingsGroup): Promise<Record<string, unknow
 };
 
 const sanitizeValue = (value: unknown, group: SettingsGroup): Record<string, unknown> => {
-  if (!value || typeof value !== 'object') return {};
+  if (!value || typeof value !== 'object') {return {};}
   const input = value as Record<string, unknown>;
   const defaults = DEFAULT_SETTINGS[group] as Record<string, unknown>;
   const sanitized: Record<string, unknown> = {};
@@ -50,7 +50,7 @@ export const getAllSettings = async (_req: AuthRequest, res: Response): Promise<
 
   for (const group of SETTINGS_GROUPS) {
     const defaults = DEFAULT_SETTINGS[group] as Record<string, unknown>;
-    result[group] = { ...defaults, ...(dbMap.get(group) || {}) };
+    result[group] = { ...defaults, ...(dbMap.get(group) ?? {}) };
   }
 
   res.json({ success: true, data: result });
@@ -83,7 +83,7 @@ export const updateSettingsGroup = async (req: AuthRequest, res: Response): Prom
   );
 
   if (group === 'features') {
-    invalidateFeatureCache();
+    await invalidateFeatureCache();
   }
 
   res.json({ success: true, data: sanitized, message: `${group} settings updated` });

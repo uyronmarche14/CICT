@@ -55,6 +55,12 @@ export const validateEnv = () => {
     missing.push('STUDENT_QR_SECRET');
   }
 
+  if (NODE_ENV === 'production') {
+    if (!process.env.CLOUDINARY_CLOUD_NAME) {missing.push('CLOUDINARY_CLOUD_NAME');}
+    if (!process.env.CLOUDINARY_API_KEY) {missing.push('CLOUDINARY_API_KEY');}
+    if (!process.env.CLOUDINARY_API_SECRET) {missing.push('CLOUDINARY_API_SECRET');}
+  }
+
   if (NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
     missing.push('CORS_ORIGIN');
   }

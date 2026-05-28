@@ -1,24 +1,17 @@
 import { Response } from 'express';
-import Student from '../models/Student';
 import { StudentAuthRequest } from '../middleware/studentAuth';
-import { AppError } from '../middleware/errorHandler';
+import { getOwnStudentProfile as getOwnStudentProfileService } from '../services/student.service';
 
 export const getOwnStudentProfile = async (
   req: StudentAuthRequest,
   res: Response
 ): Promise<void> => {
   if (!req.student) {
-    throw new AppError('Student not authenticated', 401);
+    res.status(401).json({ success: false, message: 'Student not authenticated' });
+    return;
   }
 
-  const student = await Student.findById(req.student.studentId)
-    .populate('programId', 'code name')
-    .populate('yearLevelId', 'code label numericLevel')
-    .populate('sectionId', 'name displayName');
-
-  if (!student) {
-    throw new AppError('Student not found', 404);
-  }
+  const student = await getOwnStudentProfileService(req.student.studentId);
 
   res.status(200).json({
     success: true,

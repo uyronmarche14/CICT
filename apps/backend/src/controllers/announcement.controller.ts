@@ -1,77 +1,20 @@
 import { Request, Response } from 'express';
-import Announcement from '../models/Announcement';
 import { AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import {
-  AnnouncementPriority,
-  AnnouncementType,
-  ContentOwnerType,
-  NewsStatus,
-  Permission,
-} from '../types';
-import logger from '../utils/logger';
-import { deleteFromCloudinary } from '../middleware/upload';
-import { pushNotificationService } from '../services/push-notification.service';
-import {
-  buildLegacyPlainText,
-  normalizeGalleryExcludingCover,
-  normalizeMediaAsset,
-  normalizeSections,
-  normalizeOfficerItems,
-  normalizeAwardItems,
-  normalizeAttachmentItems,
-} from '../utils/content';
-import {
-  canReassignOwnership,
-  ensureCanManageOwnedContent,
-  getAccessibleOrganizationIdsForAuthenticatedUser,
-  resolveOwnershipInput,
-  validateOwnershipPair,
-} from '../utils/organizationScope';
-import { attachOrganizationName, attachOrganizationNames } from '../utils/ownedContent';
-import { hasGlobalPermission } from '../utils/rbac';
-import { sanitizeSearchInput } from '../utils/escapeRegex';
-import { parsePagination } from '../utils/pagination';
-import {
-  shouldResetApprovalOnEdit,
-} from '../utils/contentApproval';
-import { buildOwnershipFilter, buildUpdatePayload, canViewUnpublishedContent } from '../services/content.service';
-import * as approvalService from '../services/content-approval.service';
-
-const ANNOUNCEMENT_EDITABLE_FIELDS = [
-  'title',
-  'bodyHtml',
-  'priority',
-  'type',
-  'expiresAt',
-  'targetAudience',
-  'coverImage',
-  'gallery',
-  'sections',
-  'imageUrl',
-  'imageId',
-  'subtype',
-  'effectiveDate',
-  'termStart',
-  'termEnd',
-  'relatedOrganizationId',
-  'relatedEventId',
-  'approvalSource',
-  'contactName',
-  'contactEmail',
-  'ctaLabel',
-  'ctaUrl',
-  'officerItems',
-  'outgoingOfficerItems',
-  'awardItems',
-  'attachmentItems',
-] as const;
-
-const getPublicAnnouncementQuery = () => ({
-  status: NewsStatus.PUBLISHED,
-  isActive: true,
-  $or: [{ expiresAt: { $exists: false } }, { expiresAt: null }, { expiresAt: { $gte: new Date() } }],
-});
+  createAnnouncement as createAnnouncementService,
+  getAllAnnouncements as getAllAnnouncementsService,
+  getAnnouncementById as getAnnouncementByIdService,
+  getPublicAnnouncements as getPublicAnnouncementsService,
+  getPublicAnnouncementById as getPublicAnnouncementByIdService,
+  updateAnnouncement as updateAnnouncementService,
+  deleteAnnouncement as deleteAnnouncementService,
+  submitAnnouncementForApproval as submitAnnouncementForApprovalService,
+  approveAnnouncement as approveAnnouncementService,
+  rejectAnnouncement as rejectAnnouncementService,
+  publishAnnouncement as publishAnnouncementService,
+  archiveAnnouncement as archiveAnnouncementService,
+} from '../services/announcement.service';
 
 /**
  * Create new announcement
@@ -81,88 +24,7 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
     throw new AppError('User not authenticated', 401);
   }
 
-  const {
-    title,
-    content,
-    bodyHtml: rawBodyHtml,
-    priority = AnnouncementPriority.MEDIUM,
-    type = AnnouncementType.GENERAL,
-    expiresAt,
-    targetAudience,
-    imageUrl,
-    imageId,
-    coverImage,
-    gallery,
-    sections,
-    subtype,
-    effectiveDate,
-    termStart,
-    termEnd,
-    relatedOrganizationId,
-    relatedEventId,
-    approvalSource,
-    contactName,
-    contactEmail,
-    ctaLabel,
-    ctaUrl,
-    officerItems,
-    outgoingOfficerItems,
-    awardItems,
-    attachmentItems,
-  } = req.body;
-  const ownership = resolveOwnershipInput(req.body);
-  await validateOwnershipPair(ownership.ownerType, ownership.organizationId);
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.CREATE_ANNOUNCEMENT,
-    ownership.ownerType,
-    ownership.organizationId
-  );
-
-  const bodyHtml =
-    typeof rawBodyHtml === 'string' && rawBodyHtml.trim().length > 0
-      ? rawBodyHtml
-      : typeof content === 'string'
-        ? content
-        : '';
-  const resolvedCoverImage = normalizeMediaAsset(coverImage, { imageUrl, imageId });
-
-  const announcement = await Announcement.create({
-    title,
-    content: buildLegacyPlainText(bodyHtml),
-    bodyHtml,
-    author: req.user.userId,
-    ownerType: ownership.ownerType,
-    organizationId: ownership.organizationId,
-    priority,
-    type,
-    status: NewsStatus.DRAFT,
-    isActive: false,
-    expiresAt,
-    targetAudience: targetAudience || ['all'],
-    sections: normalizeSections(sections),
-    coverImage: resolvedCoverImage,
-    gallery: normalizeGalleryExcludingCover(gallery, resolvedCoverImage),
-    imageUrl,
-    imageId,
-    subtype,
-    effectiveDate,
-    termStart,
-    termEnd,
-    relatedOrganizationId,
-    relatedEventId,
-    approvalSource,
-    contactName,
-    contactEmail,
-    ctaLabel,
-    ctaUrl,
-    officerItems: normalizeOfficerItems(officerItems),
-    outgoingOfficerItems: normalizeOfficerItems(outgoingOfficerItems),
-    awardItems: normalizeAwardItems(awardItems),
-    attachmentItems: normalizeAttachmentItems(attachmentItems),
-  });
-
-  logger.info(`Announcement created: ${announcement._id} by user ${req.user.userId}`);
+  const announcement = await createAnnouncementService(req);
 
   res.status(201).json({
     success: true,
@@ -175,112 +37,11 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
  * Get all announcements
  */
 export const getAllAnnouncements = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, priority, search, ownerType, organizationId, subtype, ctaFilter } = req.query;
-
-  const conditions: Record<string, unknown>[] = [];
-  const requestedOwnerType =
-    ownerType === ContentOwnerType.ORGANIZATION
-      ? ContentOwnerType.ORGANIZATION
-      : ownerType === ContentOwnerType.SYSTEM
-        ? ContentOwnerType.SYSTEM
-        : undefined;
-  const requestedOrganizationId =
-    typeof organizationId === 'string' && organizationId.trim().length > 0
-      ? organizationId.trim().toLowerCase()
-      : null;
-
-  if (!req.user) {
-    conditions.push({
-      ...getPublicAnnouncementQuery(),
-      ...buildOwnershipFilter(requestedOwnerType, requestedOrganizationId),
-    });
-  } else if (hasGlobalPermission(req.user, Permission.VIEW_ANNOUNCEMENT)) {
-    const adminCondition: Record<string, unknown> = {
-      ...buildOwnershipFilter(requestedOwnerType, requestedOrganizationId),
-    };
-    if (status) {
-      adminCondition.status = status;
-    }
-    conditions.push(adminCondition);
-  } else if (req.user) {
-    const accessibleOrganizationIds = getAccessibleOrganizationIdsForAuthenticatedUser(
-      req.user,
-      Permission.VIEW_ANNOUNCEMENT
-    );
-
-    if (accessibleOrganizationIds.length > 0 && requestedOwnerType !== ContentOwnerType.SYSTEM) {
-      const allowedOrganizationIds = requestedOrganizationId
-        ? accessibleOrganizationIds.filter((id) => id === requestedOrganizationId)
-        : accessibleOrganizationIds;
-
-      if (allowedOrganizationIds.length > 0) {
-        const scopedCondition: Record<string, unknown> = {
-          ownerType: ContentOwnerType.ORGANIZATION,
-          organizationId: { $in: allowedOrganizationIds },
-        };
-
-        if (status) {
-          scopedCondition.status = status;
-        }
-
-        conditions.push(scopedCondition);
-      } else {
-        conditions.push({ _id: null });
-      }
-    } else {
-      conditions.push({ _id: null });
-    }
-  }
-
-  if (priority) {
-    conditions.push({ priority });
-  }
-
-  if (subtype && typeof subtype === 'string') {
-    conditions.push({ subtype });
-  }
-
-  if (ctaFilter === 'has_cta') {
-    conditions.push({ ctaLabel: { $exists: true, $ne: null } });
-  } else if (ctaFilter === 'no_cta') {
-    conditions.push({ $or: [{ ctaLabel: { $exists: false } }, { ctaLabel: null }] });
-  }
-
-  const safeSearch = sanitizeSearchInput(search);
-  if (safeSearch) {
-    conditions.push({
-      $or: [
-        { title: { $regex: safeSearch, $options: 'i' } },
-        { content: { $regex: safeSearch, $options: 'i' } },
-        { bodyHtml: { $regex: safeSearch, $options: 'i' } },
-      ],
-    });
-  }
-  const query = conditions.length <= 1 ? conditions[0] ?? {} : { $and: conditions };
-
-  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
-
-  const [announcements, total] = await Promise.all([
-    Announcement.find(query)
-      .populate('author', 'firstName lastName email')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(lim),
-    Announcement.countDocuments(query),
-  ]);
-  const serializedAnnouncements = await attachOrganizationNames(announcements);
+  const result = await getAllAnnouncementsService(req);
 
   res.status(200).json({
     success: true,
-    data: {
-      announcements: serializedAnnouncements,
-      pagination: {
-        page: p,
-        limit: lim,
-        total,
-        pages: Math.ceil(total / lim),
-      },
-    },
+    data: result,
   });
 };
 
@@ -288,62 +49,11 @@ export const getAllAnnouncements = async (req: AuthRequest, res: Response): Prom
  * Public announcements
  */
 export const getPublicAnnouncements = async (req: Request, res: Response): Promise<void> => {
-  const { search, type, ownerType, organizationId } = req.query;
-  const conditions: Record<string, unknown>[] = [getPublicAnnouncementQuery()];
-  const requestedOwnerType =
-    ownerType === ContentOwnerType.ORGANIZATION
-      ? ContentOwnerType.ORGANIZATION
-      : ownerType === ContentOwnerType.SYSTEM
-        ? ContentOwnerType.SYSTEM
-        : undefined;
-  const requestedOrganizationId =
-    typeof organizationId === 'string' && organizationId.trim().length > 0
-      ? organizationId.trim().toLowerCase()
-      : null;
-  const { page: p, limit: lim, skip } = parsePagination(req.query as Record<string, unknown>, 10, 100);
-
-  if (type) {
-    conditions.push({ type });
-  }
-
-  if (requestedOwnerType || requestedOrganizationId) {
-    conditions.push(buildOwnershipFilter(requestedOwnerType, requestedOrganizationId));
-  }
-
-  const safeSearch = sanitizeSearchInput(search);
-  if (safeSearch) {
-    conditions.push({
-      $or: [
-        { title: { $regex: safeSearch, $options: 'i' } },
-        { content: { $regex: safeSearch, $options: 'i' } },
-        { bodyHtml: { $regex: safeSearch, $options: 'i' } },
-      ],
-    });
-  }
-
-  const finalQuery = conditions.length === 1 ? conditions[0] : { $and: conditions };
-
-  const [announcements, total] = await Promise.all([
-    Announcement.find(finalQuery)
-      .populate('author', 'firstName lastName email')
-      .sort({ publishedAt: -1, createdAt: -1 })
-      .skip(skip)
-      .limit(lim),
-    Announcement.countDocuments(finalQuery),
-  ]);
-  const serializedAnnouncements = await attachOrganizationNames(announcements);
+  const result = await getPublicAnnouncementsService(req);
 
   res.status(200).json({
     success: true,
-    data: {
-      announcements: serializedAnnouncements,
-      pagination: {
-        page: p,
-        limit: lim,
-        total,
-        pages: Math.ceil(total / lim),
-      },
-    },
+    data: result,
   });
 };
 
@@ -352,41 +62,22 @@ export const getPublicAnnouncements = async (req: Request, res: Response): Promi
  */
 export const getAnnouncementById = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-
-  if (!announcement) {
-    throw new AppError('Announcement not found', 404);
-  }
-
-    if (!canViewUnpublishedContent(req, Permission.VIEW_ANNOUNCEMENT)) {
-    const matchesPublicState =
-      announcement.status === NewsStatus.PUBLISHED &&
-      announcement.isActive &&
-      (!announcement.expiresAt || announcement.expiresAt >= new Date());
-
-    if (!matchesPublicState) {
-      await ensureCanManageOwnedContent(
-        req.user,
-        Permission.VIEW_ANNOUNCEMENT,
-        announcement.ownerType,
-        announcement.organizationId ?? null
-      );
-    }
-  }
-
-  const serializedAnnouncement = await attachOrganizationName(announcement);
+  const announcement = await getAnnouncementByIdService(id, req);
 
   res.status(200).json({
     success: true,
-    data: { announcement: serializedAnnouncement },
+    data: { announcement },
   });
 };
 
 export const getPublicAnnouncementById = async (req: Request, res: Response): Promise<void> => {
-  const authRequest = req as AuthRequest;
-  authRequest.user = undefined;
-  return getAnnouncementById(authRequest, res);
+  const id = req.params.id as string;
+  const announcement = await getPublicAnnouncementByIdService(id);
+
+  res.status(200).json({
+    success: true,
+    data: { announcement },
+  });
 };
 
 /**
@@ -394,115 +85,7 @@ export const getPublicAnnouncementById = async (req: Request, res: Response): Pr
  */
 export const updateAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const existingAnnouncement = await Announcement.findById(id);
-  if (!existingAnnouncement) {
-    throw new AppError('Announcement not found', 404);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.EDIT_ANNOUNCEMENT,
-    existingAnnouncement.ownerType,
-    existingAnnouncement.organizationId ?? null
-  );
-
-  const currentOwnership = {
-    ownerType: existingAnnouncement.ownerType,
-    organizationId: existingAnnouncement.organizationId ?? null,
-  };
-  const nextOwnership = resolveOwnershipInput({
-    ownerType: req.body.ownerType ?? currentOwnership.ownerType,
-    organizationId:
-      req.body.organizationId !== undefined
-        ? req.body.organizationId
-        : currentOwnership.organizationId,
-  });
-  await validateOwnershipPair(nextOwnership.ownerType, nextOwnership.organizationId);
-
-  const canMoveOwnership = await canReassignOwnership(
-    req.user!,
-    currentOwnership.ownerType,
-    currentOwnership.organizationId,
-    nextOwnership.ownerType,
-    nextOwnership.organizationId,
-    Permission.EDIT_ANNOUNCEMENT
-  );
-
-  if (!canMoveOwnership) {
-    throw new AppError('You cannot reassign ownership for this announcement', 403);
-  }
-
-    const updates = buildUpdatePayload(req.body, ANNOUNCEMENT_EDITABLE_FIELDS);
-  const bodyHtml =
-    typeof updates.bodyHtml === 'string'
-      ? updates.bodyHtml
-      : typeof req.body.content === 'string'
-        ? req.body.content
-        : undefined;
-  const imageUrl = typeof req.body.imageUrl === 'string' ? req.body.imageUrl : undefined;
-  const imageId = typeof req.body.imageId === 'string' ? req.body.imageId : undefined;
-
-  if (bodyHtml !== undefined) {
-    updates.bodyHtml = bodyHtml;
-    (updates as Record<string, unknown>).content = buildLegacyPlainText(bodyHtml);
-  }
-
-  if (
-    req.body.coverImage !== undefined ||
-    req.body.imageUrl !== undefined ||
-    req.body.imageId !== undefined
-  ) {
-    updates.coverImage = normalizeMediaAsset(req.body.coverImage, { imageUrl, imageId });
-    updates.imageUrl = imageUrl;
-    updates.imageId = imageId;
-  }
-
-  if (req.body.gallery !== undefined) {
-    const effectiveCoverImage =
-      (updates.coverImage as typeof existingAnnouncement.coverImage | undefined) ??
-      existingAnnouncement.coverImage;
-    updates.gallery = normalizeGalleryExcludingCover(req.body.gallery, effectiveCoverImage);
-  }
-
-  if (req.body.sections !== undefined) {
-    updates.sections = normalizeSections(req.body.sections);
-  }
-
-  if (req.body.officerItems !== undefined) {
-    updates.officerItems = normalizeOfficerItems(req.body.officerItems);
-  }
-
-  if (req.body.outgoingOfficerItems !== undefined) {
-    updates.outgoingOfficerItems = normalizeOfficerItems(req.body.outgoingOfficerItems);
-  }
-
-  if (req.body.awardItems !== undefined) {
-    updates.awardItems = normalizeAwardItems(req.body.awardItems);
-  }
-
-  if (req.body.attachmentItems !== undefined) {
-    updates.attachmentItems = normalizeAttachmentItems(req.body.attachmentItems);
-  }
-
-  (updates as Record<string, unknown>).ownerType = nextOwnership.ownerType;
-  (updates as Record<string, unknown>).organizationId = nextOwnership.organizationId;
-
-  if (shouldResetApprovalOnEdit(existingAnnouncement.status)) {
-    (updates as Record<string, unknown>).status = NewsStatus.DRAFT;
-    (updates as Record<string, unknown>).approvalSummary = undefined;
-  }
-
-  const announcement = await Announcement.findByIdAndUpdate(
-    id,
-    { $set: updates },
-    { new: true, runValidators: true }
-  ).populate('author', 'firstName lastName email');
-
-  if (!announcement) {
-    throw new AppError('Announcement not found', 404);
-  }
-
-  logger.info(`Announcement updated: ${id} by user ${req.user?.userId}`);
+  const announcement = await updateAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,
@@ -516,12 +99,7 @@ export const submitAnnouncementForApproval = async (
   res: Response
 ): Promise<void> => {
   const { id } = req.params;
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-  const updated = await approvalService.submitForApproval(
-    id, req.user, announcement, 'announcement', Permission.SUBMIT_CONTENT_FOR_APPROVAL,
-    NewsStatus.DRAFT, NewsStatus.PENDING_APPROVAL,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await submitAnnouncementForApprovalService(id, req);
 
   res.status(200).json({
     success: true,
@@ -532,12 +110,7 @@ export const submitAnnouncementForApproval = async (
 
 export const approveAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-  const updated = await approvalService.approve(
-    id, req.user, announcement, 'announcement',
-    NewsStatus.PENDING_APPROVAL, NewsStatus.APPROVED,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await approveAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,
@@ -548,13 +121,7 @@ export const approveAnnouncement = async (req: AuthRequest, res: Response): Prom
 
 export const rejectAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-  const updated = await approvalService.reject(
-    id, req.user, announcement, 'announcement',
-    NewsStatus.PENDING_APPROVAL, NewsStatus.REJECTED, reason,
-    typeof req.body.comment === 'string' ? req.body.comment.trim() : undefined
-  );
+  const updated = await rejectAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,
@@ -568,30 +135,7 @@ export const rejectAnnouncement = async (req: AuthRequest, res: Response): Promi
  */
 export const deleteAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-
-  const existingAnnouncement = await Announcement.findById(id);
-  if (!existingAnnouncement) {
-    throw new AppError('Announcement not found', 404);
-  }
-
-  await ensureCanManageOwnedContent(
-    req.user,
-    Permission.DELETE_ANNOUNCEMENT,
-    existingAnnouncement.ownerType,
-    existingAnnouncement.organizationId ?? null
-  );
-
-  const announcement = await Announcement.findByIdAndDelete(id);
-
-  if (!announcement) {
-    throw new AppError('Announcement not found', 404);
-  }
-
-  if (announcement.imageId) {
-    await deleteFromCloudinary(announcement.imageId);
-  }
-
-  logger.info(`Announcement deleted: ${id} by user ${req.user?.userId}`);
+  await deleteAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,
@@ -604,28 +148,7 @@ export const deleteAnnouncement = async (req: AuthRequest, res: Response): Promi
  */
 export const publishAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-  const updated = await approvalService.publish(
-    id, req.user, announcement, 'announcement', Permission.PUBLISH_ANNOUNCEMENT, NewsStatus.PUBLISHED,
-    (item) => {
-      (item as Record<string, unknown>).isActive = true;
-    }
-  );
-
-  logger.info(`Announcement published: ${id} by user ${req.user?.userId}`);
-
-  const a = updated as Record<string, unknown>;
-  pushNotificationService.sendToAll({
-    title: `📢 ${a.title as string}`,
-    body: typeof a.content === 'string'
-      ? a.content.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120)
-      : 'New announcement from CICT.',
-    data: {
-      type: 'announcement',
-      id: String(a._id),
-      priority: a.priority as string,
-    },
-  });
+  const updated = await publishAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,
@@ -639,14 +162,7 @@ export const publishAnnouncement = async (req: AuthRequest, res: Response): Prom
  */
 export const archiveAnnouncement = async (req: AuthRequest, res: Response): Promise<void> => {
   const { id } = req.params;
-  const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email');
-  const updated = await approvalService.archive(
-    id, req.user, announcement, 'announcement', Permission.ARCHIVE_ANNOUNCEMENT,
-    NewsStatus.PUBLISHED, NewsStatus.ARCHIVED,
-    (item) => { (item as Record<string, unknown>).isActive = false; }
-  );
-
-  logger.info(`Announcement archived: ${id} by user ${req.user?.userId}`);
+  const updated = await archiveAnnouncementService(id, req);
 
   res.status(200).json({
     success: true,

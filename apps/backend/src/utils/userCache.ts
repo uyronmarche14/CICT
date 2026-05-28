@@ -1,54 +1,22 @@
 import { type IAuthenticatedUser } from '../types';
+import { TypedCache } from './cache';
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-interface CacheEntry {
-  user: IAuthenticatedUser;
-  expiresAt: number;
-}
-
-const cache = new Map<string, CacheEntry>();
-
-let cacheHits = 0;
-let cacheMisses = 0;
-
-export const getCachedUser = (key: string): IAuthenticatedUser | undefined => {
-  const entry = cache.get(key);
-
-  if (!entry) {
-    cacheMisses++;
-    return undefined;
-  }
-
-  if (Date.now() > entry.expiresAt) {
-    cache.delete(key);
-    cacheMisses++;
-    return undefined;
-  }
-
-  cacheHits++;
-  return entry.user;
-};
-
-export const setCachedUser = (key: string, user: IAuthenticatedUser): void => {
-  cache.set(key, {
-    user,
-    expiresAt: Date.now() + CACHE_TTL_MS,
-  });
-};
-
-export const invalidateCachedUser = (key: string): void => {
-  cache.delete(key);
-};
-
-export const clearUserCache = (): void => {
-  cache.clear();
-  cacheHits = 0;
-  cacheMisses = 0;
-};
-
-export const getCacheStats = (): { size: number; hits: number; misses: number } => ({
-  size: cache.size,
-  hits: cacheHits,
-  misses: cacheMisses,
+const userAuthCache = new TypedCache<IAuthenticatedUser>({
+  namespace: 'auth:user',
+  ttlMs: 5 * 60 * 1000,
 });
+
+export const getCachedUser = (key: string): Promise<IAuthenticatedUser | undefined> =>
+  userAuthCache.get(key);
+
+export const setCachedUser = (key: string, user: IAuthenticatedUser): Promise<void> =>
+  userAuthCache.set(key, user);
+
+export const invalidateCachedUser = (key: string): Promise<void> =>
+  userAuthCache.invalidate(key);
+
+export const clearUserCache = (): Promise<void> =>
+  userAuthCache.clear();
+
+export const getCacheStats = (): Promise<{ size: number; hits: number; misses: number }> =>
+  userAuthCache.stats();

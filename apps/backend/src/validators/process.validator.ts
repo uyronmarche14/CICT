@@ -1,4 +1,5 @@
 import { body, param } from 'express-validator';
+import mongoose from 'mongoose';
 
 const STATUS_TRANSITION_NOT_ALLOWED = 'Use the transition status endpoint to change status';
 const NODES_NOT_EDITABLE_THROUGH_UPDATE = 'Nodes are managed through the template builder';
@@ -254,7 +255,9 @@ export const updateProcessInstanceValidator = [
 ];
 
 export const processIdValidator = [
-  param('id').notEmpty().withMessage('ID is required'),
+  param('id')
+    .notEmpty().withMessage('ID is required')
+    .custom((val) => mongoose.Types.ObjectId.isValid(val)).withMessage('ID must be a valid MongoDB ObjectId'),
 ];
 
 export const transitionStatusValidator = [

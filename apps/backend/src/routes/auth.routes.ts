@@ -60,4 +60,26 @@ router.put(
   authController.updatePassword
 );
 
+/**
+ * @route   POST /api/auth/forgot-password
+ * @desc    Request password reset email
+ * @access  Public
+ */
+router.post(
+  '/forgot-password',
+  createAuthLoginRateLimiter(),
+  authController.forgotPassword
+);
+
+/**
+ * @route   POST /api/auth/reset-password
+ * @desc    Reset password using token
+ * @access  Public
+ */
+router.post(
+  '/reset-password',
+  createAuthLoginRateLimiter(),
+  authController.resetPassword
+);
+
 export default router;

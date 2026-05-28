@@ -12,7 +12,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 
 export function canTransition(fromStatus: string, toStatus: string): boolean {
   const allowed = VALID_TRANSITIONS[fromStatus];
-  if (!allowed) return false;
+  if (!allowed) {return false;}
   return allowed.includes(toStatus);
 }
 
