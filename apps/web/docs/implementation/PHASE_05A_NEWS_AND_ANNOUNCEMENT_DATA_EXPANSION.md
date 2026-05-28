@@ -6,10 +6,12 @@ Expand news and announcement records so approval workflow operates on richer edi
 
 ## Current Status
 
-Not started.
+Complete.
 
-- Approval workflow foundation exists.
-- Rich metadata and structured subtypes from the audits have not yet been implemented.
+- All 15 expanded News fields exist on the model: category, featured, pinned, sourceUrl, referenceLinks, readingTime, authorDisplayName, authorRole, associatedEventId, associatedOrganizationId, spotlightLabel, seoDescription, canonicalSlug, relatedArticleIds, attachmentItems.
+- All 15 expanded Announcement fields exist on the model: subtype, effectiveDate, termStart, termEnd, relatedOrganizationId, relatedEventId, approvalSource, contactName, contactEmail, ctaLabel, ctaUrl, officerItems, outgoingOfficerItems, awardItems, attachmentItems.
+- Admin NewsForm and AnnouncementForm expose all fields.
+- This phase is fully implemented — the doc was incorrectly marked as not started.
 
 ## Dependencies
 

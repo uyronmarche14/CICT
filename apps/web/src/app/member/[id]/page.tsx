@@ -1,39 +1,50 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { CldImage } from 'next-cloudinary';
-import { Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp, Loader2 } from 'lucide-react';
+import { Mail, Calendar, Award, Users, Target, Sparkles, CheckCircle2, Briefcase, Code, TrendingUp, Loader2, ArrowLeft } from 'lucide-react';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
-import { useOrganizations } from '@/hooks/useOrganizations'; // Use dynamic hook
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import Timeline from '@/components/Timeline';
 import ScrollingGallery from '@/components/ScrollingGallery';
 import DetailPageCTA from '@/components/sections/DetailPageCTA';
 import DetailPageFooter from '@/components/sections/DetailPageFooter';
+import { memberAPI } from '@/lib/api/members';
+import type { OrganizationMember, Organization } from '@/types';
 
 export default function MemberProfilePage() {
   const params = useParams();
   const router = useRouter();
   const memberId = params.id as string;
 
-  // Fetch all organizations to find the member
-  const { organizations, loading } = useOrganizations();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [member, setMember] = useState<OrganizationMember | null>(null);
+  const [organization, setOrganization] = useState<Pick<Organization, 'id' | 'name' | 'fullName' | 'color' | 'mission' | 'vision' | 'values' | 'description'> | null>(null);
+  const [teamMembers, setTeamMembers] = useState<OrganizationMember[]>([]);
 
-  // Find the member across all organizations
-  let member = null;
-  let organization = null;
-
-  if (!loading && organizations.length > 0) {
-    for (const org of organizations) {
-      if (!org.members) continue;
-      const foundMember = org.members.find(m => m.id === memberId);
-      if (foundMember) {
-        member = foundMember;
-        organization = org;
-        break;
+  useEffect(() => {
+    const fetchMember = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await memberAPI.getById(memberId);
+        setMember(data.member);
+        setOrganization(data.organization);
+        setTeamMembers(data.teamMembers || []);
+      } catch (err) {
+        setError('Member not found');
+      } finally {
+        setLoading(false);
       }
+    };
+
+    if (memberId) {
+      fetchMember();
     }
-  }
+  }, [memberId]);
 
   if (loading) {
     return (
@@ -43,7 +54,7 @@ export default function MemberProfilePage() {
     );
   }
 
-  if (!member || !organization) {
+  if (error || !member || !organization) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
          <div className="text-center space-y-4">
@@ -56,14 +67,12 @@ export default function MemberProfilePage() {
     );
   }
 
-  // Format date
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  // Calculate tenure
   const calculateTenure = (joinedDate?: string) => {
     if (!joinedDate) return 'N/A';
     const joined = new Date(joinedDate);
@@ -80,20 +89,24 @@ export default function MemberProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Minimal Header */}
-      
-
-      {/* Main Content - Clean & Minimal */}
       <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 mt-20">
+
+        {/* Back to Organization */}
+        <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => router.push(`/organization/${organization.id}`)}
+            className="group inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
+            Back to {organization.name}
+          </Button>
+        </div>
 
         {/* Hero Section - Minimal Design */}
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12 mb-20">
           {/* Profile Image - Clean */}
           <div className="relative">
-            {/* Floating Animated Badges */}
-         
-         
-
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl border-2 border-border/20">
               <CldImage
                 src={member.photo}
@@ -103,17 +116,14 @@ export default function MemberProfilePage() {
                 sizes="320px"
                 priority
               />
-              
-              {/* Subtle gradient overlay */}
-              <div 
+              <div
                 className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent pointer-events-none"
               />
             </div>
           </div>
 
-          {/* Profile Info - Minimal */}
+          {/* Profile Info */}
           <div className="space-y-8">
-            {/* Name & Title */}
             <div className="space-y-3">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
                 {member.name}
@@ -124,9 +134,11 @@ export default function MemberProfilePage() {
               >
                 {member.position}
               </p>
+              <Badge variant="outline" className="text-sm">
+                {organization.name}
+              </Badge>
             </div>
 
-            {/* Meta Info - Minimal Pills */}
             <div className="flex flex-wrap gap-3">
               {member.joinedDate && (
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border/50">
@@ -145,14 +157,12 @@ export default function MemberProfilePage() {
               </div>
             </div>
 
-            {/* Bio - Clean Typography */}
             <div className="prose prose-lg max-w-none">
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {member.bio}
               </p>
             </div>
 
-            {/* Social Links - Minimal */}
             {member.social && (
               <div className="flex flex-wrap gap-3 pt-4">
                 {member.social.linkedin && (
@@ -223,7 +233,7 @@ export default function MemberProfilePage() {
           </div>
         )}
 
-        {/* Key Responsibilities - Enhanced Design */}
+        {/* Key Responsibilities */}
         {member.responsibilities && member.responsibilities.length > 0 && (
           <div className="mb-20">
             <div className="flex items-center gap-3 mb-8">
@@ -247,7 +257,6 @@ export default function MemberProfilePage() {
                     backgroundColor: `${organization.color.primary}03`,
                   }}
                 >
-                  {/* Number Badge */}
                   <div
                     className="absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shadow-lg transition-transform duration-300 group-hover:scale-110"
                     style={{
@@ -258,7 +267,6 @@ export default function MemberProfilePage() {
                     {idx + 1}
                   </div>
 
-                  {/* Content */}
                   <div className="flex items-start gap-3 pl-2">
                     <div
                       className="mt-1 p-1.5 rounded-lg transition-all duration-300 group-hover:scale-110"
@@ -279,7 +287,7 @@ export default function MemberProfilePage() {
           </div>
         )}
 
-        {/* Achievements - Enhanced Design */}
+        {/* Achievements */}
         {member.achievements && member.achievements.length > 0 && (
           <div className="mb-20">
             <div className="flex items-center gap-3 mb-8">
@@ -303,7 +311,6 @@ export default function MemberProfilePage() {
                     backgroundColor: `${organization.color.secondary}05`,
                   }}
                 >
-                  {/* Decorative Corner */}
                   <div
                     className="absolute top-0 right-0 w-20 h-20 opacity-10 transition-transform duration-300 group-hover:scale-110"
                     style={{
@@ -311,7 +318,6 @@ export default function MemberProfilePage() {
                     }}
                   />
 
-                  {/* Content */}
                   <div className="relative flex items-start gap-4">
                     <div
                       className="flex-shrink-0 p-3 rounded-xl shadow-lg transition-all duration-300 group-hover:scale-110 group-hover:rotate-6"
@@ -332,7 +338,6 @@ export default function MemberProfilePage() {
                     </div>
                   </div>
 
-                  {/* Hover Accent Line */}
                   <div
                     className="absolute bottom-0 left-0 right-0 h-1 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"
                     style={{ backgroundColor: organization.color.secondary }}
@@ -343,7 +348,7 @@ export default function MemberProfilePage() {
           </div>
         )}
 
-        {/* Timeline - Modern & Interactive */}
+        {/* Timeline */}
         {member.timeline && member.timeline.length > 0 && (
           <div className="mb-20">
             <div className="flex items-center gap-3 mb-8">
@@ -361,7 +366,7 @@ export default function MemberProfilePage() {
           </div>
         )}
 
-        {/* Scrolling Gallery - Full Screen Animated Photo Showcase */}
+        {/* Gallery */}
         {member.gallery && member.gallery.length > 0 && (
           <div className="mb-20">
             <ScrollingGallery images={member.gallery} accentColor={organization.color.primary} />
@@ -383,7 +388,6 @@ export default function MemberProfilePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-            {/* Mission */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Mission
@@ -393,7 +397,6 @@ export default function MemberProfilePage() {
               </p>
             </div>
 
-            {/* Vision */}
             <div className="space-y-3">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
                 Vision
@@ -404,7 +407,6 @@ export default function MemberProfilePage() {
             </div>
           </div>
 
-          {/* Core Values */}
           {organization.values && organization.values.length > 0 && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -430,49 +432,49 @@ export default function MemberProfilePage() {
         </div>
 
         {/* Other Team Members */}
-        <div className="mb-16 pt-12 border-t border-border/50">
-          <div className="flex items-center gap-3 mb-8">
-            <div
-              className="p-2 rounded-lg"
-              style={{ backgroundColor: `${organization.color.primary}15` }}
-            >
-              <Users className="h-5 w-5" style={{ color: organization.color.primary }} />
+        {teamMembers.length > 0 && (
+          <div className="mb-16 pt-12 border-t border-border/50">
+            <div className="flex items-center gap-3 mb-8">
+              <div
+                className="p-2 rounded-lg"
+                style={{ backgroundColor: `${organization.color.primary}15` }}
+              >
+                <Users className="h-5 w-5" style={{ color: organization.color.primary }} />
+              </div>
+              <h2 className="text-balance text-3xl font-bold lg:text-4xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
+                Other Team Members
+              </h2>
             </div>
-            <h2 className="text-balance text-3xl font-bold lg:text-4xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent">
-              Other Team Members
-            </h2>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {teamMembers
+                .filter(m => m.id !== memberId)
+                .slice(0, 10)
+                .map((teamMember) => (
+                  <a
+                    key={teamMember.id}
+                    href={`/member/${teamMember.id}`}
+                    className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 hover:border-foreground/30 transition-all duration-300"
+                  >
+                    <CldImage
+                      src={teamMember.photo}
+                      alt={teamMember.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
+                    />
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                    <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="font-semibold text-sm line-clamp-1">{teamMember.name}</p>
+                      <p className="text-xs opacity-90 line-clamp-1">{teamMember.position}</p>
+                    </div>
+                  </a>
+                ))}
+            </div>
           </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {organization.members
-              .filter(m => m.id !== memberId)
-              .slice(0, 10)
-              .map((teamMember) => (
-                <a
-                  key={teamMember.id}
-                  href={`/member/${teamMember.id}`}
-                  className="group relative aspect-[3/4] rounded-xl overflow-hidden border border-border/50 hover:border-foreground/30 transition-all duration-300"
-                >
-                  <CldImage
-                    src={teamMember.photo}
-                    alt={teamMember.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 20vw"
-                  />
-
-                  {/* Minimal Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-                  {/* Info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 text-white transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="font-semibold text-sm line-clamp-1">{teamMember.name}</p>
-                    <p className="text-xs opacity-90 line-clamp-1">{teamMember.position}</p>
-                  </div>
-                </a>
-              ))}
-          </div>
-        </div>
+        )}
 
       </article>
 

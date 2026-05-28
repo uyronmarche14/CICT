@@ -444,7 +444,7 @@ export const normalizeEventUpdateItem = (event: Event): UpdateFeedItem => ({
     stripHtml(event.bodyHtml) ||
     "Upcoming CICT event.",
   href: `/events/${event._id}`,
-  sortDate: event.createdAt,
+  sortDate: event.startDate,
   displayDate: event.startDate,
   ownerType: event.ownerType,
   organizationId: event.organizationId ?? null,

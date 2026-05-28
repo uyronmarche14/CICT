@@ -6,13 +6,16 @@ Define and implement a stable student-facing API contract for future mobile clie
 
 ## Current Status
 
-In progress.
+Complete.
 
-- Separate student auth routes exist.
-- Student profile, event, registration, QR, and attendance endpoints have been started.
-- Remaining work:
-  - full client-contract review
-  - response consistency hardening
+- Student auth routes (register, login, refresh, logout, me, forgot-password, reset-password) all exist with separate JWT secrets.
+- Student profile, events list/detail/register/cancel/QR, registrations, attendance history endpoints all exist.
+- Student memberships (list, apply, resign) endpoints exist.
+- Mobile API client has 8 service files (client, auth, student, events, news, announcements, public-announcements, memberships).
+- 17 React Query hooks across auth, events, attendance, profile, news, announcements, orgs, settings.
+- Mobile app has 17 route files with tabs (home, events, orgs, updates, settings).
+- Push notification registration/unregister endpoints and Expo notifications integrated.
+- This phase is fully implemented — the doc was incorrectly marked as in-progress.
   - end-to-end mobile UX alignment
   - final validation that the mobile-facing API covers all required student scenarios cleanly
 

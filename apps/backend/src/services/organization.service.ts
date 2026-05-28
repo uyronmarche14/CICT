@@ -109,6 +109,27 @@ const getAdminVisibleOrganizationIds = (req: AuthRequest): string[] => {
   )
 }
 
+// ——— Public member lookup ———
+
+export const getPublicMember = async (memberId: string): Promise<{ member: unknown; organization: unknown; teamMembers: unknown[] }> => {
+  const member = await OrganizationMember.findOne({ id: memberId }).lean()
+  if (!member) {throw new AppError('Member not found', 404)}
+
+  const organization = await Organization.findById(member.organizationId)
+    .select('id name fullName color mission vision values description')
+    .lean()
+
+  const teamMembers = await OrganizationMember.find({
+    organizationId: member.organizationId,
+    id: { $ne: memberId },
+  })
+    .sort({ sortOrder: 1 })
+    .limit(10)
+    .lean()
+
+  return { member, organization, teamMembers }
+}
+
 // ——— Reads ———
 
 export const getOrganizations = async (): Promise<unknown[]> => {

@@ -6,10 +6,13 @@ Expand event data beyond basic editorial fields so student-organization events c
 
 ## Current Status
 
-Not started.
+Complete.
 
-- Core event workflow and registration foundations exist.
-- Rich event metadata from the audit has not yet been added as structured fields end to end.
+- All 20 expanded fields exist on the Event model: registrationUrl, registrationDeadline, contactName/Email/Phone, hostOrganizationIds, coHostOrganizationIds, speakerItems, audience, eligibility, feeLabel, certificateInfo, venueDetails, mapUrl, meetingUrl, requirements, attachmentItems, posterCaption.
+- Admin EventForm (create) and EditEventForm (edit) expose all fields with form inputs.
+- Admin event detail page renders all expanded fields.
+- Admin event list table shows registration URL and contact name.
+- This phase is fully implemented — the doc was incorrectly marked as not started.
 
 ## Dependencies
 

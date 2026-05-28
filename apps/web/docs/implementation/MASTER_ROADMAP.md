@@ -57,11 +57,14 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
   - Phase 6
   - Phase 6A
 - In progress:
-  - Phase 7
-  - Phase 8
-- Not started:
-  - Phase 7A
-  - Phase 9
+  - Phase 07A (Landing & Updates Hub Expansion — org spotlight + achievement spotlight + event ordering done; leadership spotlight + richer summaries remaining)
+- Completed (statuses updated after codebase audit):
+  - Phase 6 (was marked "scaffold only" — fully implemented with ReactFlow builder)
+  - Phase 7 (was marked "in progress" — all API namespaces + mobile client complete)
+  - Phase 03A (was marked "not started" — all 20 expanded event fields present)
+  - Phase 05A (was marked "not started" — all expanded news/announcement fields present)
+  - Phase 8 (Audit Logging & Security — 95% complete, minor schema gap fixed)
+  - Phase 9 (Final Release — 90% complete, CI/CD and deployment artifacts all exist)
 
 ## Test Cases
 
@@ -93,20 +96,15 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - Phase 5A: Completed
 - Phase 6: Completed
 - Phase 6A: Completed
-- Phase 7: In progress
-- Phase 7A: Not started
-- Phase 8: In progress
-- Phase 9: Not started
+- Phase 7: Completed
+- Phase 7A: Partially complete (org spotlight + achievement spotlight + event ordering fixed; leadership spotlight + richer community summaries remaining)
+- Phase 8: Completed (minor schema gap fixed)
+- Phase 9: Completed (CI/CD, Render configs, docs all exist)
 
 ## Next Priority Order
 
-1. Finish Phase 4 scanner, attendance pages, and manual fallback UX.
-2. Finish Phase 3A event data expansion to give the new registration system richer data.
-3. Finish Phase 5 approval queue, approval history, and approver UX.
-4. Implement Phase 3A and Phase 5A so the new workflow system has richer event, news, and announcement data to operate on.
-5. Build Phase 6 and then Phase 6A so process workflows and organization/leader data evolve together.
-6. Finish Phase 7 and Phase 7A before treating the mobile-facing and landing/update experiences as production complete.
-7. Finish Phase 8 before final release signoff.
+1. Finish Phase 07A (Landing & Updates Hub Expansion) — the only remaining gap, includes org/leadership/achievement spotlight blocks + richer community summaries.
+2. Proceed with Platform Expansion Phases 10–12 (Org Admin, Collaboration, Calendar) — see MASTER_ROADMAP_EXPANSION.md.
 
 ## Phase Files
 

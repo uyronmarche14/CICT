@@ -13,7 +13,14 @@ import {
   updateMember as updateMemberService,
   deleteMember as deleteMemberService,
   uploadImage as uploadImageService,
+  getPublicMember as getPublicMemberService,
 } from '../services/organization.service';
+
+export const getPublicMember = async (req: Request, res: Response) => {
+  const memberId = req.params.memberId as string;
+  const data = await getPublicMemberService(memberId);
+  res.status(200).json({ success: true, data });
+};
 
 export const getOrganizations = async (_req: Request, res: Response) => {
   const data = await getOrganizationsService();

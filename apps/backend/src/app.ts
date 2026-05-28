@@ -27,6 +27,7 @@ import pushTokenRoutes from "./routes/pushToken.routes";
 import approvalRoutes from "./routes/approval.routes";
 import processRoutes from "./routes/process.routes";
 import settingsRoutes from "./routes/settings.routes";
+import membersRoutes from "./routes/public-member.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -143,6 +144,7 @@ app.use("/api/public/announcements", publicAnnouncementRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/organizations", organizationRoutes);
 app.use("/api/organizations", organizationMembershipRoutes);
+app.use("/api/members", membersRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/students", studentAdminRoutes);
 app.use("/api/admin/academic", academicRoutes);

@@ -29,6 +29,36 @@ const activityLogSchema = new Schema<IActivityLog>(
     userAgent: {
       type: String,
     },
+    actorType: {
+      type: String,
+      enum: ['admin', 'student', 'system'],
+    },
+    actorId: {
+      type: String,
+    },
+    studentId: {
+      type: String,
+    },
+    eventId: {
+      type: String,
+    },
+    organizationId: {
+      type: String,
+    },
+    outcome: {
+      type: String,
+      enum: ['success', 'failure', 'denied', 'duplicate'],
+    },
+    severity: {
+      type: String,
+      enum: ['info', 'warn', 'critical'],
+    },
+    reasonCode: {
+      type: String,
+    },
+    correlationId: {
+      type: String,
+    },
   },
   {
     timestamps: true,

@@ -27,6 +27,14 @@ const TestimonialSeciton = lazy(
   () => import("@/components/sections/landingpage/Testimonial")
 );
 
+const SpotlightOrganizations = lazy(
+  () => import("@/components/sections/landingpage/spotlightOrganizationsSection")
+);
+
+const SpotlightAchievements = lazy(
+  () => import("@/components/sections/landingpage/spotlightAchievementsSection")
+);
+
 
 
 interface OptimizedLayoutProps {
@@ -45,6 +53,8 @@ const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
         {/* Other Sections */}
         <CICTSection />
         <StorySection />
+        <SpotlightOrganizations />
+        <SpotlightAchievements />
         <NewsSection />
         <FAQsSection />
         <TestimonialSeciton />

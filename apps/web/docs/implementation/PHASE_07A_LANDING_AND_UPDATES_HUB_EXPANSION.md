@@ -6,10 +6,17 @@ Upgrade the landing page and updates hub so the richer event, news, announcement
 
 ## Current Status
 
-Not started.
+Partially complete.
 
-- The landing page and updates hub already aggregate content.
-- Audit-driven spotlight, ranking, and richer summary behavior is still missing.
+**Completed:**
+- Event ordering by schedule proximity — `normalizeEventUpdateItem()` in `updates-hub.ts` now sorts by `startDate` instead of `createdAt`.
+- **Organization Spotlight section** — `spotlightOrganizationsSection.tsx` added to landing page between Story and News sections. Shows up to 4 active orgs in a card grid with banner, logo, tagline, type badge, and member count.
+- **Achievement Spotlight section** — `spotlightAchievementsSection.tsx` added below the org spotlight. Pulls from `structuredAchievements[]` and `achievements[]` fields on org data, sorted by date, up to 6 items in a 3-column grid with category icons and org color accents.
+
+**Remaining:**
+- Leadership spotlight block — depends on member data from `OrganizationMember` collection (separated by Migration 002). Needs a backend endpoint or a new data fetch pattern.
+- Richer grouping of official vs. organization activity in the updates hub.
+- Richer community card summaries (officer changes, flagship events, achievement badges on feed cards).
 
 ## Dependencies
 
