@@ -4,6 +4,7 @@ import {
   ContentOwnerType,
   NewsStatus,
   Permission,
+  StudentStatus,
   UserRole,
   OrganizationType,
   OrganizationStatus,
@@ -45,6 +46,7 @@ export {
   ContentOwnerType,
   NewsStatus,
   Permission,
+  StudentStatus,
   UserRole,
   OrganizationType,
   OrganizationStatus,
@@ -296,12 +298,7 @@ export interface Organization {
   updatedAt: string;
 }
 
-export enum StudentStatus {
-  PENDING = 'pending',
-  ACTIVE = 'active',
-  INACTIVE = 'inactive',
-  SUSPENDED = 'suspended',
-}
+
 
 export interface Program {
   _id: string;

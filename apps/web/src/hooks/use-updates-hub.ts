@@ -50,7 +50,7 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.pages ? lastPage.page + 1 : undefined,
-    staleTime: 0,
+    staleTime: 30_000,
     enabled: newsEnabled,
   });
 
@@ -61,7 +61,7 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.pages ? lastPage.page + 1 : undefined,
-    staleTime: 0,
+    staleTime: 30_000,
     enabled: announcementsEnabled,
   });
 
@@ -72,7 +72,7 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
     initialPageParam: 1,
     getNextPageParam: (lastPage) =>
       lastPage.page < lastPage.pages ? lastPage.page + 1 : undefined,
-    staleTime: 0,
+    staleTime: 30_000,
     enabled: eventsEnabled,
   });
 
@@ -89,21 +89,21 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
     queryKey: ["updates-hub", "featured", "news", filters.org ?? ""],
     queryFn: () =>
       fetchPublicNewsPage(1, UPDATES_HUB_FEATURED_LIMIT, featuredFilters),
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const featuredAnnouncementsQuery = useQuery({
     queryKey: ["updates-hub", "featured", "announcements", filters.org ?? ""],
     queryFn: () =>
       fetchPublicAnnouncementsPage(1, UPDATES_HUB_FEATURED_LIMIT, featuredFilters),
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const featuredEventsQuery = useQuery({
     queryKey: ["updates-hub", "featured", "events", filters.org ?? ""],
     queryFn: () =>
       fetchPublicEventsPage(1, UPDATES_HUB_FEATURED_LIMIT, featuredFilters),
-    staleTime: 0,
+    staleTime: 30_000,
   });
 
   const feedItems = useMemo<UpdateFeedItem[]>(

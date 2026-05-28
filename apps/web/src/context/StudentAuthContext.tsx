@@ -32,24 +32,19 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('student_access_token');
-    if (!token) {
+    // Don't attempt student auth check on admin or non-student pages
+    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/student')) {
       setLoading(false);
       return;
     }
     studentAuthAPI.me()
       .then((s) => setStudent(s))
-      .catch(() => {
-        localStorage.removeItem('student_access_token');
-        localStorage.removeItem('student_refresh_token');
-      })
+      .catch(() => setStudent(null))
       .finally(() => setLoading(false));
   }, []);
 
   const login = useCallback(async (studentNumber: string, password: string, redirectTo?: string) => {
     const data = await studentAuthAPI.login(studentNumber, password);
-    localStorage.setItem('student_access_token', data.accessToken);
-    localStorage.setItem('student_refresh_token', data.refreshToken);
     setStudent({
       _id: data.student._id,
       studentNumber: data.student.studentNumber,
@@ -70,8 +65,6 @@ export function StudentAuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
-    localStorage.removeItem('student_access_token');
-    localStorage.removeItem('student_refresh_token');
     setStudent(null);
     router.push('/student/login');
   }, [router]);

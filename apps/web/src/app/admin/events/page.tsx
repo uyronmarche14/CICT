@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { eventAPI, Event } from '@/lib/api/event';
 import { EventForm } from '@/components/admin/EventForm';
 import { EditEventForm } from '@/components/admin/EditEventForm';
@@ -65,15 +65,19 @@ export default function AdminEventsPage() {
     ? organizations
     : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
   
+  const [page, setPage] = useState(1);
+
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['admin', 'events', ownerTypeFilter, organizationFilter, statusFilter],
+    queryKey: ['admin', 'events', page, ownerTypeFilter, organizationFilter, statusFilter],
     queryFn: () =>
       eventAPI.getAll({
-        limit: 100,
+        page,
+        limit: 20,
         status: statusFilter === 'all' ? undefined : statusFilter,
         ownerType: ownerTypeFilter,
         organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
       }),
+    placeholderData: keepPreviousData,
   });
 
   const canActOnEvent = (event: Event, permission: Permission) =>
@@ -155,11 +159,9 @@ export default function AdminEventsPage() {
   const getStatusBadge = (status: Event['status']) => getEventStatusBadge(status);
 
   const allEvents = data?.data.events || [];
-  const filteredEvents = allEvents.filter((event) => {
-    if (registrationFilter === 'has_url') return !!event.registrationUrl;
-    if (registrationFilter === 'open') return event.isRegistrationOpen;
-    return true;
-  });
+  const filteredEvents = allEvents;
+
+  useEffect(() => { setPage(1); }, [ownerTypeFilter, organizationFilter, statusFilter]);
 
   useEffect(() => {
     if (!canViewAllEvents && ownerTypeFilter !== ContentOwnerType.ORGANIZATION) {
@@ -449,7 +451,29 @@ export default function AdminEventsPage() {
                 )}
               </TableBody>
             </Table>
-            </div>
+          </div>
+
+          <div className="flex items-center justify-end space-x-2 py-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {data?.data?.pagination?.page ?? 1} of {data?.data?.pagination?.pages ?? 1}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(data?.data?.pagination?.pages ?? 1, p + 1))}
+              disabled={page >= (data?.data?.pagination?.pages ?? 1)}
+            >
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

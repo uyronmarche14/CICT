@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '@/lib/api/axios';
 import { ContentOwnerType, News, NewsStatus } from '@/types';
 import { NewsForm } from '@/components/admin/NewsForm';
@@ -46,8 +47,6 @@ export default function NewsPage() {
     getScopedOrganizationIdsForPermissions,
   } = usePermissions();
   const { organizations } = useOrganizations();
-  const [news, setNews] = useState<News[]>([]);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | NewsStatus>('all');
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
@@ -57,7 +56,6 @@ export default function NewsPage() {
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [featuredFilter, setFeaturedFilter] = useState<'all' | 'featured' | 'not_featured'>('all');
   const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedNews, setSelectedNews] = useState<News | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
@@ -73,43 +71,43 @@ export default function NewsPage() {
     Permission.PUBLISH_NEWS,
     Permission.ARCHIVE_NEWS,
   ]);
-  const availableOrganizations = canViewAllNews
-    ? organizations
-    : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
+  const queryClient = useQueryClient();
 
-  const fetchNews = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: newsData, isLoading } = useQuery<{ news: News[]; pagination: { pages: number } }>({
+    queryKey: ['admin', 'news', page, search, statusFilter, categoryFilter, featuredFilter, ownerTypeFilter, organizationFilter],
+    queryFn: async () => {
       const response = await api.get('/news', {
         params: {
           page,
           limit: 10,
-          search,
+          search: search || undefined,
           status: statusFilter === 'all' ? undefined : statusFilter,
+          category: categoryFilter === 'all' ? undefined : categoryFilter,
+          featured: featuredFilter === 'all' ? undefined : featuredFilter === 'featured' ? 'true' : 'false',
           ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
           organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
         },
       });
-      if (response.data.success) {
-        setNews(response.data.data.news);
-        setTotalPages(response.data.data.pagination.pages);
-      }
-    } catch (error) {
-      console.error('Failed to fetch news:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, statusFilter, ownerTypeFilter, organizationFilter]);
+      return response.data.data;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const news = newsData?.news ?? [];
+  const totalPages = newsData?.pagination?.pages ?? 1;
+  const invalidateNews = () => queryClient.invalidateQueries({ queryKey: ['admin', 'news'] });
+
+  const availableOrganizations = canViewAllNews
+    ? organizations
+    : organizations.filter((organization) => scopedOrganizationIds.includes(organization.id));
+
+  useEffect(() => { setPage(1); }, [categoryFilter, featuredFilter, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnNews = (item: News, permission: Permission) =>
     hasPermission(permission) ||
     (item.ownerType === ContentOwnerType.ORGANIZATION &&
       !!item.organizationId &&
       hasScopedPermission(item.organizationId, permission));
-
-  useEffect(() => {
-    fetchNews();
-  }, [fetchNews]);
 
   useEffect(() => {
     if (canViewAllNews) {
@@ -138,12 +136,7 @@ export default function NewsPage() {
     return null;
   }
 
-  const filteredNews = news.filter((item) => {
-    if (categoryFilter !== 'all' && item.category !== categoryFilter) return false;
-    if (featuredFilter === 'featured' && !item.featured) return false;
-    if (featuredFilter === 'not_featured' && item.featured) return false;
-    return true;
-  });
+  const filteredNews = news;
 
   const handleCreate = () => {
     setSelectedNews(null);
@@ -160,7 +153,7 @@ export default function NewsPage() {
       onConfirm: async () => {
         try {
           await api.delete(`/news/${id}`);
-          fetchNews();
+          invalidateNews();
           appToast.success('News Deleted', 'The news article has been removed.');
         } catch {
           appToast.error('Deletion Failed', 'Could not delete the news article.');
@@ -183,7 +176,7 @@ export default function NewsPage() {
 
     try {
       await api.patch(`/news/${id}/${action}`);
-      fetchNews();
+      invalidateNews();
     } catch (error) {
       console.error(`Failed to ${action} news:`, error);
     }
@@ -193,7 +186,7 @@ export default function NewsPage() {
     if (!rejectTarget) return;
     try {
       await api.patch(`/news/${rejectTarget.id}/reject`, { reason });
-      fetchNews();
+      invalidateNews();
       setRejectTarget(null);
     } catch (error) {
       console.error('Failed to reject news:', error);
@@ -329,7 +322,7 @@ export default function NewsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={9} className="h-24 text-center">
                       Loading...
@@ -460,7 +453,7 @@ export default function NewsPage() {
         open={isFormOpen} 
         onOpenChange={setIsFormOpen} 
         news={selectedNews}
-        onSuccess={fetchNews}
+        onSuccess={invalidateNews}
       />
       <ConfirmDialog
         open={!!deleteConfirm}

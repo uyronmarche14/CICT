@@ -15,7 +15,8 @@ const getStudentTokenFromRequest = (req: Request): string | null => {
     return authHeader.substring(7);
   }
 
-  return null;
+  const token = req.cookies?.token;
+  return typeof token === 'string' ? token : null;
 };
 
 export const authenticateStudent = async (

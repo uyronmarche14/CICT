@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '@/lib/api/axios';
 import { Announcement, AnnouncementPriority, ContentOwnerType } from '@/types';
 import { AnnouncementForm } from '@/components/admin/AnnouncementForm';
@@ -46,16 +47,13 @@ export default function AnnouncementsPage() {
     getScopedOrganizationIdsForPermissions,
   } = usePermissions();
   const { organizations } = useOrganizations();
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | NewsStatus>('all');
   const [ownerTypeFilter, setOwnerTypeFilter] = useState<'all' | ContentOwnerType>(
     hasPermission(Permission.VIEW_ANNOUNCEMENT) ? 'all' : ContentOwnerType.ORGANIZATION
   );
   const [organizationFilter, setOrganizationFilter] = useState('all');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
@@ -78,49 +76,40 @@ export default function AnnouncementsPage() {
   const [subtypeFilter, setSubtypeFilter] = useState<string>('all');
   const [ctaFilter, setCtaFilter] = useState<'all' | 'has_cta' | 'no_cta'>('all');
 
-  const filtered = subtypeFilter === 'all'
-    ? announcements
-    : announcements.filter(item => item.subtype === subtypeFilter);
+  const queryClient = useQueryClient();
 
-  const filteredAnnouncements = filtered.filter(item => {
-    if (ctaFilter === 'has_cta') return !!item.ctaLabel;
-    if (ctaFilter === 'no_cta') return !item.ctaLabel;
-    return true;
-  });
-
-  const fetchAnnouncements = useCallback(async () => {
-    setLoading(true);
-    try {
+  const { data: announcementsData, isLoading } = useQuery<{ announcements: Announcement[]; pagination: { pages: number } }>({
+    queryKey: ['admin', 'announcements', page, search, statusFilter, subtypeFilter, ctaFilter, ownerTypeFilter, organizationFilter],
+    queryFn: async () => {
       const response = await api.get('/announcements', {
         params: {
           page,
           limit: 10,
-          search,
+          search: search || undefined,
           status: statusFilter === 'all' ? undefined : statusFilter,
+          subtype: subtypeFilter === 'all' ? undefined : subtypeFilter,
+          ctaFilter: ctaFilter === 'all' ? undefined : ctaFilter,
           ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
           organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
         },
       });
-      if (response.data.success) {
-        setAnnouncements(response.data.data.announcements);
-        setTotalPages(response.data.data.pagination.pages);
-      }
-    } catch (error) {
-      console.error('Failed to fetch announcements:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, statusFilter, ownerTypeFilter, organizationFilter]);
+      return response.data.data;
+    },
+    placeholderData: keepPreviousData,
+  });
+
+  const announcements = announcementsData?.announcements ?? [];
+  const totalPages = announcementsData?.pagination?.pages ?? 1;
+  const invalidateAnnouncements = () => queryClient.invalidateQueries({ queryKey: ['admin', 'announcements'] });
+  const filteredAnnouncements = announcements;
+
+  useEffect(() => { setPage(1); }, [subtypeFilter, ctaFilter, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnAnnouncement = (item: Announcement, permission: Permission) =>
     hasPermission(permission) ||
     (item.ownerType === ContentOwnerType.ORGANIZATION &&
       !!item.organizationId &&
       hasScopedPermission(item.organizationId, permission));
-
-  useEffect(() => {
-    fetchAnnouncements();
-  }, [fetchAnnouncements]);
 
   useEffect(() => {
     if (canViewAllAnnouncements) {
@@ -164,7 +153,7 @@ export default function AnnouncementsPage() {
       onConfirm: async () => {
         try {
           await api.delete(`/announcements/${id}`);
-          fetchAnnouncements();
+          invalidateAnnouncements();
           appToast.success('Announcement Deleted', 'The announcement has been removed.');
         } catch {
           appToast.error('Deletion Failed', 'Could not delete the announcement.');
@@ -187,7 +176,7 @@ export default function AnnouncementsPage() {
 
     try {
       await api.patch(`/announcements/${id}/${action}`);
-      fetchAnnouncements();
+      invalidateAnnouncements();
     } catch (error) {
       console.error(`Failed to ${action} announcement:`, error);
     }
@@ -197,7 +186,7 @@ export default function AnnouncementsPage() {
     if (!rejectTarget) return;
     try {
       await api.patch(`/announcements/${rejectTarget.id}/reject`, { reason });
-      fetchAnnouncements();
+      invalidateAnnouncements();
       setRejectTarget(null);
     } catch (error) {
       console.error('Failed to reject announcement:', error);
@@ -330,7 +319,7 @@ export default function AnnouncementsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {loading ? (
+                {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={10} className="h-24 text-center">
                       Loading...
@@ -464,7 +453,7 @@ export default function AnnouncementsPage() {
         open={isFormOpen} 
         onOpenChange={setIsFormOpen} 
         announcement={selectedAnnouncement}
-        onSuccess={fetchAnnouncements}
+        onSuccess={invalidateAnnouncements}
       />
       <ConfirmDialog
         open={!!deleteConfirm}

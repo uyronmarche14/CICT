@@ -175,7 +175,7 @@ export const createAnnouncement = async (req: AuthRequest, res: Response): Promi
  * Get all announcements
  */
 export const getAllAnnouncements = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, priority, search, ownerType, organizationId } = req.query;
+  const { status, priority, search, ownerType, organizationId, subtype, ctaFilter } = req.query;
 
   const conditions: Record<string, unknown>[] = [];
   const requestedOwnerType =
@@ -234,6 +234,16 @@ export const getAllAnnouncements = async (req: AuthRequest, res: Response): Prom
 
   if (priority) {
     conditions.push({ priority });
+  }
+
+  if (subtype && typeof subtype === 'string') {
+    conditions.push({ subtype });
+  }
+
+  if (ctaFilter === 'has_cta') {
+    conditions.push({ ctaLabel: { $exists: true, $ne: null } });
+  } else if (ctaFilter === 'no_cta') {
+    conditions.push({ $or: [{ ctaLabel: { $exists: false } }, { ctaLabel: null }] });
   }
 
   const safeSearch = sanitizeSearchInput(search);

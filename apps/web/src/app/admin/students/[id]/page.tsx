@@ -11,14 +11,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { getStudentStatusBadge } from '@/utils/badge-helpers';
 
-const getProgramLabel = (program: string | { _id: string; code: string; name: string }) =>
-  typeof program === 'string' ? program : `${program.code} - ${program.name}`;
-
-const getYearLevelLabel = (yearLevel: string | { _id: string; code: string; label: string; numericLevel: number }) =>
-  typeof yearLevel === 'string' ? yearLevel : yearLevel.label;
-
-const getSectionLabel = (section: string | { _id: string; name: string; displayName: string }) =>
-  typeof section === 'string' ? section : section.displayName;
+import { getProgramLabel, getYearLevelLabel, getSectionLabel } from '@/utils/student-helpers';
 
 
 

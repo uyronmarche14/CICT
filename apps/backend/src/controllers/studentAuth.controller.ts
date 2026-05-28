@@ -6,6 +6,7 @@ import StudentSession from '../models/StudentSession';
 import { StudentAuthRequest } from '../middleware/studentAuth';
 import { AppError } from '../middleware/errorHandler';
 import { IStudentJWTPayload, StudentStatus } from '../types';
+import { getAuthCookieOptions } from '../utils/authCookies';
 
 const getStudentJwtSecret = (): string => {
   const secret = process.env.STUDENT_JWT_SECRET;
@@ -121,6 +122,12 @@ export const loginStudent = async (req: Request, res: Response): Promise<void> =
   student.lastLoginAt = new Date();
   await student.save();
 
+  res.cookie('token', accessToken, getAuthCookieOptions());
+  res.cookie('refreshToken', refreshToken, {
+    ...getAuthCookieOptions(),
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(200).json({
     success: true,
     data: {
@@ -161,6 +168,12 @@ export const refreshStudentToken = async (req: Request, res: Response): Promise<
   session.expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   await session.save();
 
+  res.cookie('token', nextAccessToken, getAuthCookieOptions());
+  res.cookie('refreshToken', nextRefreshToken, {
+    ...getAuthCookieOptions(),
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  });
+
   res.status(200).json({
     success: true,
     data: {
@@ -185,6 +198,9 @@ export const logoutStudent = async (req: Request, res: Response): Promise<void> 
       // Best-effort revoke only.
     }
   }
+
+  res.clearCookie('token', getAuthCookieOptions());
+  res.clearCookie('refreshToken', getAuthCookieOptions());
 
   res.status(200).json({
     success: true,

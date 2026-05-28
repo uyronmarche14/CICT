@@ -1,5 +1,6 @@
 'use client';
 
+import DOMPurify from 'isomorphic-dompurify';
 import { ContentSection } from '@/types';
 import { cn } from '@/lib/utils';
 import { ExternalLink, MapPin } from 'lucide-react';
@@ -19,7 +20,7 @@ export function StructuredContent({
     <div className={cn('space-y-8', className)}>
       <div
         className="prose prose-lg max-w-none"
-        dangerouslySetInnerHTML={{ __html: bodyHtml }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(bodyHtml) }}
       />
 
       {sections
@@ -37,7 +38,7 @@ export function StructuredContent({
             {section.bodyHtml ? (
               <div
                 className="prose max-w-none"
-                dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.bodyHtml) }}
               />
             ) : null}
             {section.items && section.items.length > 0 ? (

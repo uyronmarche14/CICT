@@ -4,11 +4,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, User, Mail, Calendar, GraduationCap, Building2, ArrowLeft } from 'lucide-react';
+import { Loader2, User, Mail, GraduationCap, Building2, ArrowLeft } from 'lucide-react';
 import { useStudentAuth } from '@/context/StudentAuthContext';
 import { studentMembershipAPI } from '@/lib/api/student-membership';
 import Link from 'next/link';
-import { format } from 'date-fns';
 
 export default function StudentProfilePage() {
   const { student } = useStudentAuth();
@@ -105,7 +104,7 @@ export default function StudentProfilePage() {
             </p>
           ) : (
             <div className="space-y-3">
-              {memberships.map((m: any) => (
+              {memberships.map((m: { _id: string; organizationId: string; position: string; status: string; memberType?: string }) => (
                 <div key={m._id} className="flex items-center justify-between p-3 rounded-lg border">
                   <div>
                     <p className="font-medium text-sm">{m.organizationId}</p>

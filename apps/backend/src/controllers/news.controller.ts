@@ -155,7 +155,7 @@ export const createNews = async (req: AuthRequest, res: Response): Promise<void>
  * Get all news articles
  */
 export const getAllNews = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, search, ownerType, organizationId } = req.query;
+  const { status, search, ownerType, organizationId, category, featured } = req.query;
 
   const conditions: Record<string, unknown>[] = [];
   const requestedOwnerType =
@@ -210,6 +210,16 @@ export const getAllNews = async (req: AuthRequest, res: Response): Promise<void>
     } else {
       conditions.push({ _id: null });
     }
+  }
+
+  if (category && typeof category === 'string') {
+    conditions.push({ category });
+  }
+
+  if (featured === 'true') {
+    conditions.push({ featured: true });
+  } else if (featured === 'false') {
+    conditions.push({ featured: { $ne: true } });
   }
 
   const safeSearch = sanitizeSearchInput(search);

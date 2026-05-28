@@ -50,7 +50,7 @@ export const useNews = (
       const { data } = await api.get<NewsResponse>(`/news?${params.toString()}`);
       return data.data;
     },
-    staleTime: 0,
+    staleTime: 30_000,
   });
 };
 
@@ -61,6 +61,6 @@ export const useLatestNews = () => {
       const { data } = await api.get<NewsResponse>('/news?page=1&limit=1&status=published');
       return data.data.news[0];
     },
-    staleTime: 0,
+    staleTime: 30_000,
   });
 };
