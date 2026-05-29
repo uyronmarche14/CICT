@@ -6,15 +6,16 @@ Expand observability and security controls for student auth, registration, atten
 
 ## Current Status
 
-In progress.
+Completed for the current release scope.
 
 - Expanded audit metadata fields were added.
 - Student registration, QR, attendance, and approval-related actions now have stronger logging hooks than before.
-- Remaining work:
+- `/api/audit` is mounted and protected for admins with `VIEW_LOGS`.
+- Security regression coverage now includes admin session revalidation, cookie settings, content ownership boundaries, scoped admin visibility, and cached unpublished-content authorization.
+- Operational follow-up:
   - retention policy review
-  - full security pass across student auth and QR replay risks
   - denial and abuse tracing review
-  - operational review for what admins should see and for how long
+  - review what admins should see and for how long
 
 ## Dependencies
 

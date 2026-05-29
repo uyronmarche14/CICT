@@ -5,18 +5,18 @@ Owns automated verification for frontend and backend behavior.
 ## Current visible test files
 
 Backend:
-- [security.integration.test.ts](/home/ronmarche14/projects/CICT/cict-backend/src/security.integration.test.ts:1)
-- [content.test.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/content.test.ts:1)
-- [mediaFingerprint.test.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/mediaFingerprint.test.ts:1)
+- [security.integration.test.ts](/home/ronmarche14/projects/CICT/apps/backend/src/security.integration.test.ts:1)
+- [content.test.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/content.test.ts:1)
+- [mediaFingerprint.test.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/mediaFingerprint.test.ts:1)
 
 Frontend:
-- [page.test.tsx](/home/ronmarche14/projects/CICT/cictv4/src/app/admin/dashboard/page.test.tsx:1)
-- [Sidebar.test.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/admin/Sidebar.test.tsx:1)
-- [EventCard.test.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/events/EventCard.test.tsx:1)
-- [faqsSection.test.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/sections/landingpage/faqsSection.test.tsx:1)
-- [button.test.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/ui/button.test.tsx:1)
-- [errors.test.ts](/home/ronmarche14/projects/CICT/cictv4/src/lib/api/errors.test.ts:1)
-- [media.test.ts](/home/ronmarche14/projects/CICT/cictv4/src/lib/media.test.ts:1)
+- [page.test.tsx](/home/ronmarche14/projects/CICT/apps/web/src/app/admin/dashboard/page.test.tsx:1)
+- [Sidebar.test.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/admin/Sidebar.test.tsx:1)
+- [EventCard.test.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/events/EventCard.test.tsx:1)
+- [faqsSection.test.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/sections/landingpage/faqsSection.test.tsx:1)
+- [button.test.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/ui/button.test.tsx:1)
+- [errors.test.ts](/home/ronmarche14/projects/CICT/apps/web/src/lib/api/errors.test.ts:1)
+- [media.test.ts](/home/ronmarche14/projects/CICT/apps/web/src/lib/media.test.ts:1)
 
 ## Use this agent for
 

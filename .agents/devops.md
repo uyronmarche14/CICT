@@ -11,10 +11,10 @@ Handles deployment, runtime configuration, and environment alignment for the CIC
 
 ## Key files
 
-- [cictv4/README.md](/home/ronmarche14/projects/CICT/cictv4/README.md:1)
+- [apps/web/README.md](/home/ronmarche14/projects/CICT/apps/web/README.md:1)
 - [render.yaml](/home/ronmarche14/projects/CICT/render.yaml:1)
-- [cict-backend/src/config](/home/ronmarche14/projects/CICT/cict-backend/src/config:1)
-- [cict-backend/src/utils/logger.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/logger.ts:1)
+- [apps/backend/src/config](/home/ronmarche14/projects/CICT/apps/backend/src/config:1)
+- [apps/backend/src/utils/logger.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/logger.ts:1)
 
 ## Use this agent for
 

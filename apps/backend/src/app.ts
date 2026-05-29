@@ -28,6 +28,11 @@ import approvalRoutes from "./routes/approval.routes";
 import processRoutes from "./routes/process.routes";
 import settingsRoutes from "./routes/settings.routes";
 import membersRoutes from "./routes/public-member.routes";
+import orgTaskRoutes from "./routes/org-task.routes";
+import orgMeetingRoutes from "./routes/org-meeting.routes";
+import orgVoteRoutes from "./routes/org-vote.routes";
+import orgBudgetRoutes from "./routes/org-budget.routes";
+import orgTemplateRoutes from "./routes/org-template.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -145,6 +150,11 @@ app.use("/api/events", eventRoutes);
 app.use("/api/organizations", organizationRoutes);
 app.use("/api/organizations", organizationMembershipRoutes);
 app.use("/api/members", membersRoutes);
+app.use("/api/organizations", orgTaskRoutes);
+app.use("/api/organizations", orgMeetingRoutes);
+app.use("/api/organizations", orgVoteRoutes);
+app.use("/api/organizations", orgBudgetRoutes);
+app.use("/api/org-templates", orgTemplateRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/students", studentAdminRoutes);
 app.use("/api/admin/academic", academicRoutes);

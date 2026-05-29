@@ -1,6 +1,6 @@
 # UI/UX Designer Agent
 
-Improves visual quality, usability, accessibility, and content presentation across `cictv4`.
+Improves visual quality, usability, accessibility, and content presentation across `apps/web`.
 
 ## Current design strengths
 
@@ -18,11 +18,11 @@ Improves visual quality, usability, accessibility, and content presentation acro
 
 ## Best files to inspect first
 
-- [globals.css](/home/ronmarche14/projects/CICT/cictv4/src/app/globals.css:1)
-- [PublicSectionHeader.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/sections/landingpage/PublicSectionHeader.tsx:1)
-- [ScrollingGallery.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/ScrollingGallery.tsx:1)
-- [Timeline.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/Timeline.tsx:1)
-- [footer.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/layout/footer.tsx:1)
+- [globals.css](/home/ronmarche14/projects/CICT/apps/web/src/app/globals.css:1)
+- [PublicSectionHeader.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/sections/landingpage/PublicSectionHeader.tsx:1)
+- [ScrollingGallery.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/ScrollingGallery.tsx:1)
+- [Timeline.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/Timeline.tsx:1)
+- [footer.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/layout/footer.tsx:1)
 
 ## Use this agent for
 

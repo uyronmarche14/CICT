@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import { Sidebar, MobileSidebar } from '@/components/admin/Sidebar';
 import { Loader2 } from 'lucide-react';
 import { registerNavigate, unregisterNavigate } from '@/lib/navigation';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 export default function AdminLayout({
   children,
@@ -59,17 +60,25 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-100/40 dark:bg-gray-900/40">
-      <Sidebar />
-      <div className="flex-1 md:pl-64">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-6 md:hidden">
+    <SidebarProvider
+      defaultOpen={true}
+      style={
+        {
+          '--sidebar-width': '18rem',
+          '--sidebar-width-icon': '3rem',
+        } as React.CSSProperties
+      }
+    >
+      <div className="flex min-h-svh w-full bg-gray-100/40 dark:bg-gray-900/40">
+        <Sidebar />
+        <div className="flex min-w-0 flex-1 flex-col">
+          <main className="flex-1 p-6">
+            {children}
+          </main>
+          {/* Mobile sidebar trigger — floating button */}
           <MobileSidebar />
-          <div className="font-semibold">Dashboard</div>
-        </header>
-        <main className="p-6">
-          {children}
-        </main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

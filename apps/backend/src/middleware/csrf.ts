@@ -29,6 +29,13 @@ export const setCsrfCookie = (res: Response): string => {
  *   - Compares them
  */
 export const csrfProtection = (req: Request, res: Response, next: NextFunction): void => {
+  // Skip CSRF in development (frontend and backend are on different ports,
+  // so the cookie is not accessible via document.cookie for the xsrf header)
+  if (process.env.NODE_ENV === 'development') {
+    next();
+    return;
+  }
+
   // Skip CSRF for safe methods
   if (SAFE_METHODS.includes(req.method)) {
     next();

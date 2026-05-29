@@ -18,10 +18,10 @@ Improves runtime and perceived performance across the CICT stack.
 
 ## Key files
 
-- [cictv4/src/components/updates/UpdatesHubClient.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/updates/UpdatesHubClient.tsx:1)
-- [cictv4/src/hooks/use-updates-hub.ts](/home/ronmarche14/projects/CICT/cictv4/src/hooks/use-updates-hub.ts:1)
-- [cictv4/src/components/ScrollingGallery.tsx](/home/ronmarche14/projects/CICT/cictv4/src/components/ScrollingGallery.tsx:1)
-- [cict-backend/src/routes](/home/ronmarche14/projects/CICT/cict-backend/src/routes:1)
+- [apps/web/src/components/updates/UpdatesHubClient.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/updates/UpdatesHubClient.tsx:1)
+- [apps/web/src/hooks/use-updates-hub.ts](/home/ronmarche14/projects/CICT/apps/web/src/hooks/use-updates-hub.ts:1)
+- [apps/web/src/components/ScrollingGallery.tsx](/home/ronmarche14/projects/CICT/apps/web/src/components/ScrollingGallery.tsx:1)
+- [apps/backend/src/routes](/home/ronmarche14/projects/CICT/apps/backend/src/routes:1)
 
 ## Current caveats
 

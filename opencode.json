@@ -1,0 +1,151 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "AGENTS.md",
+    ".claude/skills/coding-standards/SKILL.md",
+    ".claude/skills/backend-patterns/SKILL.md",
+    ".claude/skills/frontend-patterns/SKILL.md",
+    ".claude/skills/security-review/SKILL.md",
+    ".claude/skills/e2e-testing/SKILL.md",
+    ".claude/skills/postgres-patterns/SKILL.md",
+    ".claude/skills/api-design/SKILL.md",
+    ".claude/skills/deployment-patterns/SKILL.md",
+    ".claude/skills/docker-patterns/SKILL.md",
+    ".claude/skills/database-migrations/SKILL.md"
+  ],
+  "agent": {
+    "review": {
+      "description": "Reviews CICT code for quality, security, and best practices",
+      "mode": "subagent",
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.1,
+      "prompt": "{file:.opencode/agents/review.md}",
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "ask",
+          "git diff*": "allow",
+          "git log*": "allow",
+          "grep *": "allow"
+        },
+        "skill": {
+          "*": "allow",
+          "coding-standards": "allow",
+          "backend-patterns": "allow",
+          "frontend-patterns": "allow",
+          "security-review": "allow",
+          "e2e-testing": "allow",
+          "api-design": "allow"
+        }
+      }
+    },
+    "planner": {
+      "description": "Plans multi-step features and changes across the CICT monorepo",
+      "mode": "subagent",
+      "temperature": 0.2,
+      "permission": {
+        "edit": "deny",
+        "bash": {
+          "*": "ask",
+          "find *": "allow",
+          "grep *": "allow",
+          "ls *": "allow"
+        },
+        "skill": {
+          "*": "allow"
+        }
+      }
+    },
+    "debug": {
+      "description": "Debug issues across the CICT full stack (backend, web, mobile)",
+      "mode": "subagent",
+      "permission": {
+        "skill": {
+          "backend-patterns": "allow",
+          "frontend-patterns": "allow"
+        }
+      }
+    },
+    "tester": {
+      "description": "Writes and runs tests for the CICT monorepo",
+      "mode": "subagent",
+      "permission": {
+        "skill": "allow"
+      }
+    },
+    "database": {
+      "description": "Handles MongoDB schema, indexes, and query optimization for CICT",
+      "mode": "subagent",
+      "permission": {
+        "skill": {
+          "postgres-patterns": "allow",
+          "database-migrations": "allow"
+        }
+      }
+    },
+    "devops": {
+      "description": "Manages Render, Vercel, Docker, CI/CD for CICT",
+      "mode": "subagent",
+      "permission": {
+        "skill": {
+          "deployment-patterns": "allow",
+          "docker-patterns": "allow"
+        }
+      }
+    }
+  },
+  "command": {
+    "test": {
+      "template": "Run the full test suite across all CICT apps. First build contracts, then run:\n- pnpm run backend:test\n- pnpm run web:test\n- pnpm run mobile:test\nReport any failures and suggest fixes.",
+      "description": "Run full test suite across all apps",
+      "agent": "tester"
+    },
+    "lint": {
+      "template": "Run lint across all CICT apps:\n- pnpm run backend:lint\n- pnpm run web:lint\n- pnpm run mobile:lint\nFix any lint errors found.",
+      "description": "Lint all apps",
+      "agent": "build"
+    },
+    "typecheck": {
+      "template": "Run typecheck across all CICT apps:\n- pnpm run backend:typecheck\n- pnpm run web:typecheck\n- pnpm run mobile:typecheck\nFix any type errors found.",
+      "description": "Typecheck all apps",
+      "agent": "build"
+    },
+    "build": {
+      "template": "Run the full CICT build pipeline. First build contracts, then build backend and web:\npnpm run build",
+      "description": "Build contracts, backend, and web",
+      "agent": "build"
+    },
+    "review": {
+      "template": "Review the recent changes for quality, security, and best practices.\n\nRecent git diff:\n!`git diff --stat HEAD~1`\n\nCheck for:\n1. Security issues (input validation, auth, XSS, etc.)\n2. Backward compatibility\n3. Error handling patterns\n4. Type safety\n5. Test coverage",
+      "description": "Review recent changes",
+      "agent": "review",
+      "model": "anthropic/claude-sonnet-4-20250514"
+    },
+    "backend": {
+      "template": "Work on the CICT backend (apps/backend/). Available commands:\n- pnpm run backend:dev — start dev\n- pnpm run backend:lint — lint\n- pnpm run backend:typecheck — typecheck\n- pnpm run backend:test — run tests\n- pnpm run backend:seed — seed database\n- pnpm run backend:mongo:up — start MongoDB\n- pnpm run backend:mongo:down — stop MongoDB",
+      "description": "Backend-specific operations",
+      "agent": "build"
+    },
+    "web": {
+      "template": "Work on the CICT web frontend (apps/web/). Available commands:\n- pnpm run web:dev — start dev\n- pnpm run web:lint — lint\n- pnpm run web:typecheck — typecheck\n- pnpm run web:test — run tests\n- pnpm run web:build — build",
+      "description": "Web frontend-specific operations",
+      "agent": "build"
+    },
+    "mobile": {
+      "template": "Work on the CICT mobile app (apps/mobile/). Available commands:\n- pnpm run mobile:dev — start dev\n- pnpm run mobile:lint — lint\n- pnpm run mobile:typecheck — typecheck\n- pnpm run mobile:test — run tests\n- pnpm run mobile:android — run on Android\n- pnpm run mobile:ios — run on iOS",
+      "description": "Mobile-specific operations",
+      "agent": "build"
+    },
+    "plan": {
+      "template": "Create a detailed implementation plan for: $ARGUMENTS\n\nAnalyze the requirements and produce:\n1. Files that need to be created or modified\n2. Data model changes (MongoDB schemas, API contracts)\n3. Backend changes (routes, controllers, middleware)\n4. Frontend changes (pages, components, hooks)\n5. Mobile changes (if applicable)\n6. Test requirements\n7. Migration steps\n8. Risks and considerations",
+      "description": "Create an implementation plan",
+      "agent": "planner",
+      "model": "anthropic/claude-sonnet-4-20250514"
+    }
+  },
+  "permission": {
+    "skill": {
+      "*": "allow"
+    }
+  }
+}

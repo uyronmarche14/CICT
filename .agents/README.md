@@ -6,8 +6,8 @@ This folder contains role-based prompts for working on the CICT monorepo.
 
 ## Repo snapshot
 
-- Frontend: `cictv4/`
-- Backend: `cict-backend/`
+- Frontend: `apps/web/`
+- Backend: `apps/backend/`
 - System-level docs: `CICT_SYSTEM_DOCUMENTATION.md`, `CICT_PRESENTATION_DOCUMENTATION.md`
 
 ## Live stack
@@ -46,8 +46,8 @@ Known incomplete public pages:
 
 ## Current cross-stack gaps
 
-- `cictv4/src/lib/api/refreshToken.ts` calls `/auth/refresh-token`, but `cict-backend` does not currently expose that route.
-- `cictv4/src/lib/api/auditAPI.ts` exists, but the backend does not yet expose audit endpoints.
+- `apps/web/src/lib/api/refreshToken.ts` calls `/auth/refresh-token`, but `apps/backend` does not currently expose that route.
+- `apps/web/src/lib/api/auditAPI.ts` exists, but the backend does not yet expose audit endpoints.
 - Footer and CTA contact details are still placeholder values.
 - The contact page route is effectively empty.
 

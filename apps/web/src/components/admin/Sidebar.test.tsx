@@ -1,8 +1,27 @@
 import type { ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeAll } from 'vitest';
 import { Permission, UserRole } from '@/types';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Sidebar } from './Sidebar';
+
+beforeAll(() => {
+  Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 1440 });
+  Object.defineProperty(document, 'cookie', { writable: true, configurable: true, value: '' });
+  Object.defineProperty(window, 'matchMedia', {
+    writable: true,
+    value: vi.fn().mockImplementation((query: string) => ({
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    })),
+  });
+});
 
 vi.mock('next/navigation', () => ({
   usePathname: () => '/admin/news',
@@ -40,6 +59,10 @@ vi.mock('@/context/AuthContext', () => ({
   }),
 }));
 
+vi.mock('@/hooks/useOrganizations', () => ({
+  useAdminOrganizations: () => ({ organizations: [], loading: false }),
+}));
+
 vi.mock('@/hooks/permissions/use-permissions', () => ({
   usePermissions: () => ({
     canAccessOrganizationsModule: () => false,
@@ -58,7 +81,11 @@ vi.mock('@/hooks/permissions/use-permissions', () => ({
 
 describe('Sidebar', () => {
   it('shows only routes allowed by backend-provided permissions', () => {
-    render(<Sidebar />);
+    render(
+      <SidebarProvider defaultOpen={true}>
+        <Sidebar />
+      </SidebarProvider>
+    );
 
     expect(screen.getByText('Dashboard')).toBeTruthy();
     expect(screen.getByText('News')).toBeTruthy();

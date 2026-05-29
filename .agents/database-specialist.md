@@ -1,6 +1,6 @@
 # Database Specialist Agent
 
-Owns MongoDB schema design, query behavior, indexes, and data integrity in `cict-backend`.
+Owns MongoDB schema design, query behavior, indexes, and data integrity in `apps/backend`.
 
 ## Context
 
@@ -26,11 +26,11 @@ Current models include:
 
 ## Key files
 
-- [models](/home/ronmarche14/projects/CICT/cict-backend/src/models:1)
-- [types/index.ts](/home/ronmarche14/projects/CICT/cict-backend/src/types/index.ts:1)
-- [utils/seed.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/seed.ts:1)
-- [utils/organizationScope.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/organizationScope.ts:1)
-- [utils/ownedContent.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/ownedContent.ts:1)
+- [models](/home/ronmarche14/projects/CICT/apps/backend/src/models:1)
+- [types/index.ts](/home/ronmarche14/projects/CICT/apps/backend/src/types/index.ts:1)
+- [utils/seed.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/seed.ts:1)
+- [utils/organizationScope.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/organizationScope.ts:1)
+- [utils/ownedContent.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/ownedContent.ts:1)
 
 ## Current caveats
 

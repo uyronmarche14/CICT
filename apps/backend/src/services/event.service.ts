@@ -114,9 +114,6 @@ const ensureValidEventDateRange = (startDateValue: unknown, endDateValue: unknow
 
 export const getEventById = async (id: string, req: AuthRequest): Promise<any> => {
   const cacheKey = `${id}:with-related`
-  const cached = await eventDetailCache.get(cacheKey)
-  if (cached) {return cached}
-
   const event = await Event.findById(id)
     .populate('organizer', 'firstName lastName email')
     .populate('attendees', 'firstName lastName email')
@@ -135,6 +132,9 @@ export const getEventById = async (id: string, req: AuthRequest): Promise<any> =
       )
     }
   }
+
+  const cached = await eventDetailCache.get(cacheKey)
+  if (cached) {return cached}
 
   const serializedEvent = await attachOrganizationName(event)
 

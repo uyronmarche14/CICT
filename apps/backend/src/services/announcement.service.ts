@@ -97,9 +97,6 @@ const invalidateAnnouncement = async (id: string, invalidateDashboard = true): P
 // ——— Reads ———
 
 export const getAnnouncementById = async (id: string, req: AuthRequest): Promise<any> => {
-  const cached = await announcementDetailCache.get(id)
-  if (cached) {return cached}
-
   const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email')
 
   if (!announcement) {
@@ -122,15 +119,15 @@ export const getAnnouncementById = async (id: string, req: AuthRequest): Promise
     }
   }
 
+  const cached = await announcementDetailCache.get(id)
+  if (cached) {return cached}
+
   const serializedAnnouncement = await attachOrganizationName(announcement)
   await announcementDetailCache.set(id, serializedAnnouncement)
   return serializedAnnouncement
 }
 
 export const getPublicAnnouncementById = async (id: string): Promise<any> => {
-  const cached = await announcementDetailCache.get(`public:${id}`)
-  if (cached) {return cached}
-
   const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email')
 
   if (!announcement) {
@@ -145,6 +142,9 @@ export const getPublicAnnouncementById = async (id: string): Promise<any> => {
   if (!matchesPublicState) {
     throw new AppError('Announcement not found', 404)
   }
+
+  const cached = await announcementDetailCache.get(`public:${id}`)
+  if (cached) {return cached}
 
   const serializedAnnouncement = await attachOrganizationName(announcement)
   await announcementDetailCache.set(`public:${id}`, serializedAnnouncement)

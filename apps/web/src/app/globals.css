@@ -148,6 +148,16 @@
   }
 }
 
+@layer utilities {
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @font-face {
   font-family: "Blockletter";
   src: url("/fonts/Blockletter.otf") format("opentype");

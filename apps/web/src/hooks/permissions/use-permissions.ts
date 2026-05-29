@@ -40,6 +40,10 @@ const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
   Permission.EDIT_MEMBER,
   Permission.DELETE_MEMBER,
   Permission.MANAGE_MEMBER_ROLES,
+  Permission.MANAGE_ORG_TASKS,
+  Permission.MANAGE_ORG_MEETINGS,
+  Permission.MANAGE_ORG_VOTES,
+  Permission.MANAGE_ORG_BUDGET,
 ];
 
 const MODULE_KEYS: AdminModuleKey[] = [
@@ -150,9 +154,7 @@ export const usePermissions = () => {
       }
 
       if (
-        assignment.permissions.some((permission) =>
-          ORGANIZATION_MANAGEMENT_PERMISSIONS.includes(permission)
-        )
+        assignment.permissions.some((permission) => ORGANIZATION_MANAGEMENT_PERMISSIONS.includes(permission))
       ) {
         modules.add('organizations');
       }
@@ -203,6 +205,10 @@ export const usePermissions = () => {
       : Object.keys(scopedAdminModulesByOrganization).some((orgId) =>
           hasScopedAdminModule(orgId, 'organizations')
         ));
+  const canManageOrganizationTool = (organizationId: string, permission: Permission) =>
+    hasPermission(permission) || hasScopedPermission(organizationId, permission);
+  const hasAnyOrganizationToolPermission = (permission: Permission) =>
+    hasPermission(permission) || hasAnyScopedPermission(permission);
 
   return {
     permissions,
@@ -257,6 +263,23 @@ export const usePermissions = () => {
     canUpdateOrganization,
     canDeleteOrganization,
     canManageOrganizationMembers,
+    canManageOrganizationTool,
+    canManageOrgTasks: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_TASKS),
+    canManageOrgMeetings: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_MEETINGS),
+    canManageOrgVotes: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_VOTES),
+    canManageOrgBudget: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_BUDGET),
+    canManageOrgTemplates: () => hasPermission(Permission.MANAGE_ORG_TEMPLATES),
+    hasAnyOrgTasksAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_TASKS),
+    hasAnyOrgMeetingsAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_MEETINGS),
+    hasAnyOrgVotesAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_VOTES),
+    hasAnyOrgBudgetAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_BUDGET),
+    hasAnyOrgTemplatesAccess: () =>
+      hasPermission(Permission.MANAGE_ORG_TEMPLATES),
     canAccessOrganization,
     canAccessOrganizationsModule: () => hasVisibleAdminModule('organizations'),
     canManageOrganizationContent: (

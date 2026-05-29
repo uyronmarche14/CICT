@@ -133,6 +133,11 @@ export const ADMIN_ENTRY_PERMISSIONS: Permission[] = [
   Permission.VIEW_EVENT,
   Permission.VIEW_PROCESS,
   Permission.MANAGE_SETTINGS,
+  Permission.MANAGE_ORG_TASKS,
+  Permission.MANAGE_ORG_MEETINGS,
+  Permission.MANAGE_ORG_VOTES,
+  Permission.MANAGE_ORG_BUDGET,
+  Permission.MANAGE_ORG_TEMPLATES,
 ];
 
 export const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
@@ -145,10 +150,19 @@ export const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
   Permission.EDIT_MEMBER,
   Permission.DELETE_MEMBER,
   Permission.MANAGE_MEMBER_ROLES,
+  Permission.MANAGE_ORG_TASKS,
+  Permission.MANAGE_ORG_MEETINGS,
+  Permission.MANAGE_ORG_VOTES,
+  Permission.MANAGE_ORG_BUDGET,
+];
+
+const ORGANIZATION_MODULE_PERMISSIONS: Permission[] = [
+  ...ORGANIZATION_MANAGEMENT_PERMISSIONS,
+  Permission.MANAGE_ORG_TEMPLATES,
 ];
 
 const ADMIN_MODULE_PERMISSION_MAP: Record<Exclude<AdminModule, 'dashboard'>, Permission[]> = {
-  organizations: ORGANIZATION_MANAGEMENT_PERMISSIONS,
+  organizations: ORGANIZATION_MODULE_PERMISSIONS,
   users: [
     Permission.VIEW_USERS,
     Permission.CREATE_USER,
@@ -226,6 +240,13 @@ const SCOPED_MODULES: ScopedAdminModule[] = [
   'announcements',
 ];
 
+const SCOPED_ADMIN_MODULE_PERMISSION_MAP: Record<ScopedAdminModule, Permission[]> = {
+  organizations: ORGANIZATION_MANAGEMENT_PERMISSIONS,
+  events: ADMIN_MODULE_PERMISSION_MAP.events,
+  news: ADMIN_MODULE_PERMISSION_MAP.news,
+  announcements: ADMIN_MODULE_PERMISSION_MAP.announcements,
+};
+
 const assignmentHasAnyPermission = (
   assignment: Pick<IResolvedOrganizationAssignment, 'permissions'>,
   permissionsToCheck: Permission[]
@@ -279,7 +300,7 @@ export const deriveScopedAdminModulesByOrganization = (
     (accumulator, assignment) => {
       const modules = SCOPED_MODULES.filter((module) =>
         assignment.permissions.some((permission) =>
-          ADMIN_MODULE_PERMISSION_MAP[module].includes(permission)
+          SCOPED_ADMIN_MODULE_PERMISSION_MAP[module].includes(permission)
         )
       );
 

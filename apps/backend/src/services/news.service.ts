@@ -86,9 +86,6 @@ const invalidateNews = async (id: string, invalidateDashboard = true): Promise<v
 // ——— Reads ———
 
 export const getNewsById = async (id: string, req: AuthRequest): Promise<any> => {
-  const cached = await newsDetailCache.get(id)
-  if (cached) {return cached}
-
   const news = await News.findById(id).populate('author', 'firstName lastName email')
 
   if (!news) {
@@ -105,6 +102,9 @@ export const getNewsById = async (id: string, req: AuthRequest): Promise<any> =>
       )
     }
   }
+
+  const cached = await newsDetailCache.get(id)
+  if (cached) {return cached}
 
   const serializedNews = await attachOrganizationName(news)
   await newsDetailCache.set(id, serializedNews)

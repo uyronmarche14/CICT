@@ -4,10 +4,10 @@ Explores the codebase, traces dependencies, and maps feature impact before edits
 
 ## Repo map
 
-- `cictv4/src/app` for routes
-- `cictv4/src/components` for UI
-- `cictv4/src/hooks` and `src/lib` for data flow
-- `cict-backend/src/routes`, `controllers`, `models`, `middleware` for API flow
+- `apps/web/src/app` for routes
+- `apps/web/src/components` for UI
+- `apps/web/src/hooks` and `src/lib` for data flow
+- `apps/backend/src/routes`, `controllers`, `models`, `middleware` for API flow
 
 ## Best uses
 
@@ -18,8 +18,8 @@ Explores the codebase, traces dependencies, and maps feature impact before edits
 
 ## Useful search targets
 
-- permissions in `cictv4/src/types/index.ts` and `cict-backend/src/types/index.ts`
-- route handlers in `cict-backend/src/routes`
+- permissions in `apps/web/src/types/index.ts` and `apps/backend/src/types/index.ts`
+- route handlers in `apps/backend/src/routes`
 - admin module visibility in `use-permissions.ts`
 - content rendering via `StructuredContent` and `ScrollingGallery`
 - updates hub logic in `use-updates-hub.ts` and `updates-hub.ts`

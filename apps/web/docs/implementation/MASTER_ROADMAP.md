@@ -1,6 +1,6 @@
 # CICT Platform Expansion Roadmap
 
-Last updated: 2026-05-20
+Last updated: 2026-05-29
 
 ## Goal
 
@@ -33,6 +33,7 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - Phase 7A: landing page and updates hub expansion
 - Phase 8: audit logging and security hardening
 - Phase 9: release checklist and rollout verification
+- Phase 10: organization admin tools
 
 ## API/Data Contracts
 
@@ -58,6 +59,7 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
   - Phase 6A
 - In progress:
   - Phase 07A (Landing & Updates Hub Expansion — org spotlight + achievement spotlight + event ordering done; leadership spotlight + richer summaries remaining)
+  - Phase 10 (Organization Admin Tools — tasks, meetings, voting, budget, and templates are implemented; final hardening/verification is in progress)
 - Completed (statuses updated after codebase audit):
   - Phase 6 (was marked "scaffold only" — fully implemented with ReactFlow builder)
   - Phase 7 (was marked "in progress" — all API namespaces + mobile client complete)
@@ -98,13 +100,15 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - Phase 6A: Completed
 - Phase 7: Completed
 - Phase 7A: Partially complete (org spotlight + achievement spotlight + event ordering fixed; leadership spotlight + richer community summaries remaining)
-- Phase 8: Completed (minor schema gap fixed)
-- Phase 9: Completed (CI/CD, Render configs, docs all exist)
+- Phase 8: Completed for current release scope (audit route, activity logging, auth/session hardening, and cache authorization regressions covered; retention policy can continue as operational follow-up)
+- Phase 9: Completed for current release infrastructure (CI/CD, Render configs, docs, and validation gates exist; each new phase still requires a fresh release gate)
+- Phase 10: In progress (org tasks, meetings, voting, budget, and templates are in code; scoped RBAC and security verification are being hardened)
 
 ## Next Priority Order
 
-1. Finish Phase 07A (Landing & Updates Hub Expansion) — the only remaining gap, includes org/leadership/achievement spotlight blocks + richer community summaries.
-2. Proceed with Platform Expansion Phases 10–12 (Org Admin, Collaboration, Calendar) — see MASTER_ROADMAP_EXPANSION.md.
+1. Finish Phase 10 hardening — org-tool scoped RBAC, lint/test gates, and documentation alignment.
+2. Finish Phase 07A remaining public-surface polish — leadership spotlight, official vs. organization grouping, and richer community summaries.
+3. Proceed with Platform Expansion Phases 11–12 (Collaboration and Calendar) — see MASTER_ROADMAP_EXPANSION.md.
 
 ## Phase Files
 
@@ -121,3 +125,4 @@ Implement the CICT platform expansion in gated phases so student accounts, acade
 - [PHASE_07A_LANDING_AND_UPDATES_HUB_EXPANSION.md](/home/ronmarche14/projects/CICT/apps/web/docs/implementation/PHASE_07A_LANDING_AND_UPDATES_HUB_EXPANSION.md:1)
 - [PHASE_08_AUDIT_LOGGING_AND_SECURITY.md](/home/ronmarche14/projects/CICT/apps/web/docs/implementation/PHASE_08_AUDIT_LOGGING_AND_SECURITY.md:1)
 - [PHASE_09_FINAL_RELEASE_CHECKLIST.md](/home/ronmarche14/projects/CICT/apps/web/docs/implementation/PHASE_09_FINAL_RELEASE_CHECKLIST.md:1)
+- [MASTER_ROADMAP_EXPANSION.md](/home/ronmarche14/projects/CICT/apps/web/docs/implementation/MASTER_ROADMAP_EXPANSION.md:1)

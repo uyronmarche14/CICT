@@ -1,0 +1,52 @@
+import mongoose, { Schema, Document } from 'mongoose';
+
+export interface IOrgVoteDocument extends Document {
+  organizationId: mongoose.Types.ObjectId;
+  title: string;
+  description?: string;
+  positions: Array<{ title: string; description?: string; maxSelections: number }>;
+  candidates: Array<{ name: string; position: string; photo?: string; bio?: string }>;
+  startDate: Date;
+  endDate: Date;
+  isAnonymous: boolean;
+  isActive: boolean;
+  createdBy: mongoose.Types.ObjectId;
+}
+
+const orgVoteSchema = new Schema<IOrgVoteDocument>(
+  {
+    organizationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Organization',
+      required: true,
+      index: true,
+    },
+    title: { type: String, required: true, trim: true },
+    description: { type: String, trim: true },
+    positions: [
+      {
+        title: { type: String, required: true },
+        description: String,
+        maxSelections: { type: Number, default: 1 },
+      },
+    ],
+    candidates: [
+      {
+        name: { type: String, required: true },
+        position: { type: String, required: true },
+        photo: String,
+        bio: String,
+      },
+    ],
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    isAnonymous: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  },
+  { timestamps: true }
+);
+
+const OrgVote = mongoose.model<IOrgVoteDocument>('OrgVote', orgVoteSchema);
+
+export default OrgVote;

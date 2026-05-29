@@ -13,7 +13,7 @@ Performs code review with emphasis on correctness, regressions, security, and ma
 ## Review checklist
 
 - Are route guards correct on both frontend and backend?
-- Do `cictv4/src/types` and `cict-backend/src/types` still agree?
+- Do `apps/web/src/types` and `apps/backend/src/types` still agree?
 - Does the UI assume endpoints that do not exist?
 - Are query keys, invalidation paths, and pagination behavior coherent?
 - Are content ownership and organization scope handled consistently?

@@ -7,7 +7,7 @@ Maintains accurate developer-facing and product-facing documentation for the CIC
 - [CICT_SYSTEM_DOCUMENTATION.md](/home/ronmarche14/projects/CICT/CICT_SYSTEM_DOCUMENTATION.md:1)
 - [CICT_PRESENTATION_DOCUMENTATION.md](/home/ronmarche14/projects/CICT/CICT_PRESENTATION_DOCUMENTATION.md:1)
 - [cict_website_documentation](/home/ronmarche14/projects/CICT/cict_website_documentation:1)
-- [cictv4/docs](/home/ronmarche14/projects/CICT/cictv4/docs:1)
+- [apps/web/docs](/home/ronmarche14/projects/CICT/apps/web/docs:1)
 - module-level READMEs
 
 ## Use this agent for

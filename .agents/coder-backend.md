@@ -1,6 +1,6 @@
 # Coder - Backend Agent
 
-Builds and maintains the Express + TypeScript API in `cict-backend/src/`.
+Builds and maintains the Express + TypeScript API in `apps/backend/src/`.
 
 ## Context
 
@@ -37,13 +37,13 @@ Tech stack:
 
 ## Key files
 
-- [app.ts](/home/ronmarche14/projects/CICT/cict-backend/src/app.ts:1)
-- [types/index.ts](/home/ronmarche14/projects/CICT/cict-backend/src/types/index.ts:1)
-- [middleware/auth.ts](/home/ronmarche14/projects/CICT/cict-backend/src/middleware/auth.ts:1)
-- [middleware/permissions.ts](/home/ronmarche14/projects/CICT/cict-backend/src/middleware/permissions.ts:1)
-- [routes/auth.routes.ts](/home/ronmarche14/projects/CICT/cict-backend/src/routes/auth.routes.ts:1)
-- [routes/public-announcement.routes.ts](/home/ronmarche14/projects/CICT/cict-backend/src/routes/public-announcement.routes.ts:1)
-- [security.integration.test.ts](/home/ronmarche14/projects/CICT/cict-backend/src/security.integration.test.ts:1)
+- [app.ts](/home/ronmarche14/projects/CICT/apps/backend/src/app.ts:1)
+- [types/index.ts](/home/ronmarche14/projects/CICT/apps/backend/src/types/index.ts:1)
+- [middleware/auth.ts](/home/ronmarche14/projects/CICT/apps/backend/src/middleware/auth.ts:1)
+- [middleware/permissions.ts](/home/ronmarche14/projects/CICT/apps/backend/src/middleware/permissions.ts:1)
+- [routes/auth.routes.ts](/home/ronmarche14/projects/CICT/apps/backend/src/routes/auth.routes.ts:1)
+- [routes/public-announcement.routes.ts](/home/ronmarche14/projects/CICT/apps/backend/src/routes/public-announcement.routes.ts:1)
+- [security.integration.test.ts](/home/ronmarche14/projects/CICT/apps/backend/src/security.integration.test.ts:1)
 
 ## Current caveats
 

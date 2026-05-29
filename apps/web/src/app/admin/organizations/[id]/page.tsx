@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useAdminOrganization } from '@/hooks/useOrganizations';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-import { Loader2, ArrowLeft, Edit, AlertCircle, Trash2 } from 'lucide-react';
+import { Loader2, Edit, AlertCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CldImage } from 'next-cloudinary';
@@ -20,7 +20,6 @@ import type { OrganizationAdminAssignment } from '@/types';
 
 export default function AdminOrganizationManagePage() {
   const params = useParams();
-  const router = useRouter();
   const orgId = params.id as string;
   const {
     canAccessOrganization,
@@ -102,11 +101,7 @@ export default function AdminOrganizationManagePage() {
 
   if (error || !organization) {
      return (
-        <div className="space-y-4">
-           <Button variant="ghost" onClick={() => router.back()} className="gap-2">
-              <ArrowLeft className="w-4 h-4" />
-              Back to Organizations
-           </Button>
+        <div className="space-y-4 p-6">
            <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Error</AlertTitle>
@@ -124,44 +119,37 @@ export default function AdminOrganizationManagePage() {
 
   return (
     <div className="space-y-6">
-       <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => router.push('/admin/organizations')}>
-             <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Manage {organization.name}</h1>
-          <div className="ml-auto">
-             <div className="flex gap-2">
-                {canRemoveOrganization ? (
-                  <Button
-                    variant="destructive"
-                    className="gap-2"
-                    onClick={async () => {
-                      setDeleteConfirm({
-                        onConfirm: async () => {
-                          try {
-                            await organizationService.delete(organization.id);
-                            router.push('/admin/organizations');
-                          } catch (error) {
-                            console.error('Failed to delete organization:', error);
-                          }
-                          setDeleteConfirm(null);
-                        },
-                      });
-                      return;
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                    Delete
-                  </Button>
-                ) : null}
-                {canEditOrganization ? (
-                  <Button onClick={() => setIsEditingOrg(true)} className="gap-2">
-                    <Edit className="w-4 h-4" />
-                    Edit Details
-                  </Button>
-                ) : null}
-             </div>
-          </div>
+       <div className="flex items-center justify-end gap-2">
+          {canEditOrganization ? (
+            <Button onClick={() => setIsEditingOrg(true)} variant="outline" size="sm" className="gap-2">
+              <Edit className="w-4 h-4" />
+              Edit Details
+            </Button>
+          ) : null}
+          {canRemoveOrganization ? (
+            <Button
+              variant="destructive"
+              size="sm"
+              className="gap-2"
+              onClick={async () => {
+                setDeleteConfirm({
+                  onConfirm: async () => {
+                    try {
+                      await organizationService.delete(organization.id);
+                      window.location.href = '/admin/organizations';
+                    } catch (error) {
+                      console.error('Failed to delete organization:', error);
+                    }
+                    setDeleteConfirm(null);
+                  },
+                });
+                return;
+              }}
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete
+            </Button>
+          ) : null}
        </div>
 
        <div className="grid gap-6 md:grid-cols-[300px_1fr]">

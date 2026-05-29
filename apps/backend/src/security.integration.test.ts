@@ -9,6 +9,7 @@ import ContentApprovalAction from './models/ContentApprovalAction';
 import Event from './models/Event';
 import FAQContent from './models/FAQContent';
 import News from './models/News';
+import OrgTask from './models/OrgTask';
 import Organization from './models/Organization';
 import OrganizationAssignment from './models/OrganizationAssignment';
 import Role from './models/Role';
@@ -184,6 +185,7 @@ describe('Security-first MVP regression suite', () => {
       Event.deleteMany({}),
       FAQContent.deleteMany({}),
       News.deleteMany({}),
+      OrgTask.deleteMany({}),
       Organization.deleteMany({}),
       OrganizationAssignment.deleteMany({}),
       Role.deleteMany({}),
@@ -998,6 +1000,135 @@ describe('Security-first MVP regression suite', () => {
     ).toEqual(['CSS admin announcement']);
   });
 
+  it('does not serve cached unpublished news or events to anonymous users', async () => {
+    const { user: fullAdmin, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+
+    const draftNews = await News.create({
+      title: 'Cached draft news',
+      bodyHtml: '<p>draft</p>',
+      excerpt: 'draft',
+      author: fullAdmin._id,
+      ownerType: 'system',
+      status: NewsStatus.DRAFT,
+      tags: [],
+      gallery: [],
+      sections: [],
+    });
+
+    const draftEvent = await Event.create({
+      title: 'Cached draft event',
+      bodyHtml: '<p>draft</p>',
+      excerpt: 'draft',
+      organizer: fullAdmin._id,
+      ownerType: 'system',
+      startDate: new Date('2030-01-01T09:00:00.000Z'),
+      endDate: new Date('2030-01-01T10:00:00.000Z'),
+      location: 'CICT Hall',
+      status: EventStatus.DRAFT,
+      attendees: [],
+      gallery: [],
+      sections: [],
+      schedule: [],
+      tags: [],
+      isRegistrationOpen: false,
+    });
+
+    const cachedNewsResponse = await request(app)
+      .get(`/api/news/${draftNews._id}`)
+      .set(authHeader(token));
+    expect(cachedNewsResponse.status).toBe(200);
+    expect(cachedNewsResponse.body.data.news.title).toBe('Cached draft news');
+
+    const cachedEventResponse = await request(app)
+      .get(`/api/events/${draftEvent._id}`)
+      .set(authHeader(token));
+    expect(cachedEventResponse.status).toBe(200);
+    expect(cachedEventResponse.body.data.event.title).toBe('Cached draft event');
+
+    const anonymousNewsResponse = await request(app).get(`/api/news/${draftNews._id}`);
+    expect(anonymousNewsResponse.status).toBe(401);
+    expect(anonymousNewsResponse.body.data).toBeUndefined();
+
+    const anonymousEventResponse = await request(app).get(`/api/events/${draftEvent._id}`);
+    expect(anonymousEventResponse.status).toBe(401);
+    expect(anonymousEventResponse.body.data).toBeUndefined();
+  });
+
+  it('does not serve cached organization announcements outside scoped permissions', async () => {
+    const { user: fullAdmin, token } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+
+    await Organization.create([
+      {
+        id: 'css',
+        name: 'CSS',
+        fullName: 'Computer Studies Society',
+        description: 'CSS org',
+        longDescription: 'Computer Studies Society organization',
+        logo: '/css-logo.png',
+        banner: '/css-banner.png',
+        established: '2010',
+        mission: 'Serve CSS students',
+        vision: 'Grow CSS leaders',
+        values: ['Service'],
+        achievements: ['Hackathon'],
+        members: [],
+        color: { primary: '#111111', secondary: '#222222', accent: '#333333' },
+      },
+      {
+        id: 'iss',
+        name: 'ISS',
+        fullName: 'Information Systems Society',
+        description: 'ISS org',
+        longDescription: 'Information Systems Society organization',
+        logo: '/iss-logo.png',
+        banner: '/iss-banner.png',
+        established: '2011',
+        mission: 'Serve ISS students',
+        vision: 'Grow ISS leaders',
+        values: ['Innovation'],
+        achievements: ['Forum'],
+        members: [],
+        color: { primary: '#444444', secondary: '#555555', accent: '#666666' },
+      },
+    ]);
+
+    const issScopedAdmin = await createScopedUser(
+      [Permission.VIEW_ANNOUNCEMENT],
+      'iss',
+      fullAdmin
+    );
+
+    const cssAnnouncement = await Announcement.create({
+      title: 'Cached CSS announcement',
+      bodyHtml: '<p>css</p>',
+      author: fullAdmin._id,
+      ownerType: 'organization',
+      organizationId: 'css',
+      priority: AnnouncementPriority.MEDIUM,
+      type: AnnouncementType.GENERAL,
+      status: NewsStatus.DRAFT,
+      isActive: false,
+      targetAudience: ['all'],
+      gallery: [],
+      sections: [],
+    });
+
+    const cachedAnnouncementResponse = await request(app)
+      .get(`/api/announcements/${cssAnnouncement._id}`)
+      .set(authHeader(token));
+    expect(cachedAnnouncementResponse.status).toBe(200);
+    expect(cachedAnnouncementResponse.body.data.announcement.title).toBe(
+      'Cached CSS announcement'
+    );
+
+    const scopedAnnouncementResponse = await request(app)
+      .get(`/api/announcements/${cssAnnouncement._id}`)
+      .set(authHeader(issScopedAdmin.token));
+
+    expect(scopedAnnouncementResponse.status).toBe(403);
+    expect(scopedAnnouncementResponse.body.data).toBeUndefined();
+  });
+
   it('keeps public organization payloads free of adminAssignments while exposing scoped admin data on protected admin endpoints', async () => {
     const { user: fullAdmin } = await createSystemUser({ role: UserRole.FULL_ADMIN });
 
@@ -1116,6 +1247,92 @@ describe('Security-first MVP regression suite', () => {
     expect(assignmentsResponse.status).toBe(403);
     expect(assignmentsResponse.body.message).toBe(
       'You do not have access to this organization scope'
+    );
+  });
+
+  it('allows organization-tool scoped users to manage only their assigned organization tools', async () => {
+    const { user: fullAdmin } = await createSystemUser({ role: UserRole.FULL_ADMIN });
+
+    await Organization.create([
+      {
+        id: 'css',
+        name: 'CSS',
+        fullName: 'Computer Studies Society',
+        description: 'CSS org',
+        longDescription: 'Computer Studies Society organization',
+        logo: '/css-logo.png',
+        banner: '/css-banner.png',
+        established: '2010',
+        mission: 'Serve CSS students',
+        vision: 'Grow CSS leaders',
+        values: ['Service'],
+        achievements: ['Hackathon'],
+        members: [],
+        color: { primary: '#111111', secondary: '#222222', accent: '#333333' },
+      },
+      {
+        id: 'iss',
+        name: 'ISS',
+        fullName: 'Information Systems Society',
+        description: 'ISS org',
+        longDescription: 'Information Systems Society organization',
+        logo: '/iss-logo.png',
+        banner: '/iss-banner.png',
+        established: '2011',
+        mission: 'Serve ISS students',
+        vision: 'Grow ISS leaders',
+        values: ['Innovation'],
+        achievements: ['Forum'],
+        members: [],
+        color: { primary: '#444444', secondary: '#555555', accent: '#666666' },
+      },
+    ]);
+
+    const taskScopedUser = await createScopedUser(
+      [Permission.MANAGE_ORG_TASKS],
+      'css',
+      fullAdmin
+    );
+
+    const profileResponse = await request(app)
+      .get('/api/auth/profile')
+      .set(authHeader(taskScopedUser.token));
+
+    expect(profileResponse.status).toBe(200);
+    expect(profileResponse.body.data.canAccessAdmin).toBe(true);
+    expect(profileResponse.body.data.user.visibleAdminModules).toEqual(
+      expect.arrayContaining(['dashboard', 'organizations'])
+    );
+    expect(profileResponse.body.data.user.scopedAdminModulesByOrganization.css).toEqual([
+      'organizations',
+    ]);
+
+    const createTaskResponse = await request(app)
+      .post('/api/organizations/css/tasks')
+      .set(authHeader(taskScopedUser.token))
+      .send({
+        title: 'Prepare general assembly',
+        priority: 'high',
+        checklist: [{ text: 'Reserve room', completed: false }],
+      });
+
+    expect(createTaskResponse.status).toBe(201);
+    expect(createTaskResponse.body.data.title).toBe('Prepare general assembly');
+
+    const cssTasksResponse = await request(app)
+      .get('/api/organizations/css/tasks')
+      .set(authHeader(taskScopedUser.token));
+
+    expect(cssTasksResponse.status).toBe(200);
+    expect(cssTasksResponse.body.data).toHaveLength(1);
+
+    const issTasksResponse = await request(app)
+      .get('/api/organizations/iss/tasks')
+      .set(authHeader(taskScopedUser.token));
+
+    expect(issTasksResponse.status).toBe(403);
+    expect(issTasksResponse.body.message).toBe(
+      'You do not have access to manage tasks for this organization'
     );
   });
 

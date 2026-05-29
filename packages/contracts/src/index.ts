@@ -66,6 +66,11 @@ export const Permission = {
   ASSIGN_ROLE: 'assign_role',
   VIEW_LOGS: 'view_logs',
   MANAGE_SETTINGS: 'manage_settings',
+  MANAGE_ORG_TASKS: 'manage_org_tasks',
+  MANAGE_ORG_MEETINGS: 'manage_org_meetings',
+  MANAGE_ORG_VOTES: 'manage_org_votes',
+  MANAGE_ORG_BUDGET: 'manage_org_budget',
+  MANAGE_ORG_TEMPLATES: 'manage_org_templates',
 } as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];
 

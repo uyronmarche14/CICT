@@ -43,4 +43,25 @@ export const queryKeys = {
   permissionsMetadata: {
     all: ['permissions-metadata'] as const,
   },
+  orgTasks: {
+    all: (orgId: string) => ['org-tasks', orgId] as const,
+    detail: (orgId: string, taskId: string) => ['org-tasks', orgId, taskId] as const,
+  },
+  orgMeetings: {
+    all: (orgId: string) => ['org-meetings', orgId] as const,
+    detail: (orgId: string, meetingId: string) => ['org-meetings', orgId, meetingId] as const,
+  },
+  orgVotes: {
+    all: (orgId: string) => ['org-votes', orgId] as const,
+    detail: (orgId: string, voteId: string) => ['org-votes', orgId, voteId] as const,
+    results: (orgId: string, voteId: string) => ['org-votes', orgId, voteId, 'results'] as const,
+  },
+  orgBudget: {
+    overview: (orgId: string) => ['org-budget', orgId] as const,
+    transactions: (orgId: string) => ['org-budget', orgId, 'transactions'] as const,
+  },
+  orgTemplates: {
+    all: ['org-templates'] as const,
+    detail: (id: string) => ['org-templates', id] as const,
+  },
 };

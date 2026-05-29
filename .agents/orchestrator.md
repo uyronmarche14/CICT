@@ -26,7 +26,7 @@ Coordinates multi-step work across frontend, backend, docs, and tests.
 
 ## Key files
 
-- [cictv4/src/types/index.ts](/home/ronmarche14/projects/CICT/cictv4/src/types/index.ts:1)
-- [cict-backend/src/types/index.ts](/home/ronmarche14/projects/CICT/cict-backend/src/types/index.ts:1)
-- [cictv4/src/hooks/permissions/use-permissions.ts](/home/ronmarche14/projects/CICT/cictv4/src/hooks/permissions/use-permissions.ts:1)
-- [cict-backend/src/utils/rbac.ts](/home/ronmarche14/projects/CICT/cict-backend/src/utils/rbac.ts:1)
+- [apps/web/src/types/index.ts](/home/ronmarche14/projects/CICT/apps/web/src/types/index.ts:1)
+- [apps/backend/src/types/index.ts](/home/ronmarche14/projects/CICT/apps/backend/src/types/index.ts:1)
+- [apps/web/src/hooks/permissions/use-permissions.ts](/home/ronmarche14/projects/CICT/apps/web/src/hooks/permissions/use-permissions.ts:1)
+- [apps/backend/src/utils/rbac.ts](/home/ronmarche14/projects/CICT/apps/backend/src/utils/rbac.ts:1)
