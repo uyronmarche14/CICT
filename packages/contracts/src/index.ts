@@ -71,6 +71,13 @@ export const Permission = {
   MANAGE_ORG_VOTES: 'manage_org_votes',
   MANAGE_ORG_BUDGET: 'manage_org_budget',
   MANAGE_ORG_TEMPLATES: 'manage_org_templates',
+  VIEW_ORG_ANALYTICS: 'view_org_analytics',
+  MANAGE_ORG_PARTNERSHIPS: 'manage_org_partnerships',
+  MANAGE_ORG_COLLABORATION: 'manage_org_collaboration',
+  SHARE_CONTENT_CROSS_ORG: 'share_content_cross_org',
+  MANAGE_ORG_TASK_FORCES: 'manage_org_task_forces',
+  MANAGE_ORG_RESOURCE_POOLING: 'manage_org_resource_pooling',
+  MANAGE_ORG_MENTORSHIP: 'manage_org_mentorship',
 } as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];
 

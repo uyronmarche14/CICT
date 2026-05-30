@@ -273,6 +273,8 @@ export const usePermissions = () => {
     canManageOrgBudget: (organizationId: string) =>
       canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_BUDGET),
     canManageOrgTemplates: () => hasPermission(Permission.MANAGE_ORG_TEMPLATES),
+    canManageOrgAnalytics: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.VIEW_ORG_ANALYTICS),
     hasAnyOrgTasksAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_TASKS),
     hasAnyOrgMeetingsAccess: () =>
       hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_MEETINGS),

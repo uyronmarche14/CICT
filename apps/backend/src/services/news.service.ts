@@ -65,7 +65,7 @@ const NEWS_EDITABLE_FIELDS = [
   'relatedArticleIds',
 ] as const
 
-const newsDetailCache = new TypedCache<any>({
+const newsDetailCache = new TypedCache<unknown>({
   namespace: 'news:detail',
   ttlMs: 120_000,
 })
@@ -85,7 +85,7 @@ const invalidateNews = async (id: string, invalidateDashboard = true): Promise<v
 
 // ——— Reads ———
 
-export const getNewsById = async (id: string, req: AuthRequest): Promise<any> => {
+export const getNewsById = async (id: string, req: AuthRequest): Promise<unknown> => {
   const news = await News.findById(id).populate('author', 'firstName lastName email')
 
   if (!news) {

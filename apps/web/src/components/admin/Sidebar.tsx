@@ -29,7 +29,13 @@ import {
   CalendarClock,
   Vote,
   Wallet,
+  BarChart3,
   LayoutTemplate,
+  Handshake,
+  MessageSquare,
+  Share2,
+  UsersRound,
+  Package,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -75,6 +81,13 @@ const PHASE_10_ORG_TOOLS: OrgTool[] = [
   { label: 'Meetings', icon: CalendarClock, href: '/meetings', canAccess: (permissions, orgId) => permissions.canManageOrgMeetings(orgId) },
   { label: 'Voting & Elections', icon: Vote, href: '/voting', canAccess: (permissions, orgId) => permissions.canManageOrgVotes(orgId) },
   { label: 'Budget & Finance', icon: Wallet, href: '/budget', canAccess: (permissions, orgId) => permissions.canManageOrgBudget(orgId) },
+  { label: 'Analytics', icon: BarChart3, href: '/analytics' },
+  { label: 'Partnerships', icon: Handshake, href: '/partnerships' },
+  { label: 'Collaboration Spaces', icon: MessageSquare, href: '/collaborations' },
+  { label: 'Shared Content', icon: Share2, href: '/shared-content' },
+  { label: 'Task Forces', icon: UsersRound, href: '/task-forces' },
+  { label: 'Resource Pooling', icon: Package, href: '/resources' },
+  { label: 'Mentorship', icon: GraduationCap, href: '/mentorship' },
   { label: 'Templates', icon: LayoutTemplate, href: '/templates', canAccess: (permissions) => permissions.hasAnyOrgTemplatesAccess() },
 ];
 

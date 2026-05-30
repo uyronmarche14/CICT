@@ -6,9 +6,16 @@ import {
   CalendarClock,
   Vote,
   Wallet,
+  BarChart3,
   LayoutTemplate,
   LayoutDashboard,
   MoreHorizontal,
+  Handshake,
+  MessageSquare,
+  Share2,
+  UsersRound,
+  Package,
+  GraduationCap,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
@@ -36,10 +43,17 @@ const ORG_TOOLS: NavItem[] = [
   { label: 'Meetings', href: '/meetings', icon: CalendarClock, canAccess: (permissions, orgId) => permissions.canManageOrgMeetings(orgId) },
   { label: 'Voting & Elections', href: '/voting', icon: Vote, canAccess: (permissions, orgId) => permissions.canManageOrgVotes(orgId) },
   { label: 'Budget & Finance', href: '/budget', icon: Wallet, canAccess: (permissions, orgId) => permissions.canManageOrgBudget(orgId) },
+  { label: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { label: 'Partnerships', href: '/partnerships', icon: Handshake },
+  { label: 'Collaboration Spaces', href: '/collaborations', icon: MessageSquare },
+  { label: 'Shared Content', href: '/shared-content', icon: Share2 },
+  { label: 'Task Forces', href: '/task-forces', icon: UsersRound },
+  { label: 'Resource Pooling', href: '/resources', icon: Package },
+  { label: 'Mentorship', href: '/mentorship', icon: GraduationCap },
   { label: 'Templates', href: '/templates', icon: LayoutTemplate, canAccess: (permissions) => permissions.hasAnyOrgTemplatesAccess() },
 ];
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE = 7;
 
 interface OrgSubNavProps {
   orgId: string;

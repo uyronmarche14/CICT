@@ -33,6 +33,13 @@ import orgMeetingRoutes from "./routes/org-meeting.routes";
 import orgVoteRoutes from "./routes/org-vote.routes";
 import orgBudgetRoutes from "./routes/org-budget.routes";
 import orgTemplateRoutes from "./routes/org-template.routes";
+import orgAnalyticsRoutes from "./routes/org-analytics.routes";
+import orgPartnershipRoutes from "./routes/org-partnership.routes";
+import orgCollaborationRoutes from "./routes/org-collaboration.routes";
+import orgSharedContentRoutes from "./routes/org-shared-content.routes";
+import orgTaskForceRoutes from "./routes/org-task-force.routes";
+import orgResourceRoutes from "./routes/org-resource.routes";
+import orgMentorshipRoutes from "./routes/org-mentorship.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -155,6 +162,13 @@ app.use("/api/organizations", orgMeetingRoutes);
 app.use("/api/organizations", orgVoteRoutes);
 app.use("/api/organizations", orgBudgetRoutes);
 app.use("/api/org-templates", orgTemplateRoutes);
+app.use("/api/organizations", orgAnalyticsRoutes);
+app.use("/api/organizations", orgPartnershipRoutes);
+app.use("/api/organizations", orgCollaborationRoutes);
+app.use("/api/organizations", orgSharedContentRoutes);
+app.use("/api/organizations", orgTaskForceRoutes);
+app.use("/api/organizations", orgResourceRoutes);
+app.use("/api/organizations", orgMentorshipRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/admin/students", studentAdminRoutes);
 app.use("/api/admin/academic", academicRoutes);

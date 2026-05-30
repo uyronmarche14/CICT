@@ -77,7 +77,7 @@ const EVENT_EDITABLE_FIELDS = [
   'posterCaption',
 ] as const
 
-const eventDetailCache = new TypedCache<any>({
+const eventDetailCache = new TypedCache<unknown>({
   namespace: 'event:detail',
   ttlMs: 120_000,
 })
@@ -112,7 +112,7 @@ const ensureValidEventDateRange = (startDateValue: unknown, endDateValue: unknow
 
 // ——— Reads ———
 
-export const getEventById = async (id: string, req: AuthRequest): Promise<any> => {
+export const getEventById = async (id: string, req: AuthRequest): Promise<unknown> => {
   const cacheKey = `${id}:with-related`
   const event = await Event.findById(id)
     .populate('organizer', 'firstName lastName email')

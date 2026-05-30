@@ -64,4 +64,34 @@ export const queryKeys = {
     all: ['org-templates'] as const,
     detail: (id: string) => ['org-templates', id] as const,
   },
+  orgAnalytics: {
+    overview: (orgId: string) => ['org-analytics', orgId, 'overview'] as const,
+    engagement: (orgId: string) => ['org-analytics', orgId, 'engagement'] as const,
+    tasks: (orgId: string) => ['org-analytics', orgId, 'tasks'] as const,
+    events: (orgId: string) => ['org-analytics', orgId, 'events'] as const,
+    financial: (orgId: string) => ['org-analytics', orgId, 'financial'] as const,
+  },
+  orgPartnerships: {
+    all: (orgId: string) => ['org-partnerships', orgId] as const,
+  },
+  orgCollaborations: {
+    all: (orgId: string) => ['org-collaborations', orgId] as const,
+    detail: (orgId: string, id: string) => ['org-collaborations', orgId, id] as const,
+    messages: (orgId: string, spaceId: string) => ['org-collaborations', orgId, spaceId, 'messages'] as const,
+  },
+  orgSharedContent: {
+    incoming: (orgId: string) => ['org-shared-content', orgId, 'incoming'] as const,
+    outgoing: (orgId: string) => ['org-shared-content', orgId, 'outgoing'] as const,
+  },
+  orgTaskForces: {
+    all: (orgId: string) => ['org-task-forces', orgId] as const,
+    detail: (orgId: string, id: string) => ['org-task-forces', orgId, id] as const,
+  },
+  orgResources: {
+    outgoing: (orgId: string) => ['org-resources', orgId, 'outgoing'] as const,
+    incoming: (orgId: string) => ['org-resources', orgId, 'incoming'] as const,
+  },
+  orgMentorships: {
+    all: (orgId: string) => ['org-mentorships', orgId] as const,
+  },
 };

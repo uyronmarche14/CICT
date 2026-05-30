@@ -70,7 +70,7 @@ const ANNOUNCEMENT_EDITABLE_FIELDS = [
   'attachmentItems',
 ] as const
 
-const announcementDetailCache = new TypedCache<any>({
+const announcementDetailCache = new TypedCache<unknown>({
   namespace: 'announcement:detail',
   ttlMs: 120_000,
 })
@@ -96,7 +96,7 @@ const invalidateAnnouncement = async (id: string, invalidateDashboard = true): P
 
 // ——— Reads ———
 
-export const getAnnouncementById = async (id: string, req: AuthRequest): Promise<any> => {
+export const getAnnouncementById = async (id: string, req: AuthRequest): Promise<unknown> => {
   const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email')
 
   if (!announcement) {
@@ -127,7 +127,7 @@ export const getAnnouncementById = async (id: string, req: AuthRequest): Promise
   return serializedAnnouncement
 }
 
-export const getPublicAnnouncementById = async (id: string): Promise<any> => {
+export const getPublicAnnouncementById = async (id: string): Promise<unknown> => {
   const announcement = await Announcement.findById(id).populate('author', 'firstName lastName email')
 
   if (!announcement) {

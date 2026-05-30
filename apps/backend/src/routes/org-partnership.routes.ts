@@ -1,0 +1,23 @@
+import express from 'express';
+import { authenticate as protect } from '../middleware/auth';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
+import { validate } from '../middleware/validate';
+import { logActivity } from '../middleware/activityLogger';
+import {
+  listPartnerships, createPartnership, getPartnership,
+  acceptPartnership, declinePartnership, terminatePartnership,
+} from '../controllers/org-partnership.controller';
+import { createPartnershipValidator, partnershipActionValidator } from '../validators/org-partnership.validator';
+
+const router = express.Router();
+router.use(protect, requireAdminAccess);
+
+router.get('/:orgId/partnerships', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), listPartnerships);
+router.post('/:orgId/partnerships', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), validate(createPartnershipValidator), logActivity('create', 'org_partnership'), createPartnership);
+router.get('/:orgId/partnerships/:id', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), getPartnership);
+router.patch('/:orgId/partnerships/:id/accept', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), validate(partnershipActionValidator), logActivity('accept', 'org_partnership'), acceptPartnership);
+router.patch('/:orgId/partnerships/:id/decline', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), validate(partnershipActionValidator), logActivity('decline', 'org_partnership'), declinePartnership);
+router.patch('/:orgId/partnerships/:id/terminate', authorize(Permission.MANAGE_ORG_PARTNERSHIPS), validate(partnershipActionValidator), logActivity('terminate', 'org_partnership'), terminatePartnership);
+
+export default router;
