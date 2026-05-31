@@ -4,6 +4,22 @@ Full-stack web platform for the CICT department. Public-facing website + admin C
 
 The repository is now a pnpm workspace monorepo with backend, web, mobile, and shared API contracts.
 
+## Start Here for Developers
+
+New to the project? Start with the [Developer Guide](docs/DEVELOPER_GUIDE.md). It explains the monorepo structure, backend/web/mobile responsibilities, request flow, local setup, quality checks, deployment overview, and first-day onboarding checklist.
+
+## Documentation Index
+
+| Document | Purpose |
+|---|---|
+| [Developer Guide](docs/DEVELOPER_GUIDE.md) | Main onboarding guide for new developers |
+| [System Documentation](CICT_SYSTEM_DOCUMENTATION.md) | Deep current-state reference for modules, features, and gaps |
+| [CI/CD Pipeline](CICT_CICD_PIPELINE.md) | CI/CD tracker, deployment phases, and verification status |
+| [Agent Operational Reference](AGENTS.md) | Agent instructions, scripts, secrets, and branch protection notes |
+| [Main Roadmap](apps/web/docs/implementation/MASTER_ROADMAP.md) | Phase 1-9 implementation roadmap |
+| [Expansion Roadmap](apps/web/docs/implementation/MASTER_ROADMAP_EXPANSION.md) | Phase 10+ expansion roadmap and business logic |
+| [Mobile Architecture](apps/mobile/docs/architecture.md) | Expo app architecture and mobile guidance |
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -37,18 +53,18 @@ pnpm install
 
 ### Run Locally
 
-**Terminal 1 — MongoDB + Backend:**
+**Terminal 1 - MongoDB + Backend:**
 ```bash
 pnpm run backend:mongo:up
 pnpm run backend:dev
 ```
 
-**Terminal 2 — Frontend:**
+**Terminal 2 - Frontend:**
 ```bash
 pnpm run web:dev
 ```
 
-Open http://localhost:3000 — API at http://localhost:5000/api
+Open http://localhost:3000. The API is at http://localhost:5000/api.
 
 ### Seed Database
 ```bash
@@ -101,17 +117,15 @@ For phone testing from WSL, prefer a tunnel-backed mobile API URL instead of `lo
 ## Branch Strategy
 
 ```
-feature/* ──PR──→ staging ──push──→ Render staging backend
-                      │ PR
-                      ↓
-                    main ──push──→ Render production backend + Vercel frontend
+feature/* -> PR -> staging -> push -> Render staging backend
+                 -> PR -> main -> push -> Render production backend + Vercel frontend
 ```
 
 ## CI/CD
 
 Three GitHub Actions workflows:
-- **CI** — lint, typecheck, test, build, security scan (on every PR)
-- **Deploy Staging** — push to `staging` → deploys backend to Render
-- **Deploy Production** — push to `main` → deploys to Render (backend) + Vercel (frontend)
+- **CI** - lint, typecheck, test, build, security scan (on every PR)
+- **Deploy Staging** - push to `staging` deploys backend to Render
+- **Deploy Production** - push to `main` deploys to Render (backend) and Vercel (frontend)
 
 See `AGENTS.md` for CI/CD reference and required GitHub Secrets.

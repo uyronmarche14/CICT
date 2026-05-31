@@ -1,5 +1,5 @@
 import type { Request, Response } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 const parsePositiveInt = (value: string | undefined, fallback: number) => {
   if (!value) {
@@ -70,7 +70,7 @@ export const createStudentLoginRateLimiter = () =>
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       const identifier = req.body?.identifier as string | undefined;
-      return identifier ? `student_login:${identifier.trim().toLowerCase()}` : req.ip ?? 'unknown';
+      return identifier ? `student_login:${identifier.trim().toLowerCase()}` : ipKeyGenerator(req.ip ?? '');
     },
     handler: createJsonRateLimitHandler(
       'Too many login attempts for this account, please try again later.'

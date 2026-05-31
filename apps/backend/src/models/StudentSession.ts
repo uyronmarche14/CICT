@@ -28,7 +28,6 @@ const studentSessionSchema = new Schema<IStudentSession>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
     revokedAt: {
       type: Date,
