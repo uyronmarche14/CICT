@@ -19,23 +19,24 @@ import { Label } from '@/components/ui/label';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
+import { LookupMultiCombobox } from '@/components/ui/lookup-combobox';
 
 const statusColors: Record<string, string> = { planning: 'bg-gray-100 text-gray-600', active: 'bg-green-100 text-green-700', completed: 'bg-blue-100 text-blue-700', cancelled: 'bg-red-100 text-red-700' };
 
 export default function OrgTaskForcesPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgTaskForces } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgTaskForces(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '', startDate: '' });
+  const [form, setForm] = useState({ name: '', description: '', startDate: '', participantOrgIds: [] as string[] });
 
   const { data: taskForces = [], isLoading } = useQuery({ queryKey: queryKeys.orgTaskForces.all(orgId), queryFn: () => orgTaskForcesAPI.list(orgId), enabled: !!orgId });
   const delMut = useMutation({ mutationFn: (id: string) => orgTaskForcesAPI.delete(orgId, id), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.orgTaskForces.all(orgId) }) });
   const createMut = useMutation({
     mutationFn: () => orgTaskForcesAPI.create(orgId, form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.orgTaskForces.all(orgId) }); setOpen(false); setForm({ name: '', description: '', startDate: '' }); appToast.success('Task force created', ''); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.orgTaskForces.all(orgId) }); setOpen(false); setForm({ name: '', description: '', startDate: '', participantOrgIds: [] }); appToast.success('Task force created', ''); },
     onError: () => appToast.error('Error', 'Failed to create task force.'),
   });
 
@@ -50,6 +51,7 @@ export default function OrgTaskForcesPage() {
             <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Task force name" /></div>
             <div><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What is this task force for?" /></div>
             <div><Label>Start Date</Label><DatePicker value={form.startDate} onChange={(v) => setForm({ ...form, startDate: v || '' })} /></div>
+            <div><Label>Participant Organizations</Label><LookupMultiCombobox kind="organizations" value={form.participantOrgIds} onChange={(value) => setForm({ ...form, participantOrgIds: value })} placeholder="Select organizations" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!form.name.trim() || !form.startDate || createMut.isPending}>Create</Button></DialogFooter></DialogContent></Dialog></>}>
       {isLoading ? <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>

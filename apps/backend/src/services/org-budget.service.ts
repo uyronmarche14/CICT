@@ -29,22 +29,42 @@ export const createBudget = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
-  return OrgBudget.create({ ...req.body, organizationId: oid, createdBy });
+  return OrgBudget.create({
+    ...req.body,
+    organizationId: oid,
+    createdBy,
+    statusHistory: [{ status: 'created', changedBy: createdBy, changedAt: new Date() }],
+  });
 };
 
 export const updateBudget = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const budget = await OrgBudget.findOneAndUpdate(
-    { organizationId: oid },
-    { $set: req.body },
-    { new: true, runValidators: true, upsert: true }
-  );
+  let budget = await OrgBudget.findOne({ organizationId: oid });
+  if (!budget) {
+    const createdBy = req.user?.userId;
+    if (!createdBy) {throw new AppError('User not authenticated', 401);}
+    budget = await OrgBudget.create({ ...req.body, organizationId: oid, createdBy });
+    return budget;
+  }
+  if (req.body.totalBudget && budget.totalBudget !== req.body.totalBudget) {
+    budget.statusHistory.push({
+      status: `totalBudget: ${budget.totalBudget} → ${req.body.totalBudget}`,
+      changedBy: req.user!.userId,
+      changedAt: new Date(),
+      reason: req.body.reason,
+    });
+  }
+  Object.assign(budget, req.body);
+  await budget.save();
   return budget;
 };
 
 export const listTransactions = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  return OrgTransaction.find({ organizationId: oid }).sort({ date: -1 }).lean();
+  const filter: Record<string, unknown> = { organizationId: oid };
+  if (req.query.fiscalYear) {filter.fiscalYear = req.query.fiscalYear;}
+  if (req.query.semester) {filter.semester = req.query.semester;}
+  return OrgTransaction.find(filter).sort({ date: -1 }).lean();
 };
 
 export const createTransaction = async (req: AuthRequest, orgId: string) => {

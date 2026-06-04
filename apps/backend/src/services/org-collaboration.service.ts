@@ -5,6 +5,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureOrganizationsExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -23,7 +24,10 @@ export const listSpaces = async (req: AuthRequest, orgId: string) => {
 
 export const createSpace = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
-  return CollaborationSpace.create({ ...req.body, participantOrgIds: [org.id, ...(req.body.participantOrgIds || [])], createdBy: req.user!.userId });
+  const participantOrgIds = Array.isArray(req.body.participantOrgIds)
+    ? await ensureOrganizationsExist(req.body.participantOrgIds)
+    : [];
+  return CollaborationSpace.create({ ...req.body, participantOrgIds: [...new Set([org.id, ...participantOrgIds])], createdBy: req.user!.userId });
 };
 
 export const getSpace = async (req: AuthRequest, orgId: string, id: string) => {
@@ -35,6 +39,9 @@ export const getSpace = async (req: AuthRequest, orgId: string, id: string) => {
 
 export const updateSpace = async (req: AuthRequest, orgId: string, id: string) => {
   await resolveOrg(req, orgId);
+  if (Array.isArray(req.body.participantOrgIds)) {
+    req.body.participantOrgIds = await ensureOrganizationsExist(req.body.participantOrgIds);
+  }
   const space = await CollaborationSpace.findOneAndUpdate(
     { _id: id, participantOrgIds: orgId },
     { $set: req.body },

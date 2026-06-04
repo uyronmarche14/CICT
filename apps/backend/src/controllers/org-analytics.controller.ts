@@ -27,6 +27,36 @@ export const getEngagement = async (req: AuthRequest, res: Response) => {
   res.json({ success: true, data });
 };
 
+export const getTaskForceAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getTaskForceAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
+export const getResourceAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getResourceAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
+export const getPartnershipAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getPartnershipAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
+export const getCollaborationAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getCollaborationAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
+export const getMentorshipAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getMentorshipAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
+export const getSharedContentAnalytics = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getSharedContentAnalytics(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
 export const exportReport = async (req: AuthRequest, res: Response) => {
   const data = await analyticsService.exportReport(req, req.params.orgId);
   res.json({ success: true, data });

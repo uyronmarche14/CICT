@@ -32,7 +32,10 @@ export const createMentorship = async (req: AuthRequest, orgId: string) => {
   const existing = await OrgMentorship.findOne({ mentorOrgId: org.id, menteeOrgId });
   if (existing) {throw new AppError('Mentorship already exists', 409);}
 
-  return OrgMentorship.create({ mentorOrgId: org.id, menteeOrgId, focusAreas, startDate, endDate, createdBy: req.user!.userId });
+  return OrgMentorship.create({
+    mentorOrgId: org.id, menteeOrgId, focusAreas, startDate, endDate, createdBy: req.user!.userId,
+    statusHistory: [{ status: 'active', changedBy: req.user!.userId, changedAt: new Date() }],
+  });
 };
 
 export const getMentorship = async (req: AuthRequest, orgId: string, id: string) => {
@@ -44,12 +47,13 @@ export const getMentorship = async (req: AuthRequest, orgId: string, id: string)
 
 export const updateMentorshipStatus = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const mentorship = await OrgMentorship.findOneAndUpdate(
-    { _id: id, $or: [{ mentorOrgId: org.id }, { menteeOrgId: org.id }] },
-    { $set: { status: req.body.status } },
-    { new: true }
-  );
+  const mentorship = await OrgMentorship.findOne({ _id: id, $or: [{ mentorOrgId: org.id }, { menteeOrgId: org.id }] });
   if (!mentorship) {throw new AppError('Mentorship not found', 404);}
+  if (mentorship.status !== req.body.status) {
+    mentorship.statusHistory.push({ status: req.body.status, changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.reason });
+  }
+  mentorship.status = req.body.status;
+  await mentorship.save();
   return mentorship;
 };
 

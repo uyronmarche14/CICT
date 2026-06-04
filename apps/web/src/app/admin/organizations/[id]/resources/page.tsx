@@ -20,18 +20,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
+import { LookupCombobox } from '@/components/ui/lookup-combobox';
+import { useReferenceData } from '@/hooks/use-reference-data';
 
 const statusColors: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', approved: 'bg-green-100 text-green-700', denied: 'bg-red-100 text-red-700', fulfilled: 'bg-blue-100 text-blue-700', cancelled: 'bg-gray-100 text-gray-600' };
 const typeColors: Record<string, string> = { venue: 'bg-purple-100 text-purple-700', equipment: 'bg-cyan-100 text-cyan-700', budget: 'bg-emerald-100 text-emerald-700', personnel: 'bg-orange-100 text-orange-700', other: 'bg-gray-100 text-gray-600' };
 
 export default function OrgResourcesPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgResources } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgResources(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ resourceType: 'other', description: '', providingOrgId: '' });
+  const { items: resourceTypes } = useReferenceData('resourceTypes');
 
   const qk = { inc: queryKeys.orgResources.incoming(orgId), out: queryKeys.orgResources.outgoing(orgId) };
   const { data: outgoing = [], isLoading: outLoading } = useQuery({ queryKey: qk.out, queryFn: () => orgResourcesAPI.outgoing(orgId), enabled: !!orgId });
@@ -77,10 +80,18 @@ export default function OrgResourcesPage() {
             <div><Label>Resource Type</Label>
               <Select value={form.resourceType} onValueChange={(v) => setForm({ ...form, resourceType: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><SelectItem value="venue">Venue</SelectItem><SelectItem value="equipment">Equipment</SelectItem><SelectItem value="budget">Budget</SelectItem><SelectItem value="personnel">Personnel</SelectItem><SelectItem value="other">Other</SelectItem></SelectContent>
+                <SelectContent>
+                  {(resourceTypes.length > 0 ? resourceTypes : [
+                    { value: 'venue', label: 'venue' },
+                    { value: 'equipment', label: 'equipment' },
+                    { value: 'budget', label: 'budget' },
+                    { value: 'personnel', label: 'personnel' },
+                    { value: 'other', label: 'other' },
+                  ]).map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                </SelectContent>
               </Select></div>
             <div><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What do you need?" /></div>
-            <div><Label>Provider organization (optional)</Label><Input value={form.providingOrgId} onChange={(e) => setForm({ ...form, providingOrgId: e.target.value })} placeholder="e.g. css" /></div>
+            <div><Label>Provider Organization (optional)</Label><LookupCombobox kind="organizations" value={form.providingOrgId} onChange={(value) => setForm({ ...form, providingOrgId: value })} placeholder="Select provider" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!form.description.trim() || createMut.isPending}>Send Request</Button></DialogFooter></DialogContent></Dialog></>}>
       <Tabs defaultValue="outgoing">

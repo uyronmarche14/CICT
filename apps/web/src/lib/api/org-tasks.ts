@@ -13,6 +13,11 @@ interface Task {
   tags?: string[];
   attachments?: Array<{ name: string; url: string; type: string }>;
   checklist?: Array<{ text: string; completed: boolean }>;
+  statusHistory?: Array<{ status: string; changedBy: string; changedAt: string; reason?: string }>;
+  meetingId?: string;
+  actionItemIndex?: number;
+  committee?: string;
+  officerPosition?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -43,6 +48,12 @@ export const orgTasksAPI = {
   },
   toggleChecklist: async (orgId: string, taskId: string, index: number, completed: boolean) => {
     const res = await api.patch<{ success: boolean; data: Task }>(`/organizations/${orgId}/tasks/${taskId}/checklist`, { index, completed });
+    return res.data.data;
+  },
+  promoteFromMeetingAction: async (orgId: string, title: string, meetingId: string, actionItemIndex: number) => {
+    const res = await api.post<{ success: boolean; data: Task }>(`/organizations/${orgId}/tasks`, {
+      title, meetingId, actionItemIndex,
+    });
     return res.data.data;
   },
 };

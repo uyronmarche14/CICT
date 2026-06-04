@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { Plus, X } from 'lucide-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
@@ -15,12 +16,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DatePicker } from '@/components/ui/DatePicker';
 import { appToast } from '@/lib/app-toast';
 import { orgBudgetAPI } from '@/lib/api/org-budget';
+import { useReferenceData } from '@/hooks/use-reference-data';
+
+const categoryItemSchema = z.object({
+  name: z.string().min(1, 'Category name is required'),
+  allocated: z.coerce.number().min(0, 'Allocation must be positive'),
+});
 
 const budgetSchema = z.object({
   fiscalYear: z.string().min(1, 'Fiscal year is required'),
   totalBudget: z.coerce.number().min(0, 'Budget must be positive'),
   notes: z.string().optional(),
+  categories: z.array(categoryItemSchema).optional(),
 });
+
+type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
@@ -32,6 +42,9 @@ const transactionSchema = z.object({
   paymentMethod: z.enum(['cash', 'bank_transfer', 'check', 'online']).optional(),
   referenceNumber: z.string().optional(),
   receiptUrl: z.string().optional(),
+  budgetId: z.string().optional(),
+  fiscalYear: z.string().optional(),
+  semester: z.string().optional(),
 });
 
 const TRANSACTION_CATEGORIES = [
@@ -39,27 +52,41 @@ const TRANSACTION_CATEGORIES = [
   'Marketing', 'Venue', 'Utilities', 'Miscellaneous', 'Donations', 'Dues', 'Other',
 ];
 
-export function BudgetForm({ orgId, open, onOpenChange, onSuccess }: {
-  orgId: string; open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void;
+export function BudgetForm({ orgId, open, onOpenChange, onSuccess, item }: {
+  orgId: string; open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void; item?: BudgetFormValues | null;
 }) {
-  const form = useForm<z.infer<typeof budgetSchema>>({
+  const isEdit = !!item;
+  const [categories, setCategories] = useState<Array<{ name: string; allocated: number }>>([]);
+  const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
-    defaultValues: { fiscalYear: '', totalBudget: 0, notes: '' },
+    defaultValues: { fiscalYear: '', totalBudget: 0, notes: '', categories: [] },
   });
-  useEffect(() => { if (open) form.reset({ fiscalYear: '', totalBudget: 0, notes: '' }); }, [form, open]);
+  useEffect(() => {
+    if (open) {
+      const data = item || { fiscalYear: '', totalBudget: 0, notes: '', categories: [] };
+      form.reset(data);
+      setCategories(data.categories ?? []);
+    }
+  }, [form, open, item]);
 
-  const onSubmit = async (data: z.infer<typeof budgetSchema>) => {
+  const onSubmit = async (data: BudgetFormValues) => {
     try {
-      await orgBudgetAPI.create(orgId, data);
-      appToast.success('Budget Set', 'Budget has been created.');
-      onSuccess(); onOpenChange(false); form.reset();
+      const payload = { ...data, categories };
+      if (isEdit) {
+        await orgBudgetAPI.update(orgId, payload);
+        appToast.success('Budget Updated', 'Budget has been updated.');
+      } else {
+        await orgBudgetAPI.create(orgId, payload);
+        appToast.success('Budget Set', 'Budget has been created.');
+      }
+      onSuccess(); onOpenChange(false); form.reset(); setCategories([]);
     } catch { appToast.error('Error', 'Failed to save budget.'); }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader><DialogTitle>Set Budget</DialogTitle><DialogDescription>Set the annual budget.</DialogDescription></DialogHeader>
+      <DialogContent className="sm:max-w-[560px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{isEdit ? 'Edit Budget' : 'Set Budget'}</DialogTitle><DialogDescription>{isEdit ? 'Update the annual budget.' : 'Set the annual budget.'}</DialogDescription></DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <Controller name="fiscalYear" control={form.control} render={({ field }) => (
@@ -71,9 +98,38 @@ export function BudgetForm({ orgId, open, onOpenChange, onSuccess }: {
             <Controller name="notes" control={form.control} render={({ field }) => (
               <FormItem><FormLabel>Notes</FormLabel><FormControl><Input placeholder="Optional notes" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
+
+            {/* Budget Categories */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <FormLabel>Budget Categories</FormLabel>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCategories([...categories, { name: '', allocated: 0 }])}>
+                  <Plus className="h-3 w-3 mr-1" />Add Category
+                </Button>
+              </div>
+              {categories.map((cat, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input placeholder="Category name" value={cat.name} onChange={(e) => {
+                    const u = [...categories]; u[i] = { ...u[i], name: e.target.value }; setCategories(u);
+                  }} className="flex-1" />
+                  <Input type="number" min={0} step="0.01" placeholder="Amount" value={cat.allocated || ''} onChange={(e) => {
+                    const u = [...categories]; u[i] = { ...u[i], allocated: parseFloat(e.target.value) || 0 }; setCategories(u);
+                  }} className="w-32" />
+                  <Button type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setCategories(categories.filter((_, idx) => idx !== i))}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              {categories.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  Total allocated: ₱{categories.reduce((s, c) => s + c.allocated, 0).toLocaleString()} / ₱{form.watch('totalBudget')?.toLocaleString() || '0'}
+                </p>
+              )}
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Save Budget</Button>
+              <Button type="submit">{isEdit ? 'Update Budget' : 'Save Budget'}</Button>
             </DialogFooter>
           </form>
         </Form>
@@ -82,14 +138,15 @@ export function BudgetForm({ orgId, open, onOpenChange, onSuccess }: {
   );
 }
 
-export function TransactionForm({ orgId, open, onOpenChange, onSuccess }: {
-  orgId: string; open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void;
+export function TransactionForm({ orgId, open, onOpenChange, onSuccess, budgetId }: {
+  orgId: string; open: boolean; onOpenChange: (o: boolean) => void; onSuccess: () => void; budgetId?: string;
 }) {
+  const { items: budgetCategories } = useReferenceData('budgetCategories');
   const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
-    defaultValues: { type: 'expense', category: '', amount: 0, description: '', date: '', vendor: '', paymentMethod: undefined, referenceNumber: '', receiptUrl: '' },
+    defaultValues: { type: 'expense', category: '', amount: 0, description: '', date: '', vendor: '', paymentMethod: undefined, referenceNumber: '', receiptUrl: '', budgetId: budgetId ?? '', fiscalYear: '', semester: '' },
   });
-  useEffect(() => { if (open) form.reset({ type: 'expense', category: '', amount: 0, description: '', date: '', vendor: '', paymentMethod: undefined, referenceNumber: '', receiptUrl: '' }); }, [form, open]);
+  useEffect(() => { if (open) form.reset({ type: 'expense', category: '', amount: 0, description: '', date: '', vendor: '', paymentMethod: undefined, referenceNumber: '', receiptUrl: '', budgetId: budgetId ?? '', fiscalYear: '', semester: '' }); }, [form, open, budgetId]);
 
   const onSubmit = async (data: z.infer<typeof transactionSchema>) => {
     try {
@@ -120,7 +177,9 @@ export function TransactionForm({ orgId, open, onOpenChange, onSuccess }: {
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      {TRANSACTION_CATEGORIES.map((c) => (<SelectItem key={c} value={c}>{c}</SelectItem>))}
+                      {(budgetCategories.length > 0 ? budgetCategories : TRANSACTION_CATEGORIES.map((category) => ({ value: category, label: category }))).map((category) => (
+                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -163,6 +222,14 @@ export function TransactionForm({ orgId, open, onOpenChange, onSuccess }: {
               )} />
               <Controller name="receiptUrl" control={form.control} render={({ field }) => (
                 <FormItem><FormLabel>Receipt URL</FormLabel><FormControl><Input placeholder="Link to receipt image" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <Controller name="fiscalYear" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Fiscal Year</FormLabel><FormControl><Input placeholder="2025-2026" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <Controller name="semester" control={form.control} render={({ field }) => (
+                <FormItem><FormLabel>Semester</FormLabel><FormControl><Input placeholder="1st, 2nd, Summer" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
             </div>
             <DialogFooter>

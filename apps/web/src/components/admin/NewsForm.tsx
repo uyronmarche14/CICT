@@ -46,6 +46,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
+import { useReferenceData } from '@/hooks/use-reference-data';
 
 const newsSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -120,6 +121,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
   const [seoDescription, setSeoDescription] = useState<string>(news?.seoDescription ?? '');
   const [canonicalSlug, setCanonicalSlug] = useState<string>(news?.canonicalSlug ?? '');
   const [relatedArticleIds, setRelatedArticleIds] = useState<string[]>(news?.relatedArticleIds ?? []);
+  const { items: contentCategories } = useReferenceData('contentCategories');
 
   const form = useForm<NewsFormValues>({
     resolver: zodResolver(newsSchema),
@@ -470,12 +472,14 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="news">News</SelectItem>
-                      <SelectItem value="feature">Feature</SelectItem>
-                      <SelectItem value="opinion">Opinion</SelectItem>
-                      <SelectItem value="announcement">Announcement</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                      <SelectItem value="general">General</SelectItem>
+                      {(contentCategories.length > 0 ? contentCategories : [
+                        { value: 'news', label: 'News' },
+                        { value: 'feature', label: 'Feature' },
+                        { value: 'opinion', label: 'Opinion' },
+                        { value: 'announcement', label: 'Announcement' },
+                        { value: 'event', label: 'Event' },
+                        { value: 'general', label: 'General' },
+                      ]).map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>

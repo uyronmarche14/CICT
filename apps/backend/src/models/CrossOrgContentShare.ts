@@ -7,6 +7,7 @@ export interface ICrossOrgContentShareDocument extends Document {
   targetOrgIds: string[];
   sharedBy: mongoose.Types.ObjectId;
   isActive: boolean;
+  partnershipId?: mongoose.Types.ObjectId;
 }
 
 const crossOrgContentShareSchema = new Schema<ICrossOrgContentShareDocument>(
@@ -21,6 +22,7 @@ const crossOrgContentShareSchema = new Schema<ICrossOrgContentShareDocument>(
     targetOrgIds: [{ type: String, trim: true, lowercase: true }],
     sharedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     isActive: { type: Boolean, default: true },
+    partnershipId: { type: Schema.Types.ObjectId, ref: 'OrgPartnership' },
   },
   { timestamps: true }
 );

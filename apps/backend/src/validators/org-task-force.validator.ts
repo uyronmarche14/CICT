@@ -7,6 +7,10 @@ export const createTaskForceValidator = [
   body('objectives').optional().isArray(),
   body('startDate').isISO8601().withMessage('Start date is required').toDate(),
   body('endDate').optional().isISO8601().toDate(),
+  body('partnershipId').optional().isMongoId(),
+  body('linkedEventIds').optional().isArray(),
+  body('linkedTaskIds').optional().isArray(),
+  body('linkedMeetingIds').optional().isArray(),
 ];
 
 export const updateTaskForceValidator = [
@@ -17,6 +21,10 @@ export const updateTaskForceValidator = [
   body('objectives').optional().isArray(),
   body('startDate').optional().isISO8601().toDate(),
   body('endDate').optional({ values: 'null' }).isISO8601().toDate(),
+  body('partnershipId').optional().isMongoId(),
+  body('linkedEventIds').optional().isArray(),
+  body('linkedTaskIds').optional().isArray(),
+  body('linkedMeetingIds').optional().isArray(),
 ];
 
 export const taskForceIdValidator = [param('id').isMongoId().withMessage('Invalid task force ID')];

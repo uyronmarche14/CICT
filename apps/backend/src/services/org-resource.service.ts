@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureOrganizationsExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -27,7 +28,17 @@ export const listIncoming = async (req: AuthRequest, orgId: string) => {
 
 export const createRequest = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
-  return ResourceRequest.create({ ...req.body, organizationId: org._id, createdBy: req.user!.userId });
+  if (req.body.providingOrgId) {
+    const [providingOrgId] = await ensureOrganizationsExist(
+      [req.body.providingOrgId],
+      'Provider organization not found'
+    );
+    req.body.providingOrgId = providingOrgId;
+  }
+  return ResourceRequest.create({
+    ...req.body, organizationId: org._id, createdBy: req.user!.userId,
+    statusHistory: [{ status: 'pending', changedBy: req.user!.userId, changedAt: new Date() }],
+  });
 };
 
 export const getRequest = async (req: AuthRequest, orgId: string, id: string) => {
@@ -42,33 +53,34 @@ export const getRequest = async (req: AuthRequest, orgId: string, id: string) =>
 
 export const approveRequest = async (req: AuthRequest, orgId: string, id: string) => {
   await resolveOrg(req, orgId);
-  const request = await ResourceRequest.findOneAndUpdate(
-    { _id: id, providingOrgId: orgId, status: 'pending' },
-    { $set: { status: 'approved', reviewedBy: req.user!.userId, reviewNotes: req.body.notes } },
-    { new: true }
-  );
+  const request = await ResourceRequest.findOne({ _id: id, providingOrgId: orgId, status: 'pending' });
   if (!request) {throw new AppError('Request not found or not pending', 404);}
+  request.status = 'approved';
+  request.reviewedBy = req.user!.userId;
+  request.reviewNotes = req.body.notes;
+  request.statusHistory.push({ status: 'approved', changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.notes });
+  await request.save();
   return request;
 };
 
 export const denyRequest = async (req: AuthRequest, orgId: string, id: string) => {
   await resolveOrg(req, orgId);
-  const request = await ResourceRequest.findOneAndUpdate(
-    { _id: id, providingOrgId: orgId, status: 'pending' },
-    { $set: { status: 'denied', reviewedBy: req.user!.userId, reviewNotes: req.body.notes } },
-    { new: true }
-  );
+  const request = await ResourceRequest.findOne({ _id: id, providingOrgId: orgId, status: 'pending' });
   if (!request) {throw new AppError('Request not found or not pending', 404);}
+  request.status = 'denied';
+  request.reviewedBy = req.user!.userId;
+  request.reviewNotes = req.body.notes;
+  request.statusHistory.push({ status: 'denied', changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.notes });
+  await request.save();
   return request;
 };
 
 export const cancelRequest = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const request = await ResourceRequest.findOneAndUpdate(
-    { _id: id, organizationId: org._id, status: { $in: ['pending', 'approved'] } },
-    { $set: { status: 'cancelled' } },
-    { new: true }
-  );
+  const request = await ResourceRequest.findOne({ _id: id, organizationId: org._id, status: { $in: ['pending', 'approved'] } });
   if (!request) {throw new AppError('Request not found or cannot be cancelled', 404);}
+  request.status = 'cancelled';
+  request.statusHistory.push({ status: 'cancelled', changedBy: req.user!.userId, changedAt: new Date() });
+  await request.save();
   return request;
 };

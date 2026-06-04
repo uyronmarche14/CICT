@@ -17,14 +17,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { appToast } from '@/lib/app-toast';
+import { LookupCombobox } from '@/components/ui/lookup-combobox';
 import { format } from 'date-fns';
 
 const statusColors: Record<string, string> = { active: 'bg-green-100 text-green-700', completed: 'bg-blue-100 text-blue-700', cancelled: 'bg-red-100 text-red-700' };
 
 export default function OrgMentorshipPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgMentorship } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgMentorship(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -50,7 +51,7 @@ export default function OrgMentorshipPage() {
         <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent><DialogHeader><DialogTitle>Establish Mentorship</DialogTitle><DialogDescription>Mentor another organization.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <div><Label>Mentee organization slug</Label><Input value={menteeOrgId} onChange={(e) => setMenteeOrgId(e.target.value)} placeholder="e.g. css" /></div>
+            <div><Label>Mentee Organization</Label><LookupCombobox kind="organizations" value={menteeOrgId} onChange={setMenteeOrgId} placeholder="Select organization" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
             <div><Label>Focus areas (comma separated)</Label><Input value={focusAreas} onChange={(e) => setFocusAreas(e.target.value)} placeholder="e.g. leadership, event planning" /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!menteeOrgId.trim() || createMut.isPending}>Establish</Button></DialogFooter></DialogContent></Dialog></>}>

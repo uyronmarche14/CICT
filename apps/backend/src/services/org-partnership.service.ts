@@ -32,7 +32,10 @@ export const createPartnership = async (req: AuthRequest, orgId: string) => {
   const existing = await OrgPartnership.findOne({ orgIdA: org.id, orgIdB });
   if (existing) {throw new AppError('Partnership already exists', 409);}
 
-  return OrgPartnership.create({ orgIdA: org.id, orgIdB, partnershipType, terms, initiatedBy: req.user!.userId });
+  return OrgPartnership.create({
+    orgIdA: org.id, orgIdB, partnershipType, terms, initiatedBy: req.user!.userId, signedAtA: new Date(),
+    statusHistory: [{ status: 'pending', changedBy: req.user!.userId, changedAt: new Date() }],
+  });
 };
 
 export const getPartnership = async (req: AuthRequest, orgId: string, id: string) => {
@@ -49,6 +52,7 @@ export const acceptPartnership = async (req: AuthRequest, orgId: string, id: str
 
   partnership.status = 'active';
   partnership.signedAtB = new Date();
+  partnership.statusHistory.push({ status: 'active', changedBy: req.user!.userId, changedAt: new Date() });
   await partnership.save();
 
   // Update partnerItems on both orgs
@@ -71,12 +75,11 @@ export const acceptPartnership = async (req: AuthRequest, orgId: string, id: str
 
 export const declinePartnership = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const partnership = await OrgPartnership.findOneAndUpdate(
-    { _id: id, orgIdB: org.id, status: 'pending' },
-    { $set: { status: 'declined' } },
-    { new: true }
-  );
+  const partnership = await OrgPartnership.findOne({ _id: id, orgIdB: org.id, status: 'pending' });
   if (!partnership) {throw new AppError('Partnership not found or not pending', 404);}
+  partnership.status = 'declined';
+  partnership.statusHistory.push({ status: 'declined', changedBy: req.user!.userId, changedAt: new Date() });
+  await partnership.save();
   return partnership;
 };
 
@@ -87,13 +90,20 @@ export const terminatePartnership = async (req: AuthRequest, orgId: string, id: 
 
   partnership.status = 'terminated';
   partnership.terminatedAt = new Date();
+  partnership.statusHistory.push({ status: 'terminated', changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.reason });
   await partnership.save();
 
-  // Remove from partnerItems on both orgs
-  await Promise.all([
-    Organization.updateOne({ id: partnership.orgIdA }, { $pull: { partnerItems: { name: { $exists: true } } } }),
-    Organization.updateOne({ id: partnership.orgIdB }, { $pull: { partnerItems: { name: { $exists: true } } } }),
+  // Remove only the matching partnership from partnerItems on both orgs
+  const [orgA, orgB] = await Promise.all([
+    Organization.findOne({ id: partnership.orgIdA }).select('name'),
+    Organization.findOne({ id: partnership.orgIdB }).select('name'),
   ]);
+  if (orgA && orgB) {
+    await Promise.all([
+      Organization.updateOne({ id: partnership.orgIdA }, { $pull: { partnerItems: { name: orgB.name } } }),
+      Organization.updateOne({ id: partnership.orgIdB }, { $pull: { partnerItems: { name: orgA.name } } }),
+    ]);
+  }
 
   return partnership;
 };

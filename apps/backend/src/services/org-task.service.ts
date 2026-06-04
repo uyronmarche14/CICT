@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureUsersExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -21,6 +22,8 @@ export const listTasks = async (req: AuthRequest, orgId: string) => {
   if (req.query.status) {filter.status = req.query.status;}
   if (req.query.priority) {filter.priority = req.query.priority;}
   if (req.query.assignee) {filter.assigneeIds = req.query.assignee;}
+  if (req.query.fiscalYear) {filter.fiscalYear = req.query.fiscalYear;}
+  if (req.query.semester) {filter.semester = req.query.semester;}
   return OrgTask.find(filter).sort({ createdAt: -1 }).lean();
 };
 
@@ -28,6 +31,9 @@ export const createTask = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
+  if (Array.isArray(req.body.assigneeIds)) {
+    req.body.assigneeIds = await ensureUsersExist(req.body.assigneeIds);
+  }
   return OrgTask.create({ ...req.body, organizationId: oid, createdBy });
 };
 
@@ -40,12 +46,21 @@ export const getTask = async (req: AuthRequest, orgId: string, taskId: string) =
 
 export const updateTask = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOneAndUpdate(
-    { _id: taskId, organizationId: oid },
-    { $set: req.body },
-    { new: true, runValidators: true }
-  );
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid });
   if (!task) {throw new AppError('Task not found', 404);}
+  if (req.body.status && task.status !== req.body.status) {
+    task.statusHistory.push({
+      status: req.body.status,
+      changedBy: req.user!.userId,
+      changedAt: new Date(),
+      reason: req.body.reason,
+    });
+  }
+  if (Array.isArray(req.body.assigneeIds)) {
+    req.body.assigneeIds = await ensureUsersExist(req.body.assigneeIds);
+  }
+  Object.assign(task, req.body);
+  await task.save();
   return task;
 };
 
@@ -57,12 +72,18 @@ export const deleteTask = async (req: AuthRequest, orgId: string, taskId: string
 
 export const updateTaskStatus = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOneAndUpdate(
-    { _id: taskId, organizationId: oid },
-    { $set: { status: req.body.status } },
-    { new: true }
-  );
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid });
   if (!task) {throw new AppError('Task not found', 404);}
+  if (task.status !== req.body.status) {
+    task.statusHistory.push({
+      status: req.body.status,
+      changedBy: req.user!.userId,
+      changedAt: new Date(),
+      reason: req.body.reason,
+    });
+  }
+  task.status = req.body.status;
+  await task.save();
   return task;
 };
 

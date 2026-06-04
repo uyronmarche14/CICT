@@ -23,6 +23,9 @@ export interface IOrgMeetingDocument extends Document {
     status: 'open' | 'in_progress' | 'completed';
   }>;
   createdBy: mongoose.Types.ObjectId;
+  fiscalYear?: string;
+  semester?: string;
+  processInstanceId?: mongoose.Types.ObjectId;
 }
 
 const orgMeetingSchema = new Schema<IOrgMeetingDocument>(
@@ -49,6 +52,9 @@ const orgMeetingSchema = new Schema<IOrgMeetingDocument>(
       status: { type: String, enum: ['open', 'in_progress', 'completed'], default: 'open' },
     }],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    fiscalYear: { type: String, trim: true },
+    semester: { type: String, trim: true },
+    processInstanceId: { type: Schema.Types.ObjectId, ref: 'ProcessInstance' },
   },
   { timestamps: true }
 );

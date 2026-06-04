@@ -24,6 +24,9 @@ export const createTransactionValidator = [
   body('paymentMethod').optional().isIn(['cash', 'bank_transfer', 'check', 'online']),
   body('referenceNumber').optional().trim(),
   body('receiptUrl').optional().trim(),
+  body('budgetId').optional().isMongoId(),
+  body('fiscalYear').optional().trim(),
+  body('semester').optional().trim(),
 ];
 
 export const transactionIdValidator = [param('txId').isMongoId().withMessage('Invalid transaction ID')];

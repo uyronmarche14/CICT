@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Loader2, Save, AlertCircle, Settings as SettingsIcon,
-  Shield, Upload, Bell, GraduationCap, Wrench, Flag, Mail,
+  Shield, Upload, Bell, GraduationCap, Wrench, Flag,
+  ListChecks,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { settingsAPI, SettingsMap } from '@/lib/api/settings';
+import { settingsAPI } from '@/lib/api/settings';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { appToast } from '@/lib/app-toast';
@@ -27,9 +28,8 @@ const TABS = [
   { value: 'security', label: 'Security', icon: Shield },
   { value: 'uploads', label: 'Uploads', icon: Upload },
   { value: 'notifications', label: 'Notifications', icon: Bell },
+  { value: 'referenceData', label: 'Reference Data', icon: ListChecks },
 ] as const;
-
-type TabValue = (typeof TABS)[number]['value'];
 
 export default function AdminSettingsPage() {
   const { canManageSettings } = usePermissions();
@@ -239,6 +239,28 @@ export default function AdminSettingsPage() {
               onChange={handleChange}
               onSave={handleSave}
               saving={saving.notifications}
+            />
+          </TabsContent>
+
+          <TabsContent value="referenceData" className="mt-6">
+            <SettingsCard
+              title="Reference Data"
+              description="Reusable controlled values for searchable dropdowns and feature forms. Use one item per line."
+              group="referenceData"
+              fields={[
+                { key: 'taskCategories', label: 'Task Categories', type: 'textarea' },
+                { key: 'budgetCategories', label: 'Budget Categories', type: 'textarea' },
+                { key: 'resourceTypes', label: 'Resource Types', type: 'textarea' },
+                { key: 'partnershipTypes', label: 'Partnership Types', type: 'textarea' },
+                { key: 'mentorshipFocusAreas', label: 'Mentorship Focus Areas', type: 'textarea' },
+                { key: 'committees', label: 'Committees', type: 'textarea' },
+                { key: 'officerPositions', label: 'Officer Positions', type: 'textarea' },
+                { key: 'contentCategories', label: 'Content Categories', type: 'textarea' },
+              ]}
+              values={forms.referenceData || {}}
+              onChange={handleChange}
+              onSave={handleSave}
+              saving={saving.referenceData}
             />
           </TabsContent>
         </Tabs>

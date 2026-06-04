@@ -26,10 +26,10 @@ Phase 10 data should feed later phases instead of staying isolated:
 **Complete.** Full CRUD (create, read, update, delete) for all 5 core features.
 
 **Backend (7 models, 29 routes):**
-- `OrgTask` — Kanban-style task management with status (todo/in_progress/done), priority, due date, checklist, tags, category
+- `OrgTask` — Kanban-style task management with status (todo/in_progress/done), priority, due date, checklist, tags, category, status history, meeting linking, committee/office ownership fields
 - `OrgMeeting` — Meeting scheduling with date, duration, agenda topics with presenters, attendees with RSVP, minutes, action items
 - `OrgVote` + `OrgVoteBallot` — Voting/elections with positions, candidates, anonymous ballots, results with vote counts
-- `OrgBudget` + `OrgTransaction` — Budget tracking with fiscal year, categories, income/expense transactions
+- `OrgBudget` + `OrgTransaction` — Budget tracking with fiscal year, categories, income/expense transactions, status history, budget linking
 - `OrgTemplate` — Reusable org structure templates with default roles, color schemes, committees, programs
 
 **Frontend (12 route files + 5 form components):**
@@ -37,12 +37,18 @@ Phase 10 data should feed later phases instead of staying isolated:
 - OrgSubNav tab bar with overflow dropdown
 - All pages use `OrgPageLayout` with loading/empty/content states
 - Create/edit dialogs using shadcn Dialog + react-hook-form
+- BudgetForm supports edit mode (pre-populated from existing budget data)
+- TransactionForm includes fiscal year and semester fields
 
 **Key features:**
 - Permission-gated: 5 new `MANAGE_ORG_*` permissions
 - CSRF fixed for development mode
 - `requireAdminAccess` + `authorize` middleware on all routes
 - Bilateral org slug→ObjectId resolution in all services
+- Status history tracking on OrgTask and OrgBudget with changedBy, changedAt, reason
+- Meeting-to-task linking fields on OrgTask (meetingId, actionItemIndex)
+- Officer/committee ownership fields on OrgTask (committee, officerPosition)
+- Fiscal year and semester tracking on OrgTransaction, scoped budget filtering
 
 ## Dependencies
 
@@ -86,13 +92,19 @@ All mounted at `/api/organizations` with `protect` + `requireAdminAccess`:
 - Response format: `{ success: boolean, data?: T, message?: string }`
 - All models include `timestamps: true` (createdAt, updatedAt)
 
+## Completed Strengthening Tasks
+
+- ~~Add status history for task and budget changes for better accountability.~~ ✅ `statusHistory` field on OrgTask + OrgBudget, auto-tracked on status/amount changes.
+- ~~Add officer/committee ownership fields where appropriate, so reports can show who is responsible.~~ ✅ `committee` and `officerPosition` on OrgTask + TaskForm UI + card badges.
+- ~~Link meeting action items to `OrgTask` records so follow-up work is not trapped inside meeting minutes.~~ ✅ `meetingId` + `actionItemIndex` on OrgTask; "Promote to Task" button in meeting cards opens TaskForm pre-filled.
+- ~~Add fiscal-year/semester filters across tasks, meetings, votes, and transactions.~~ ✅ `fiscalYear` + `semester` on OrgTask, OrgMeeting, OrgTransaction; `FiscalSemesterFilter` component on all 3 pages.
+- ~~Add budget categories editor UI.~~ ✅ Categories (name + allocated) editor in BudgetForm, displayed during edit.
+- ~~Add StatusHistory viewer UI.~~ ✅ `StatusHistoryTimeline` component on tasks + budget pages.
+- ~~Add process-template links for org content.~~ ✅ `processInstanceId` on OrgTask, OrgMeeting, OrgBudget; `linkedContentType` extended with `task/meeting/budget`; `POST /instances/:id/link` route.
+
 ## Future Strengthening Tasks
 
-- Link meeting action items to `OrgTask` records so follow-up work is not trapped inside meeting minutes.
-- Add status history for task and budget changes for better accountability.
-- Add fiscal-year/semester filters across tasks, meetings, votes, and transactions.
-- Add optional process-template links for formal workflows such as budget requests, event preparation, and elections.
-- Add officer/committee ownership fields where appropriate, so reports can show who is responsible.
+- Add optional process-template links for formal workflows such as budget requests, event preparation, and elections. (Link route exists, frontend button to link processes pending.)
 
 ## Test Cases
 

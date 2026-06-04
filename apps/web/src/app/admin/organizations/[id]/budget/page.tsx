@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Wallet, Loader2, TrendingUp, TrendingDown, DollarSign, PiggyBank, Plus, Trash2 } from 'lucide-react';
+import { Wallet, Loader2, TrendingUp, TrendingDown, DollarSign, PiggyBank, Plus, Trash2, History } from 'lucide-react';
 import { useAdminOrganization } from '@/hooks/useOrganizations';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
@@ -13,6 +13,8 @@ import OrgPageLayout from '@/components/organizations/OrgPageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BudgetForm, TransactionForm } from '@/components/admin/BudgetForm';
+import { StatusHistoryTimeline } from '@/components/admin/StatusHistoryTimeline';
+import { FiscalSemesterFilter } from '@/components/admin/FiscalSemesterFilter';
 import { format } from 'date-fns';
 
 export default function OrgBudgetPage() {
@@ -25,10 +27,15 @@ export default function OrgBudgetPage() {
 
   const [showBudgetForm, setShowBudgetForm] = useState(false);
   const [showTxForm, setShowTxForm] = useState(false);
+  const [showBudgetHistory, setShowBudgetHistory] = useState(false);
+  const [filters, setFilters] = useState({ fiscalYear: '', semester: '' });
+
+  const txParams = { ...filters };
+  Object.keys(txParams).forEach((k) => { if (!txParams[k as keyof typeof txParams]) delete txParams[k as keyof typeof txParams]; });
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.orgBudget.overview(orgId) });
-    queryClient.invalidateQueries({ queryKey: queryKeys.orgBudget.transactions(orgId) });
+    queryClient.invalidateQueries({ queryKey: [...queryKeys.orgBudget.transactions(orgId), filters] });
   };
 
   const { data: overview, isLoading } = useQuery({
@@ -38,8 +45,8 @@ export default function OrgBudgetPage() {
   });
 
   const { data: transactions = [], isLoading: txLoading } = useQuery({
-    queryKey: queryKeys.orgBudget.transactions(orgId),
-    queryFn: () => orgBudgetAPI.listTransactions(orgId),
+    queryKey: [...queryKeys.orgBudget.transactions(orgId), filters],
+    queryFn: () => orgBudgetAPI.listTransactions(orgId, txParams),
     enabled: !!orgId,
   });
 
@@ -64,6 +71,9 @@ export default function OrgBudgetPage() {
         </div>
       }
     >
+      <div className="mb-4">
+        <FiscalSemesterFilter values={filters} onChange={setFilters} />
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -103,7 +113,14 @@ export default function OrgBudgetPage() {
             <Card>
               <CardHeader className="pb-2 flex flex-row items-center justify-between">
                 <CardTitle className="text-sm font-medium text-muted-foreground">Budget</CardTitle>
-                <PiggyBank className="h-4 w-4 text-muted-foreground" />
+                <div className="flex items-center gap-1">
+                  {overview?.budget?.statusHistory && overview.budget.statusHistory.length > 0 && (
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setShowBudgetHistory(true)}>
+                      <History className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                    </Button>
+                  )}
+                  <PiggyBank className="h-4 w-4 text-muted-foreground" />
+                </div>
               </CardHeader>
               <CardContent>
                 <p className="text-2xl font-bold">₱{overview?.budget?.totalBudget?.toLocaleString() ?? 'Not set'}</p>
@@ -167,8 +184,14 @@ export default function OrgBudgetPage() {
         </div>
       )}
 
-      <BudgetForm orgId={orgId} open={showBudgetForm} onOpenChange={setShowBudgetForm} onSuccess={invalidate} />
-      <TransactionForm orgId={orgId} open={showTxForm} onOpenChange={setShowTxForm} onSuccess={invalidate} />
+      <BudgetForm orgId={orgId} open={showBudgetForm} onOpenChange={setShowBudgetForm} onSuccess={invalidate} item={overview?.budget ? { fiscalYear: overview.budget.fiscalYear, totalBudget: overview.budget.totalBudget, notes: overview.budget.notes || '', categories: overview.budget.categories ?? [] } : null} />
+      <TransactionForm orgId={orgId} open={showTxForm} onOpenChange={setShowTxForm} onSuccess={invalidate} budgetId={overview?.budget?._id} />
+      <StatusHistoryTimeline
+        open={showBudgetHistory}
+        onOpenChange={setShowBudgetHistory}
+        entries={overview?.budget?.statusHistory ?? []}
+        title="Budget History"
+      />
     </OrgPageLayout>
   );
 }

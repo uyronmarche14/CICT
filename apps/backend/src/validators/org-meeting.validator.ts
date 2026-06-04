@@ -11,6 +11,8 @@ export const createMeetingValidator = [
   body('attendees').optional().isArray(),
   body('minutes').optional().trim(),
   body('actionItems').optional().isArray(),
+  body('fiscalYear').optional().trim(),
+  body('semester').optional().trim(),
 ];
 
 export const updateMeetingValidator = [
@@ -25,6 +27,8 @@ export const updateMeetingValidator = [
   body('attendees').optional().isArray(),
   body('minutes').optional().trim(),
   body('actionItems').optional().isArray(),
+  body('fiscalYear').optional().trim(),
+  body('semester').optional().trim(),
 ];
 
 export const meetingIdValidator = [param('meetingId').isMongoId().withMessage('Invalid meeting ID')];

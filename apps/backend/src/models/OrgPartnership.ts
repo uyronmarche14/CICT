@@ -10,6 +10,15 @@ export interface IOrgPartnershipDocument extends Document {
   signedAtA?: Date;
   signedAtB?: Date;
   terminatedAt?: Date;
+  statusHistory: Array<{ status: string; changedBy: string | mongoose.Types.ObjectId; changedAt: Date; reason?: string }>;
+  outcome?: {
+    goals?: string;
+    deliverables?: string;
+    successMetrics?: string;
+    completionNotes?: string;
+    postEvaluation?: string;
+  };
+  evidenceAttachments: Array<{ name: string; url: string }>;
 }
 
 const orgPartnershipSchema = new Schema<IOrgPartnershipDocument>(
@@ -27,6 +36,22 @@ const orgPartnershipSchema = new Schema<IOrgPartnershipDocument>(
     signedAtA: Date,
     signedAtB: Date,
     terminatedAt: Date,
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        changedAt: { type: Date, default: Date.now },
+        reason: String,
+      },
+    ],
+    outcome: {
+      goals: String,
+      deliverables: String,
+      successMetrics: String,
+      completionNotes: String,
+      postEvaluation: String,
+    },
+    evidenceAttachments: [{ name: String, url: String }],
   },
   { timestamps: true }
 );

@@ -7,6 +7,9 @@ import logger from '../utils/logger';
 import { sanitizeHtmlContent } from '../utils/sanitize';
 import { parsePagination } from '../utils/pagination';
 import { Permission, INodeAssignment } from '../types';
+import OrgTask from '../models/OrgTask';
+import OrgMeeting from '../models/OrgMeeting';
+import OrgBudget from '../models/OrgBudget';
 import {
   createInstanceFromTemplate,
   transitionInstanceStatus,
@@ -648,4 +651,27 @@ export const getProcessInstanceActivity = async (req: AuthRequest, res: Response
     success: true,
     data: { activity },
   });
+};
+
+export const linkContentToProcess = async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  const { contentType, contentId, orgId } = req.body;
+
+  const updateModel = async () => {
+    const filter = { _id: contentId, organizationId: orgId };
+    const update = { $set: { processInstanceId: id } as Record<string, unknown> };
+    if (contentType === 'task') {
+      return OrgTask.findOneAndUpdate(filter, update, { new: true });
+    }
+    if (contentType === 'meeting') {
+      return OrgMeeting.findOneAndUpdate(filter, update, { new: true });
+    }
+    return OrgBudget.findOneAndUpdate(filter, update, { new: true });
+  };
+  const entity = await updateModel();
+  if (!entity) { res.status(404).json({ success: false, message: `${contentType} not found` }); return; }
+
+  await ProcessInstance.findByIdAndUpdate(id, { $set: { linkedContentType: contentType, linkedContentId: contentId } });
+
+  res.status(200).json({ success: true, data: entity });
 };

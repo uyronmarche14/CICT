@@ -44,6 +44,12 @@ const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
   Permission.MANAGE_ORG_MEETINGS,
   Permission.MANAGE_ORG_VOTES,
   Permission.MANAGE_ORG_BUDGET,
+  Permission.MANAGE_ORG_PARTNERSHIPS,
+  Permission.MANAGE_ORG_COLLABORATION,
+  Permission.SHARE_CONTENT_CROSS_ORG,
+  Permission.MANAGE_ORG_TASK_FORCES,
+  Permission.MANAGE_ORG_RESOURCE_POOLING,
+  Permission.MANAGE_ORG_MENTORSHIP,
 ];
 
 const MODULE_KEYS: AdminModuleKey[] = [
@@ -275,6 +281,18 @@ export const usePermissions = () => {
     canManageOrgTemplates: () => hasPermission(Permission.MANAGE_ORG_TEMPLATES),
     canManageOrgAnalytics: (organizationId: string) =>
       canManageOrganizationTool(organizationId, Permission.VIEW_ORG_ANALYTICS),
+    canManageOrgPartnerships: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_PARTNERSHIPS),
+    canManageOrgCollaborations: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_COLLABORATION),
+    canManageOrgSharedContent: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.SHARE_CONTENT_CROSS_ORG),
+    canManageOrgTaskForces: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_TASK_FORCES),
+    canManageOrgResources: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_RESOURCE_POOLING),
+    canManageOrgMentorship: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_MENTORSHIP),
     hasAnyOrgTasksAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_TASKS),
     hasAnyOrgMeetingsAccess: () =>
       hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_MEETINGS),
@@ -282,6 +300,18 @@ export const usePermissions = () => {
     hasAnyOrgBudgetAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_BUDGET),
     hasAnyOrgTemplatesAccess: () =>
       hasPermission(Permission.MANAGE_ORG_TEMPLATES),
+    hasAnyOrgPartnershipsAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_PARTNERSHIPS),
+    hasAnyOrgCollaborationsAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_COLLABORATION),
+    hasAnyOrgSharedContentAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.SHARE_CONTENT_CROSS_ORG),
+    hasAnyOrgTaskForcesAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_TASK_FORCES),
+    hasAnyOrgResourcesAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_RESOURCE_POOLING),
+    hasAnyOrgMentorshipAccess: () =>
+      hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_MENTORSHIP),
     canAccessOrganization,
     canAccessOrganizationsModule: () => hasVisibleAdminModule('organizations'),
     canManageOrganizationContent: (

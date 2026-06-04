@@ -52,7 +52,7 @@ const processInstanceSchema = new Schema<IProcessInstance>(
     },
     linkedContentType: {
       type: String,
-      enum: ['news', 'announcement', 'event'],
+      enum: ['news', 'announcement', 'event', 'task', 'meeting', 'budget'],
     },
     linkedContentId: {
       type: String,

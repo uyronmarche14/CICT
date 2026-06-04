@@ -27,6 +27,7 @@ import pushTokenRoutes from "./routes/pushToken.routes";
 import approvalRoutes from "./routes/approval.routes";
 import processRoutes from "./routes/process.routes";
 import settingsRoutes from "./routes/settings.routes";
+import lookupRoutes from "./routes/lookup.routes";
 import membersRoutes from "./routes/public-member.routes";
 import orgTaskRoutes from "./routes/org-task.routes";
 import orgMeetingRoutes from "./routes/org-meeting.routes";
@@ -182,6 +183,7 @@ app.use("/api/student", pushTokenRoutes);
 app.use("/api/admin/approvals", approvalRoutes);
 app.use("/api/admin/processes", processRoutes);
 app.use("/api/admin/settings", settingsRoutes);
+app.use("/api/admin/lookups", lookupRoutes);
 
 // 404 handler
 app.use(notFound);

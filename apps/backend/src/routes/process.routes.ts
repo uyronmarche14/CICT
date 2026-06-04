@@ -16,6 +16,7 @@ import {
   approveProcessStepValidator,
   advanceInstanceValidator,
   updateChecklistItemValidator,
+  linkContentValidator,
 } from '../validators/process.validator';
 
 const router: Router = Router();
@@ -160,6 +161,15 @@ router.get(
   requireAdminAccess,
   validate(processIdValidator),
   processController.getProcessInstanceActivity
+);
+
+router.post(
+  '/instances/:id/link',
+  authenticate,
+  requireAdminAccess,
+  validate(linkContentValidator),
+  logActivity('link', 'process_instance'),
+  processController.linkContentToProcess
 );
 
 export default router;

@@ -20,17 +20,18 @@ Dashboards are valuable only when they explain what needs attention. Prefer metr
 
 ## Current Status
 
-**Complete baseline.** Frontend with recharts + backend aggregation service implemented. Additional metric refinement should continue as Phase 11 collaboration data becomes linked to core records.
+**Complete.** All original + expanded analytics sources implemented.
 
 **Backend:**
-- `services/org-analytics.service.ts` — 6 aggregation functions with 60s TTL caching
-- Aggregates from: OrgTask, OrgMeeting, Event, EventRegistration, EventAttendanceLog, OrgBudget, OrgTransaction, OrganizationMembership
+- `services/org-analytics.service.ts` — 12 aggregation functions with 60s TTL caching
+- Aggregates from: OrgTask, OrgMeeting, Event, EventRegistration, EventAttendanceLog, OrgBudget, OrgTransaction, OrganizationMembership, OrgTaskForce, ResourceRequest, OrgPartnership, CollaborationSpace, CollaborationMessage, OrgMentorship, CrossOrgContentShare
 - Engagement score formula: weighted composite of task completion, meeting activity, contributions, budget usage
+- Phase 11 data sources fully integrated: task-forces, resources, partnerships, collaborations, mentorships, shared-content
 
 **Frontend:**
 - recharts installed (`pnpm --filter @cict/web add recharts`)
-- Analytics page with 5 tabs: Overview, Tasks, Events, Financial, Engagement
-- Metric cards + Progress bar + PieChart (status) + BarChart (priority/financial) + LineChart (monthly trends)
+- Analytics page with 12 tabs: Overview, Tasks, Events, Financial, Engagement, Task Forces, Resources, Partnerships, Collaborations, Mentorship, Shared Content
+- Metric cards + Progress bar + PieChart + BarChart + LineChart (recharts)
 - Permission-gated via `VIEW_ORG_ANALYTICS`
 
 ## Dependencies
@@ -69,15 +70,20 @@ GET  /:orgId/analytics/export       — Combined report of all above
 - 60s cache TTL (analytics data doesn't need real-time freshness)
 - Engagement score: 0–100 weighted composite
 
-## Data Expansion Targets
+## Data Expansion Status
 
-Add these analytics sources when the corresponding operational data becomes stable:
-- Partnership analytics: active partnerships, pending invites, completed collaborations, terminated partnerships, outcome score.
-- Collaboration analytics: active spaces, message activity, linked tasks, open deliverables, completed milestones.
-- Shared-content analytics: incoming/outgoing shares, feed impressions if available, target org reach.
-- Resource analytics: pending requests, approval rate, fulfillment rate, late/cancelled requests, most requested resource type.
-- Mentorship analytics: active mentor pairs, completed sessions, focus areas, completion rate, mentee outcomes.
-- Task-force analytics: active task forces, objective completion, participant org count, overdue milestones.
+All Phase 10A expansion targets have been implemented:
+
+| Source | Status | Metrics Available |
+|---|---|---|
+| Task-force analytics | ✅ **Done** | Total, by status, objectives completion |
+| Resource analytics | ✅ **Done** | Total, by status, by resource type |
+| Partnership analytics | ✅ **Done** | Total, by status (active/pending/declined/terminated) |
+| Collaboration analytics | ✅ **Done** | Total spaces, active spaces, total messages |
+| Mentorship analytics | ✅ **Done** | Total, by status, total sessions, avg sessions |
+| Shared-content analytics | ✅ **Done** | Outgoing, incoming, total, by content type |
+| Status history analytics | ✅ **Done** | Task completion velocity, budget change frequency |
+| Fiscal/semester filtering | ✅ **Done** | Transaction analytics scoped by fiscalYear and semester |
 
 Recommended summary cards:
 - Org Health Score

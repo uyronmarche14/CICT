@@ -22,6 +22,7 @@ import { DatePicker } from '@/components/ui/DatePicker';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { appToast } from '@/lib/app-toast';
 import { orgMeetingsAPI } from '@/lib/api/org-meetings';
+import { LookupCombobox } from '@/components/ui/lookup-combobox';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -139,14 +140,26 @@ export function MeetingForm({ orgId, open, onOpenChange, item, onSuccess }: Meet
                 </Button>
               </div>
               {actionItems.map((ai, i) => (
-                <div key={i} className="flex items-center gap-2">
+                <div key={i} className="grid grid-cols-1 items-center gap-2 sm:grid-cols-[1fr_150px_120px_112px_32px]">
                   <Input placeholder="Action item" value={ai.text} onChange={(e) => {
                     const u = [...actionItems]; u[i] = { ...u[i], text: e.target.value }; setActionItems(u);
-                  }} className="flex-[2]" />
+                  }} />
+                  <LookupCombobox
+                    kind="users"
+                    value={ai.assigneeId ?? ''}
+                    onChange={(value) => {
+                      const u = [...actionItems]; u[i] = { ...u[i], assigneeId: value }; setActionItems(u);
+                    }}
+                    placeholder="Assignee"
+                    searchPlaceholder="Search users..."
+                  />
+                  <DatePicker value={ai.dueDate ?? ''} onChange={(v) => {
+                    const u = [...actionItems]; u[i] = { ...u[i], dueDate: v || '' }; setActionItems(u);
+                  }} />
                   <Select value={ai.status} onValueChange={(v: 'open' | 'in_progress' | 'completed') => {
                     const u = [...actionItems]; u[i] = { ...u[i], status: v }; setActionItems(u);
                   }}>
-                    <SelectTrigger className="w-28"><SelectValue /></SelectTrigger>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="open">Open</SelectItem>
                       <SelectItem value="in_progress">In Progress</SelectItem>

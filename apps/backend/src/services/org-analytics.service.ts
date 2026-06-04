@@ -7,6 +7,13 @@ import OrganizationMembership from '../models/OrganizationMembership';
 import Event from '../models/Event';
 import EventRegistration from '../models/EventRegistration';
 import EventAttendanceLog from '../models/EventAttendanceLog';
+import OrgTaskForce from '../models/OrgTaskForce';
+import ResourceRequest from '../models/ResourceRequest';
+import OrgPartnership from '../models/OrgPartnership';
+import CollaborationSpace from '../models/CollaborationSpace';
+import CollaborationMessage from '../models/CollaborationMessage';
+import OrgMentorship from '../models/OrgMentorship';
+import CrossOrgContentShare from '../models/CrossOrgContentShare';
 import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
@@ -223,16 +230,169 @@ export const getEngagement = async (req: AuthRequest, orgId: string) => {
   return result;
 };
 
+export const getTaskForceAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `taskforces:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const total = await OrgTaskForce.countDocuments({ organizationId: oid });
+  const byStatus = await OrgTaskForce.aggregate([
+    { $match: { organizationId: oid } },
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+  ]);
+  const objectivesStats = await OrgTaskForce.aggregate([
+    { $match: { organizationId: oid } },
+    { $unwind: '$objectives' },
+    { $group: { _id: null, total: { $sum: 1 }, completed: { $sum: { $cond: ['$objectives.completed', 1, 0] } } } },
+  ]);
+  const result = {
+    total,
+    byStatus: byStatus.map((s: { _id: string; count: number }) => ({ status: s._id, count: s.count })),
+    objectivesTotal: objectivesStats[0]?.total ?? 0,
+    objectivesCompleted: objectivesStats[0]?.completed ?? 0,
+  };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
+export const getResourceAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `resources:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const total = await ResourceRequest.countDocuments({ organizationId: oid });
+  const byStatus = await ResourceRequest.aggregate([
+    { $match: { organizationId: oid } },
+    { $group: { _id: '$status', count: { $sum: 1 } } },
+  ]);
+  const byType = await ResourceRequest.aggregate([
+    { $match: { organizationId: oid } },
+    { $group: { _id: '$resourceType', count: { $sum: 1 } } },
+  ]);
+  const result = {
+    total,
+    byStatus: byStatus.map((s: { _id: string; count: number }) => ({ status: s._id, count: s.count })),
+    byType: byType.map((t: { _id: string; count: number }) => ({ resourceType: t._id, count: t.count })),
+  };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
+export const getPartnershipAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `partnerships:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const org = await Organization.findById(oid).select('id');
+  if (!org) {throw new AppError('Organization not found', 404);}
+  const orgSlug = org.id;
+  const partnerships = await OrgPartnership.find({
+    $or: [{ orgIdA: orgSlug }, { orgIdB: orgSlug }],
+  }).lean();
+  const byStatus: Record<string, number> = {};
+  for (const p of partnerships) {
+    byStatus[p.status] = (byStatus[p.status] || 0) + 1;
+  }
+  const result = { total: partnerships.length, byStatus };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
+export const getCollaborationAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `collaborations:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const org = await Organization.findById(oid).select('id');
+  if (!org) {throw new AppError('Organization not found', 404);}
+  const orgSlug = org.id;
+  const spaces = await CollaborationSpace.find({ participantOrgIds: orgSlug }).lean();
+  const spaceIds = spaces.map((s) => s._id);
+  const messageCount = spaceIds.length > 0
+    ? await CollaborationMessage.countDocuments({ spaceId: { $in: spaceIds } })
+    : 0;
+  const result = {
+    totalSpaces: spaces.length,
+    activeSpaces: spaces.filter((s) => s.isActive).length,
+    totalMessages: messageCount,
+  };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
+export const getMentorshipAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `mentorships:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const org = await Organization.findById(oid).select('id');
+  if (!org) {throw new AppError('Organization not found', 404);}
+  const orgSlug = org.id;
+  const mentorships = await OrgMentorship.find({
+    $or: [{ mentorOrgId: orgSlug }, { menteeOrgId: orgSlug }],
+  }).lean();
+  const byStatus: Record<string, number> = {};
+  let totalSessions = 0;
+  for (const m of mentorships) {
+    byStatus[m.status] = (byStatus[m.status] || 0) + 1;
+    totalSessions += m.meetings?.length ?? 0;
+  }
+  const result = {
+    total: mentorships.length,
+    byStatus,
+    totalSessions,
+    avgSessionsPerMentorship: mentorships.length > 0 ? Math.round(totalSessions / mentorships.length) : 0,
+  };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
+export const getSharedContentAnalytics = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const cacheKey = `shared-content:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {return cached;}
+
+  const org = await Organization.findById(oid).select('id');
+  if (!org) {throw new AppError('Organization not found', 404);}
+  const orgSlug = org.id;
+  const outgoing = await CrossOrgContentShare.countDocuments({ sourceOrgId: orgSlug });
+  const incoming = await CrossOrgContentShare.countDocuments({ targetOrgIds: orgSlug });
+  const byType = await CrossOrgContentShare.aggregate([
+    { $match: { $or: [{ sourceOrgId: orgSlug }, { targetOrgIds: orgSlug }] } },
+    { $group: { _id: '$contentType', count: { $sum: 1 } } },
+  ]);
+  const result = {
+    outgoing,
+    incoming,
+    total: outgoing + incoming,
+    byType: byType.map((t: { _id: string; count: number }) => ({ contentType: t._id, count: t.count })),
+  };
+  await analyticsCache.set(cacheKey, result);
+  return result;
+};
+
 export const exportReport = async (req: AuthRequest, orgId: string) => {
-  const [overview, tasks, events, financial, engagement] = await Promise.all([
+  const [overview, tasks, events, financial, engagement, taskForces, resources, partnerships, collaborations, mentorships, sharedContent] = await Promise.all([
     getOverview(req, orgId),
     getTaskAnalytics(req, orgId),
     getEventAnalytics(req, orgId),
     getFinancialAnalytics(req, orgId),
     getEngagement(req, orgId),
+    getTaskForceAnalytics(req, orgId),
+    getResourceAnalytics(req, orgId),
+    getPartnershipAnalytics(req, orgId),
+    getCollaborationAnalytics(req, orgId),
+    getMentorshipAnalytics(req, orgId),
+    getSharedContentAnalytics(req, orgId),
   ]);
 
-  return { overview, tasks, events, financial, engagement };
+  return { overview, tasks, events, financial, engagement, taskForces, resources, partnerships, collaborations, mentorships, sharedContent };
 };
 
 // Private helpers

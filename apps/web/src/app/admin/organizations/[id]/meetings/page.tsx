@@ -3,7 +3,8 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { CalendarClock, Plus, Loader2, Trash2, MapPin, Users, ExternalLink, Clock, Pencil } from 'lucide-react';
+import { CalendarClock, Plus, Loader2, Trash2, MapPin, Users, ExternalLink, Clock, Pencil, ArrowUpCircle } from 'lucide-react';
+import { appToast } from '@/lib/app-toast';
 import { useAdminOrganization } from '@/hooks/useOrganizations';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
@@ -14,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { MeetingForm } from '@/components/admin/MeetingForm';
+import { TaskForm } from '@/components/admin/TaskForm';
+import { FiscalSemesterFilter } from '@/components/admin/FiscalSemesterFilter';
 import { format } from 'date-fns';
 
 export default function OrgMeetingsPage() {
@@ -26,10 +29,15 @@ export default function OrgMeetingsPage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState<{ _id: string; title: string; date: string; duration: number; location?: string; meetingUrl?: string; description?: string; agenda?: Array<{ topic: string; duration?: number }> } | null>(null);
+  const [filters, setFilters] = useState({ fiscalYear: '', semester: '' });
+  const [taskFromAction, setTaskFromAction] = useState<{ _id: string; title: string; meetingId: string; actionItemIndex: number } | null>(null);
+
+  const queryParams = { ...filters };
+  Object.keys(queryParams).forEach((k) => { if (!queryParams[k as keyof typeof queryParams]) delete queryParams[k as keyof typeof queryParams]; });
 
   const { data: meetings = [], isLoading } = useQuery({
-    queryKey: queryKeys.orgMeetings.all(orgId),
-    queryFn: () => orgMeetingsAPI.list(orgId),
+    queryKey: [...queryKeys.orgMeetings.all(orgId), filters],
+    queryFn: () => orgMeetingsAPI.list(orgId, queryParams as Record<string, string>),
     enabled: !!orgId,
   });
 
@@ -55,6 +63,9 @@ export default function OrgMeetingsPage() {
         </Button>
       }
     >
+      <div className="mb-4">
+        <FiscalSemesterFilter values={filters} onChange={setFilters} />
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -70,7 +81,7 @@ export default function OrgMeetingsPage() {
               <h3 className="text-sm font-semibold text-muted-foreground mb-3">Upcoming</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {upcoming.map((m) => (
-                  <MeetingCard key={m._id} meeting={m} onEdit={() => { setEditingMeeting(m); setShowForm(true); }} onDelete={() => deleteMutation.mutate(m._id)} />
+                  <MeetingCard key={m._id} orgId={orgId} meeting={m} onEdit={() => { setEditingMeeting(m); setShowForm(true); }} onDelete={() => deleteMutation.mutate(m._id)} onPromoteToTask={(title, idx) => setTaskFromAction({ _id: '', title, meetingId: m._id, actionItemIndex: idx })} />
                 ))}
               </div>
             </div>
@@ -80,7 +91,7 @@ export default function OrgMeetingsPage() {
               <h3 className="text-sm font-semibold text-muted-foreground mb-3">Past</h3>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {past.map((m) => (
-                  <MeetingCard key={m._id} meeting={m} onEdit={() => { setEditingMeeting(m); setShowForm(true); }} onDelete={() => deleteMutation.mutate(m._id)} />
+                  <MeetingCard key={m._id} orgId={orgId} meeting={m} onEdit={() => { setEditingMeeting(m); setShowForm(true); }} onDelete={() => deleteMutation.mutate(m._id)} onPromoteToTask={(title, idx) => setTaskFromAction({ _id: '', title, meetingId: m._id, actionItemIndex: idx })} />
                 ))}
               </div>
             </div>
@@ -95,14 +106,23 @@ export default function OrgMeetingsPage() {
         item={editingMeeting}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.orgMeetings.all(orgId) })}
       />
+      <TaskForm
+        orgId={orgId}
+        open={!!taskFromAction}
+        onOpenChange={(o) => { if (!o) setTaskFromAction(null); }}
+        item={taskFromAction}
+        onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.orgTasks.all(orgId) })}
+      />
     </OrgPageLayout>
   );
 }
 
-function MeetingCard({ meeting, onEdit, onDelete }: {
+function MeetingCard({ meeting, orgId, onEdit, onDelete, onPromoteToTask }: {
   meeting: { _id: string; title: string; date: string; duration: number; location?: string; meetingUrl?: string; attendees?: Array<{ rsvp: string }>; minutes?: string; actionItems?: Array<{ text: string; status: string }> };
+  orgId: string;
   onEdit: () => void;
   onDelete: () => void;
+  onPromoteToTask?: (title: string, actionItemIndex: number) => void;
 }) {
   const isPast = new Date(meeting.date) < new Date();
   const acceptedCount = meeting.attendees?.filter((a) => a.rsvp === 'accepted').length ?? 0;
@@ -147,6 +167,18 @@ function MeetingCard({ meeting, onEdit, onDelete }: {
             </Badge>
           )}
         </div>
+        {isPast && meeting.actionItems && meeting.actionItems.length > 0 && (
+          <div className="mt-2 space-y-1">
+            {meeting.actionItems.map((ai, idx) => ai.status === 'completed' ? null : (
+              <div key={idx} className="flex items-center justify-between gap-2 rounded-md bg-muted/30 px-2 py-1">
+                <span className="text-[10px] text-muted-foreground line-clamp-1 flex-1">{ai.text}</span>
+                <Button variant="ghost" size="icon" className="h-5 w-5 shrink-0" onClick={() => onPromoteToTask?.(ai.text, idx)} title="Promote to task">
+                  <ArrowUpCircle className="h-3 w-3 text-primary hover:text-primary/80" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

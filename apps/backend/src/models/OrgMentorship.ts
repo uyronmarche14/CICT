@@ -9,6 +9,12 @@ export interface IOrgMentorshipDocument extends Document {
   status: 'active' | 'completed' | 'cancelled';
   meetings: Array<{ date: Date; notes?: string }>;
   createdBy: mongoose.Types.ObjectId;
+  partnershipId?: mongoose.Types.ObjectId;
+  statusHistory: Array<{ status: string; changedBy: string | mongoose.Types.ObjectId; changedAt: Date; reason?: string }>;
+  outcome?: {
+    goals?: string;
+    completionNotes?: string;
+  };
 }
 
 const orgMentorshipSchema = new Schema<IOrgMentorshipDocument>(
@@ -25,6 +31,19 @@ const orgMentorshipSchema = new Schema<IOrgMentorshipDocument>(
     },
     meetings: [{ date: { type: Date, required: true }, notes: String }],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    partnershipId: { type: Schema.Types.ObjectId, ref: 'OrgPartnership' },
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        changedAt: { type: Date, default: Date.now },
+        reason: String,
+      },
+    ],
+    outcome: {
+      goals: String,
+      completionNotes: String,
+    },
   },
   { timestamps: true }
 );

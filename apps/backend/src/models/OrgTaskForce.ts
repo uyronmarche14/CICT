@@ -11,6 +11,15 @@ export interface IOrgTaskForceDocument extends Document {
   endDate?: Date;
   status: 'planning' | 'active' | 'completed' | 'cancelled';
   createdBy: mongoose.Types.ObjectId;
+  partnershipId?: mongoose.Types.ObjectId;
+  linkedEventIds: mongoose.Types.ObjectId[];
+  linkedTaskIds: mongoose.Types.ObjectId[];
+  linkedMeetingIds: mongoose.Types.ObjectId[];
+  statusHistory: Array<{ status: string; changedBy: string | mongoose.Types.ObjectId; changedAt: Date; reason?: string }>;
+  outcome?: {
+    deliverables?: string;
+    completionNotes?: string;
+  };
 }
 
 const orgTaskForceSchema = new Schema<IOrgTaskForceDocument>(
@@ -29,6 +38,22 @@ const orgTaskForceSchema = new Schema<IOrgTaskForceDocument>(
       default: 'planning',
     },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    partnershipId: { type: Schema.Types.ObjectId, ref: 'OrgPartnership' },
+    linkedEventIds: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
+    linkedTaskIds: [{ type: Schema.Types.ObjectId, ref: 'OrgTask' }],
+    linkedMeetingIds: [{ type: Schema.Types.ObjectId, ref: 'OrgMeeting' }],
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        changedAt: { type: Date, default: Date.now },
+        reason: String,
+      },
+    ],
+    outcome: {
+      deliverables: String,
+      completionNotes: String,
+    },
   },
   { timestamps: true }
 );

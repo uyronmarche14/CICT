@@ -36,6 +36,16 @@ export const DEFAULT_SETTINGS = {
     pushEnabled: false,
     smsEnabled: false,
   },
+  referenceData: {
+    taskCategories: 'General\nEvent\nAcademic\nAdmin\nOther',
+    budgetCategories: 'Supplies\nEquipment\nEvents\nFood\nTransportation\nMarketing\nVenue\nUtilities\nMiscellaneous\nDonations\nDues\nOther',
+    resourceTypes: 'venue\nequipment\nbudget\npersonnel\nother',
+    partnershipTypes: 'partner\nsponsor\nacademic\ncommunity\nindustry\nother',
+    mentorshipFocusAreas: 'leadership\nevent planning\ndocumentation\nfinance\nmembership\ntechnical skills',
+    committees: 'Executive\nFinance\nEvents\nDocumentation\nCreatives\nMembership\nTechnical',
+    officerPositions: 'President\nVice President\nSecretary\nTreasurer\nAuditor\nPublic Relations Officer',
+    contentCategories: 'news\nfeature\nopinion\nannouncement\nevent\ngeneral',
+  },
 } as const;
 
 export type SettingsGroup = keyof typeof DEFAULT_SETTINGS;

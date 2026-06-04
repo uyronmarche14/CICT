@@ -239,7 +239,7 @@ export type ProcessInstance = {
   title: string;
   description?: string;
   status: ProcessInstanceStatus;
-  linkedContentType?: 'news' | 'announcement' | 'event';
+  linkedContentType?: 'news' | 'announcement' | 'event' | 'task' | 'meeting' | 'budget';
   linkedContentId?: string;
   organizationId?: string | null;
   createdBy: string | { _id: string; firstName: string; lastName: string; email: string };
@@ -1726,7 +1726,7 @@ export const processInstanceSchema: z.ZodType<ProcessInstance> = z.object({
   title: z.string(),
   description: z.string().optional(),
   status: processInstanceStatusSchema,
-  linkedContentType: z.enum(['news', 'announcement', 'event']).optional(),
+  linkedContentType: z.enum(['news', 'announcement', 'event', 'task', 'meeting', 'budget']).optional(),
   linkedContentId: z.string().optional(),
   organizationId: z.string().nullable().optional(),
   createdBy: z.union([

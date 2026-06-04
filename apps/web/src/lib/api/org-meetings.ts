@@ -18,8 +18,8 @@ interface Meeting {
 }
 
 export const orgMeetingsAPI = {
-  list: async (orgId: string) => {
-    const res = await api.get<{ success: boolean; data: Meeting[] }>(`/organizations/${orgId}/meetings`);
+  list: async (orgId: string, params?: Record<string, string>) => {
+    const res = await api.get<{ success: boolean; data: Meeting[] }>(`/organizations/${orgId}/meetings`, { params });
     return res.data.data;
   },
   get: async (orgId: string, meetingId: string) => {

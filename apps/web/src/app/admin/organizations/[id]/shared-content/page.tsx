@@ -14,21 +14,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
+import { LookupCombobox, LookupMultiCombobox } from '@/components/ui/lookup-combobox';
 
 export default function OrgSharedContentPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgSharedContent } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgSharedContent(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ contentType: 'news', contentId: '', targetOrgIds: '' });
+  const [form, setForm] = useState<{ contentType: 'news' | 'announcement' | 'event'; contentId: string; targetOrgIds: string[] }>({ contentType: 'news', contentId: '', targetOrgIds: [] });
 
   const qkInc = queryKeys.orgSharedContent.incoming(orgId);
   const qkOut = queryKeys.orgSharedContent.outgoing(orgId);
@@ -37,8 +37,8 @@ export default function OrgSharedContentPage() {
 
   const removeMut = useMutation({ mutationFn: (id: string) => orgSharedContentAPI.remove(orgId, id), onSuccess: () => { qc.invalidateQueries({ queryKey: qkInc }); qc.invalidateQueries({ queryKey: qkOut }); } });
   const shareMut = useMutation({
-    mutationFn: () => orgSharedContentAPI.share(orgId, { ...form, targetOrgIds: form.targetOrgIds.split(',').map((s) => s.trim()).filter(Boolean) }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: qkOut }); setOpen(false); setForm({ contentType: 'news', contentId: '', targetOrgIds: '' }); appToast.success('Content shared', ''); },
+    mutationFn: () => orgSharedContentAPI.share(orgId, form),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: qkOut }); setOpen(false); setForm({ contentType: 'news', contentId: '', targetOrgIds: [] }); appToast.success('Content shared', ''); },
     onError: () => appToast.error('Error', 'Failed to share content.'),
   });
 
@@ -64,14 +64,14 @@ export default function OrgSharedContentPage() {
         <DialogContent><DialogHeader><DialogTitle>Share Content</DialogTitle><DialogDescription>Share a news, announcement, or event with other organizations.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
             <div><Label>Content Type</Label>
-              <Select value={form.contentType} onValueChange={(v) => setForm({ ...form, contentType: v })}>
+              <Select value={form.contentType} onValueChange={(v: 'news' | 'announcement' | 'event') => setForm({ ...form, contentType: v, contentId: '' })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><SelectItem value="news">News</SelectItem><SelectItem value="announcement">Announcement</SelectItem><SelectItem value="event">Event</SelectItem></SelectContent>
               </Select></div>
-            <div><Label>Content ID</Label><Input value={form.contentId} onChange={(e) => setForm({ ...form, contentId: e.target.value })} placeholder="Content _id" /></div>
-            <div><Label>Target organizations (comma separated slugs)</Label><Input value={form.targetOrgIds} onChange={(e) => setForm({ ...form, targetOrgIds: e.target.value })} placeholder="e.g. css, iss" /></div>
+            <div><Label>Content</Label><LookupCombobox kind="content" value={form.contentId} onChange={(value) => setForm({ ...form, contentId: value })} placeholder="Select content" searchPlaceholder="Search content..." params={{ type: form.contentType, orgId }} /></div>
+            <div><Label>Target Organizations</Label><LookupMultiCombobox kind="organizations" value={form.targetOrgIds} onChange={(value) => setForm({ ...form, targetOrgIds: value })} placeholder="Select organizations" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => shareMut.mutate()} disabled={!form.contentId.trim() || !form.targetOrgIds.trim() || shareMut.isPending}>Share</Button></DialogFooter></DialogContent></Dialog></>}>
+          <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => shareMut.mutate()} disabled={!form.contentId.trim() || form.targetOrgIds.length === 0 || shareMut.isPending}>Share</Button></DialogFooter></DialogContent></Dialog></>}>
       <Tabs defaultValue="incoming"><TabsList><TabsTrigger value="incoming">Incoming</TabsTrigger><TabsTrigger value="outgoing">Outgoing</TabsTrigger></TabsList>
         <TabsContent value="incoming" className="mt-4">{incLoading ? <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div> : renderList(incoming, 'No incoming shared content.')}</TabsContent>
         <TabsContent value="outgoing" className="mt-4">{outLoading ? <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div> : renderList(outgoing, 'No outgoing shared content.')}</TabsContent>

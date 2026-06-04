@@ -11,6 +11,8 @@ export const createTaskValidator = [
   body('tags').optional().isArray(),
   body('attachments').optional().isArray(),
   body('checklist').optional().isArray(),
+  body('fiscalYear').optional().trim(),
+  body('semester').optional().trim(),
 ];
 
 export const updateTaskValidator = [
@@ -25,6 +27,8 @@ export const updateTaskValidator = [
   body('tags').optional().isArray(),
   body('attachments').optional().isArray(),
   body('checklist').optional().isArray(),
+  body('fiscalYear').optional().trim(),
+  body('semester').optional().trim(),
 ];
 
 export const taskIdValidator = [param('taskId').isMongoId().withMessage('Invalid task ID')];
@@ -32,6 +36,7 @@ export const taskIdValidator = [param('taskId').isMongoId().withMessage('Invalid
 export const updateTaskStatusValidator = [
   param('taskId').isMongoId().withMessage('Invalid task ID'),
   body('status').isIn(['todo', 'in_progress', 'done']).withMessage('Invalid status'),
+  body('reason').optional().trim(),
 ];
 
 export const toggleChecklistValidator = [

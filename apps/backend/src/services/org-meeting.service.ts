@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureUsersExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -15,15 +16,31 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
   return organization._id;
 };
 
+const validateActionItemAssignees = async (body: Record<string, any>) => {
+  if (!Array.isArray(body.actionItems)) {
+    return;
+  }
+
+  const assigneeIds = body.actionItems
+    .map((item) => item?.assigneeId)
+    .filter((id): id is string => typeof id === 'string' && id.trim().length > 0);
+
+  await ensureUsersExist(assigneeIds);
+};
+
 export const listMeetings = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  return OrgMeeting.find({ organizationId: oid }).sort({ date: -1 }).lean();
+  const filter: Record<string, unknown> = { organizationId: oid };
+  if (req.query.fiscalYear) {filter.fiscalYear = req.query.fiscalYear;}
+  if (req.query.semester) {filter.semester = req.query.semester;}
+  return OrgMeeting.find(filter).sort({ date: -1 }).lean();
 };
 
 export const createMeeting = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
+  await validateActionItemAssignees(req.body);
   return OrgMeeting.create({ ...req.body, organizationId: oid, createdBy });
 };
 
@@ -36,6 +53,7 @@ export const getMeeting = async (req: AuthRequest, orgId: string, meetingId: str
 
 export const updateMeeting = async (req: AuthRequest, orgId: string, meetingId: string) => {
   const oid = await resolveOrg(req, orgId);
+  await validateActionItemAssignees(req.body);
   const meeting = await OrgMeeting.findOneAndUpdate(
     { _id: meetingId, organizationId: oid },
     { $set: req.body },
@@ -64,6 +82,7 @@ export const updateMinutes = async (req: AuthRequest, orgId: string, meetingId: 
 
 export const updateActionItems = async (req: AuthRequest, orgId: string, meetingId: string) => {
   const oid = await resolveOrg(req, orgId);
+  await validateActionItemAssignees(req.body);
   const meeting = await OrgMeeting.findOneAndUpdate(
     { _id: meetingId, organizationId: oid },
     { $set: { actionItems: req.body.actionItems } },

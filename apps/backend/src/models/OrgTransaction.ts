@@ -12,6 +12,9 @@ export interface IOrgTransactionDocument extends Document {
   referenceNumber?: string;
   receiptUrl?: string;
   createdBy: mongoose.Types.ObjectId;
+  budgetId?: mongoose.Types.ObjectId;
+  fiscalYear?: string;
+  semester?: string;
 }
 
 const orgTransactionSchema = new Schema<IOrgTransactionDocument>(
@@ -27,6 +30,9 @@ const orgTransactionSchema = new Schema<IOrgTransactionDocument>(
     referenceNumber: { type: String, trim: true },
     receiptUrl: { type: String, trim: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    budgetId: { type: Schema.Types.ObjectId, ref: 'OrgBudget' },
+    fiscalYear: { type: String, trim: true },
+    semester: { type: String, trim: true },
   },
   { timestamps: true }
 );

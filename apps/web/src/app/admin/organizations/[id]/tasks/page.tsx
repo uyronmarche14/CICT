@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { ListChecks, Plus, Loader2, Trash2, CheckCircle2, Circle, Clock, Pencil, ArrowRight, ArrowLeft, Check } from 'lucide-react';
+import { ListChecks, Plus, Loader2, Trash2, CheckCircle2, Circle, Clock, Pencil, ArrowRight, ArrowLeft, Check, History } from 'lucide-react';
 import { useAdminOrganization } from '@/hooks/useOrganizations';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
@@ -14,6 +14,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { TaskForm } from '@/components/admin/TaskForm';
+import { StatusHistoryTimeline } from '@/components/admin/StatusHistoryTimeline';
+import { FiscalSemesterFilter } from '@/components/admin/FiscalSemesterFilter';
 import { format } from 'date-fns';
 
 const statusConfig = {
@@ -38,11 +40,16 @@ export default function OrgTasksPage() {
   const queryClient = useQueryClient();
 
   const [showForm, setShowForm] = useState(false);
-  const [editingTask, setEditingTask] = useState<{ _id: string; title: string; description?: string; priority: string; dueDate?: string } | null>(null);
+  const [editingTask, setEditingTask] = useState<{ _id: string; title: string; description?: string; priority: string; dueDate?: string; category?: string; tags?: string[]; checklist?: Array<{ text: string; completed: boolean }>; committee?: string; officerPosition?: string } | null>(null);
+  const [historyEntry, setHistoryEntry] = useState<{ title: string; entries: Array<{ status: string; changedBy: string; changedAt: string; reason?: string }> } | null>(null);
+  const [filters, setFilters] = useState({ fiscalYear: '', semester: '' });
+
+  const queryParams = { ...filters };
+  Object.keys(queryParams).forEach((k) => { if (!queryParams[k as keyof typeof queryParams]) delete queryParams[k as keyof typeof queryParams]; });
 
   const { data: tasks = [], isLoading } = useQuery({
-    queryKey: queryKeys.orgTasks.all(orgId),
-    queryFn: () => orgTasksAPI.list(orgId),
+    queryKey: [...queryKeys.orgTasks.all(orgId), filters],
+    queryFn: () => orgTasksAPI.list(orgId, queryParams),
     enabled: !!orgId,
   });
 
@@ -77,6 +84,9 @@ export default function OrgTasksPage() {
         </Button>
       }
     >
+      <div className="mb-4">
+        <FiscalSemesterFilter values={filters} onChange={setFilters} />
+      </div>
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -104,6 +114,11 @@ export default function OrgTasksPage() {
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => { setEditingTask(task); setShowForm(true); }}>
                             <Pencil className="h-3 w-3 text-muted-foreground hover:text-primary" />
                           </Button>
+                          {task.statusHistory && task.statusHistory.length > 0 && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setHistoryEntry({ title: task.title, entries: task.statusHistory! })}>
+                              <History className="h-3 w-3 text-muted-foreground hover:text-primary" />
+                            </Button>
+                          )}
                           <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => deleteMutation.mutate(task._id)}>
                             <Trash2 className="h-3 w-3 text-muted-foreground hover:text-red-500" />
                           </Button>
@@ -134,6 +149,12 @@ export default function OrgTasksPage() {
                           {task.tags.map((tag: string, i: number) => (
                             <span key={i} className="text-[9px] bg-muted px-1.5 py-0.5 rounded-full text-muted-foreground">{tag}</span>
                           ))}
+                        </div>
+                      )}
+                      {(task.committee || task.officerPosition) && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {task.committee && <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full">{task.committee}</span>}
+                          {task.officerPosition && <span className="text-[9px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full">{task.officerPosition}</span>}
                         </div>
                       )}
                       {/* Status transition buttons */}
@@ -178,6 +199,12 @@ export default function OrgTasksPage() {
         onOpenChange={setShowForm}
         item={editingTask}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: queryKeys.orgTasks.all(orgId) })}
+      />
+      <StatusHistoryTimeline
+        open={!!historyEntry}
+        onOpenChange={(o) => { if (!o) setHistoryEntry(null); }}
+        entries={historyEntry?.entries ?? []}
+        title={`History: ${historyEntry?.title ?? ''}`}
       />
     </OrgPageLayout>
   );

@@ -18,17 +18,18 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
+import { LookupMultiCombobox } from '@/components/ui/lookup-combobox';
 
 export default function OrgCollaborationsPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgCollaborations } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgCollaborations(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [activeSpace, setActiveSpace] = useState<string | null>(null);
   const [newMsg, setNewMsg] = useState('');
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '' });
+  const [form, setForm] = useState({ name: '', description: '', participantOrgIds: [] as string[] });
 
   const qkAll = queryKeys.orgCollaborations.all(orgId);
   const { data: spaces = [], isLoading } = useQuery({ queryKey: qkAll, queryFn: () => orgCollaborationsAPI.list(orgId), enabled: !!orgId });
@@ -38,7 +39,7 @@ export default function OrgCollaborationsPage() {
   const sendMut = useMutation({ mutationFn: (content: string) => orgCollaborationsAPI.sendMessage(orgId, activeSpace!, content), onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.orgCollaborations.messages(orgId, activeSpace!) }); setNewMsg(''); } });
   const createMut = useMutation({
     mutationFn: () => orgCollaborationsAPI.create(orgId, form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: qkAll }); setOpen(false); setForm({ name: '', description: '' }); appToast.success('Space created', ''); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: qkAll }); setOpen(false); setForm({ name: '', description: '', participantOrgIds: [] }); appToast.success('Space created', ''); },
     onError: () => appToast.error('Error', 'Failed to create space.'),
   });
 
@@ -77,6 +78,7 @@ export default function OrgCollaborationsPage() {
           <div className="space-y-4 py-2">
             <div><Label>Name</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Space name" /></div>
             <div><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What is this space for?" /></div>
+            <div><Label>Participant Organizations</Label><LookupMultiCombobox kind="organizations" value={form.participantOrgIds} onChange={(value) => setForm({ ...form, participantOrgIds: value })} placeholder="Select organizations" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!form.name.trim() || createMut.isPending}>Create</Button></DialogFooter></DialogContent></Dialog></>}>
       {isLoading ? <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>

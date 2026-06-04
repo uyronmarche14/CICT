@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureContentExists, ensureOrganizationsExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -18,14 +19,21 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
 export const shareContent = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
   const { contentType, contentId, targetOrgIds } = req.body;
+  const normalizedTargetOrgIds = await ensureOrganizationsExist(
+    targetOrgIds,
+    'One or more target organizations were not found'
+  );
+
+  await ensureContentExists(contentType, contentId, org.id);
+
   const existing = await CrossOrgContentShare.findOne({ contentType, contentId, sourceOrgId: org.id });
   if (existing) {
-    existing.targetOrgIds = [...new Set([...existing.targetOrgIds, ...targetOrgIds])];
+    existing.targetOrgIds = [...new Set([...existing.targetOrgIds, ...normalizedTargetOrgIds])];
     existing.isActive = true;
     await existing.save();
     return existing;
   }
-  return CrossOrgContentShare.create({ contentType, contentId, sourceOrgId: org.id, targetOrgIds, sharedBy: req.user!.userId });
+  return CrossOrgContentShare.create({ contentType, contentId, sourceOrgId: org.id, targetOrgIds: normalizedTargetOrgIds, sharedBy: req.user!.userId });
 };
 
 export const listIncoming = async (req: AuthRequest, orgId: string) => {

@@ -718,7 +718,7 @@ export interface IProcessInstance extends Document {
   title: string;
   description?: string;
   status: 'draft' | 'active' | 'completed' | 'archived';
-  linkedContentType?: 'news' | 'announcement' | 'event';
+  linkedContentType?: 'news' | 'announcement' | 'event' | 'task' | 'meeting' | 'budget';
   linkedContentId?: string;
   organizationId?: string | null;
   createdBy: Types.ObjectId | IUser;

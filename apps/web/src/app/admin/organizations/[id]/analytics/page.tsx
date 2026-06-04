@@ -69,6 +69,42 @@ export default function OrgAnalyticsPage() {
     enabled: !!orgId && canAnalytics,
   });
 
+  const { data: taskForces } = useQuery({
+    queryKey: ['org-analytics', orgId, 'task-forces'],
+    queryFn: () => analyticsAPI.getTaskForces(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
+  const { data: resources } = useQuery({
+    queryKey: ['org-analytics', orgId, 'resources'],
+    queryFn: () => analyticsAPI.getResources(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
+  const { data: partnerships } = useQuery({
+    queryKey: ['org-analytics', orgId, 'partnerships'],
+    queryFn: () => analyticsAPI.getPartnerships(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
+  const { data: collaborations } = useQuery({
+    queryKey: ['org-analytics', orgId, 'collaborations'],
+    queryFn: () => analyticsAPI.getCollaborations(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
+  const { data: mentorships } = useQuery({
+    queryKey: ['org-analytics', orgId, 'mentorships'],
+    queryFn: () => analyticsAPI.getMentorships(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
+  const { data: sharedContent } = useQuery({
+    queryKey: ['org-analytics', orgId, 'shared-content'],
+    queryFn: () => analyticsAPI.getSharedContent(orgId),
+    enabled: !!orgId && canAnalytics,
+  });
+
   if (!shouldRender) return null;
 
   const isLoading = orgLoading || overviewLoading;
@@ -90,6 +126,12 @@ export default function OrgAnalyticsPage() {
             <TabsTrigger value="events">Events</TabsTrigger>
             <TabsTrigger value="financial">Financial</TabsTrigger>
             <TabsTrigger value="engagement">Engagement</TabsTrigger>
+            <TabsTrigger value="taskforces">Task Forces</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+            <TabsTrigger value="partnerships">Partnerships</TabsTrigger>
+            <TabsTrigger value="collaborations">Collab</TabsTrigger>
+            <TabsTrigger value="mentorships">Mentorship</TabsTrigger>
+            <TabsTrigger value="shared">Shared</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -253,6 +295,115 @@ export default function OrgAnalyticsPage() {
                 <MetricCard icon={BarChart3} label="Total Hours" value={engagement.totalHours} color="text-purple-500" />
               </div>
             ) : <p className="text-sm text-muted-foreground">No engagement data available.</p>}
+          </TabsContent>
+
+          {/* Task Forces Tab */}
+          <TabsContent value="taskforces" className="space-y-6">
+            {taskForces ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+                <MetricCard icon={BarChart3} label="Total Task Forces" value={taskForces.total} color="text-primary" />
+                <MetricCard icon={CheckCircle2} label="Objectives" value={`${taskForces.objectivesCompleted}/${taskForces.objectivesTotal}`} color="text-green-500" />
+                {taskForces.byStatus.map((s, i) => (
+                  <MetricCard key={s.status} icon={BarChart3} label={s.status} value={s.count} color={COLORS[i % COLORS.length]} />
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground">No task force data available.</p>}
+          </TabsContent>
+
+          {/* Resources Tab */}
+          <TabsContent value="resources" className="space-y-6">
+            {resources ? (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <MetricCard icon={BarChart3} label="Total Requests" value={resources.total} color="text-primary" />
+                  {resources.byStatus.map((s, i) => (
+                    <MetricCard key={s.status} icon={BarChart3} label={s.status} value={s.count} color={COLORS[i % COLORS.length]} />
+                  ))}
+                </div>
+                {resources.byType.length > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm font-medium">By Resource Type</CardTitle></CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={resources.byType} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="resourceType" width={100} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : <p className="text-sm text-muted-foreground">No resource data available.</p>}
+          </TabsContent>
+
+          {/* Partnerships Tab */}
+          <TabsContent value="partnerships" className="space-y-6">
+            {partnerships ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <MetricCard icon={BarChart3} label="Total Partnerships" value={partnerships.total} color="text-primary" />
+                {Object.entries(partnerships.byStatus).map(([status, count], i) => (
+                  <MetricCard key={status} icon={BarChart3} label={status} value={count} color={COLORS[i % COLORS.length]} />
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground">No partnership data available.</p>}
+          </TabsContent>
+
+          {/* Collaborations Tab */}
+          <TabsContent value="collaborations" className="space-y-6">
+            {collaborations ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <MetricCard icon={Users} label="Total Spaces" value={collaborations.totalSpaces} color="text-primary" />
+                <MetricCard icon={CheckCircle2} label="Active Spaces" value={collaborations.activeSpaces} color="text-green-500" />
+                <MetricCard icon={BarChart3} label="Messages" value={collaborations.totalMessages} color="text-blue-500" />
+              </div>
+            ) : <p className="text-sm text-muted-foreground">No collaboration data available.</p>}
+          </TabsContent>
+
+          {/* Mentorship Tab */}
+          <TabsContent value="mentorships" className="space-y-6">
+            {mentorships ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <MetricCard icon={BarChart3} label="Total" value={mentorships.total} color="text-primary" />
+                <MetricCard icon={BarChart3} label="Sessions" value={mentorships.totalSessions} color="text-blue-500" />
+                <MetricCard icon={BarChart3} label="Avg Sessions" value={mentorships.avgSessionsPerMentorship} color="text-purple-500" />
+                {Object.entries(mentorships.byStatus).map(([status, count], i) => (
+                  <MetricCard key={status} icon={BarChart3} label={status} value={count} color={COLORS[i % COLORS.length]} />
+                ))}
+              </div>
+            ) : <p className="text-sm text-muted-foreground">No mentorship data available.</p>}
+          </TabsContent>
+
+          {/* Shared Content Tab */}
+          <TabsContent value="shared" className="space-y-6">
+            {sharedContent ? (
+              <>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <MetricCard icon={BarChart3} label="Outgoing" value={sharedContent.outgoing} color="text-blue-500" />
+                  <MetricCard icon={BarChart3} label="Incoming" value={sharedContent.incoming} color="text-green-500" />
+                  <MetricCard icon={BarChart3} label="Total" value={sharedContent.total} color="text-primary" />
+                </div>
+                {sharedContent.byType.length > 0 && (
+                  <Card>
+                    <CardHeader><CardTitle className="text-sm font-medium">By Content Type</CardTitle></CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={sharedContent.byType} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis type="category" dataKey="contentType" width={100} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#6366f1" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                )}
+              </>
+            ) : <p className="text-sm text-muted-foreground">No shared content data available.</p>}
           </TabsContent>
         </Tabs>
       )}

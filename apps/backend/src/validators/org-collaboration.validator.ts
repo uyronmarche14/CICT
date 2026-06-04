@@ -5,6 +5,7 @@ export const createSpaceValidator = [
   body('description').optional().trim(),
   body('participantOrgIds').optional().isArray(),
   body('participantUserIds').optional().isArray(),
+  body('partnershipId').optional().isMongoId(),
 ];
 
 export const updateSpaceValidator = [
@@ -14,6 +15,7 @@ export const updateSpaceValidator = [
   body('participantOrgIds').optional().isArray(),
   body('participantUserIds').optional().isArray(),
   body('isActive').optional().isBoolean(),
+  body('partnershipId').optional().isMongoId(),
 ];
 
 export const spaceIdValidator = [param('id').isMongoId().withMessage('Invalid space ID')];

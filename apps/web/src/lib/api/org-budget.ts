@@ -7,6 +7,7 @@ interface Budget {
   totalBudget: number;
   categories?: Array<{ name: string; allocated: number }>;
   notes?: string;
+  statusHistory?: Array<{ status: string; changedBy: string; changedAt: string; reason?: string }>;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +24,9 @@ interface Transaction {
   paymentMethod?: 'cash' | 'bank_transfer' | 'check' | 'online';
   referenceNumber?: string;
   receiptUrl?: string;
+  budgetId?: string;
+  fiscalYear?: string;
+  semester?: string;
   createdAt: string;
 }
 
@@ -44,8 +48,8 @@ export const orgBudgetAPI = {
     const res = await api.put<{ success: boolean; data: Budget }>(`/organizations/${orgId}/budget`, data);
     return res.data.data;
   },
-  listTransactions: async (orgId: string) => {
-    const res = await api.get<{ success: boolean; data: Transaction[] }>(`/organizations/${orgId}/budget/transactions`);
+  listTransactions: async (orgId: string, params?: Record<string, string>) => {
+    const res = await api.get<{ success: boolean; data: Transaction[] }>(`/organizations/${orgId}/budget/transactions`, { params });
     return res.data.data;
   },
   createTransaction: async (orgId: string, data: Partial<Transaction>) => {

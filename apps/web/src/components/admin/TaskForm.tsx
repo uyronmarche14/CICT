@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { appToast } from '@/lib/app-toast';
 import { orgTasksAPI } from '@/lib/api/org-tasks';
+import { LookupMultiCombobox } from '@/components/ui/lookup-combobox';
+import { useReferenceData } from '@/hooks/use-reference-data';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -31,15 +33,33 @@ const formSchema = z.object({
   priority: z.enum(['low', 'medium', 'high', 'urgent']),
   dueDate: z.string().optional(),
   category: z.string().optional(),
+  committee: z.string().optional(),
+  officerPosition: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+interface TaskFormItem {
+  _id: string;
+  title: string;
+  description?: string;
+  priority?: string;
+  dueDate?: string;
+  category?: string;
+  tags?: string[];
+  checklist?: Array<{ text: string; completed: boolean }>;
+  assigneeIds?: string[];
+  committee?: string;
+  officerPosition?: string;
+  meetingId?: string;
+  actionItemIndex?: number;
+}
 
 interface TaskFormProps {
   orgId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item?: { _id: string; title: string; description?: string; priority: string; dueDate?: string; category?: string; tags?: string[]; checklist?: Array<{ text: string; completed: boolean }> } | null;
+  item?: TaskFormItem | null;
   onSuccess: () => void;
 }
 
@@ -47,10 +67,12 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
   const [checklist, setChecklist] = useState<Array<{ text: string; completed: boolean }>>([]);
+  const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
+  const { items: taskCategories } = useReferenceData('taskCategories');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: '', description: '', priority: 'medium', dueDate: '', category: '' },
+    defaultValues: { title: '', description: '', priority: 'medium', dueDate: '', category: '', committee: '', officerPosition: '' },
   });
 
   useEffect(() => {
@@ -61,15 +83,20 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
         priority: (item?.priority as FormValues['priority']) ?? 'medium',
         dueDate: item?.dueDate ?? '',
         category: item?.category ?? '',
+        committee: item?.committee ?? '',
+        officerPosition: item?.officerPosition ?? '',
       });
       setTags(item?.tags ?? []);
       setChecklist(item?.checklist ?? []);
+      setAssigneeIds(item?.assigneeIds ?? []);
     }
   }, [form, item, open]);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      const payload = { ...data, tags, checklist };
+      const payload: Record<string, unknown> = { ...data, tags, checklist, assigneeIds };
+      if (item?.meetingId) { payload.meetingId = item.meetingId; }
+      if (item?.actionItemIndex !== undefined) { payload.actionItemIndex = item.actionItemIndex; }
       if (item) {
         await orgTasksAPI.update(orgId, item._id, payload);
         appToast.success('Updated', 'Task has been updated.');
@@ -82,6 +109,7 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
       form.reset();
       setTags([]);
       setChecklist([]);
+      setAssigneeIds([]);
     } catch {
       appToast.error('Error', 'Failed to save task.');
     }
@@ -124,11 +152,15 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl><SelectTrigger><SelectValue placeholder="General" /></SelectTrigger></FormControl>
                     <SelectContent>
-                      <SelectItem value="General">General</SelectItem>
-                      <SelectItem value="Event">Event</SelectItem>
-                      <SelectItem value="Academic">Academic</SelectItem>
-                      <SelectItem value="Admin">Admin</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
+                      {(taskCategories.length > 0 ? taskCategories : [
+                        { value: 'General', label: 'General' },
+                        { value: 'Event', label: 'Event' },
+                        { value: 'Academic', label: 'Academic' },
+                        { value: 'Admin', label: 'Admin' },
+                        { value: 'Other', label: 'Other' },
+                      ]).map((category) => (
+                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -159,6 +191,26 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
                   ))}
                 </div>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <FormLabel>Assignees</FormLabel>
+              <LookupMultiCombobox
+                kind="users"
+                value={assigneeIds}
+                onChange={setAssigneeIds}
+                placeholder="Assign users"
+                searchPlaceholder="Search users..."
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Controller control={form.control} name="committee" render={({ field }) => (
+                <FormItem><FormLabel>Committee</FormLabel><FormControl><Input placeholder="e.g. Finance, Events" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <Controller control={form.control} name="officerPosition" render={({ field }) => (
+                <FormItem><FormLabel>Officer Position</FormLabel><FormControl><Input placeholder="e.g. Treasurer" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
             </div>
 
             <Controller control={form.control} name="description" render={({ field }) => (

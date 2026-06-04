@@ -14,16 +14,16 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { appToast } from '@/lib/app-toast';
+import { LookupCombobox } from '@/components/ui/lookup-combobox';
 
 const statusColors: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', active: 'bg-green-100 text-green-700', declined: 'bg-red-100 text-red-700', terminated: 'bg-gray-100 text-gray-600' };
 
 export default function OrgPartnershipsPage() {
   const params = useParams(); const orgId = params.id as string;
-  const { canAccessOrganization } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessOrganization(orgId));
+  const { canManageOrgPartnerships } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(canManageOrgPartnerships(orgId));
   const { loading: orgLoading } = useAdminOrganization(orgId);
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -50,7 +50,17 @@ export default function OrgPartnershipsPage() {
       action={<><Button size="sm" onClick={() => setOpen(true)}><Plus className="mr-2 h-4 w-4" />New Partnership</Button>
         <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent><DialogHeader><DialogTitle>New Partnership</DialogTitle><DialogDescription>Invite another organization to partner with.</DialogDescription></DialogHeader>
-          <div className="space-y-4 py-2"><Label>Organization slug</Label><Input value={orgIdB} onChange={(e) => setOrgIdB(e.target.value)} placeholder="e.g. css" /></div>
+          <div className="space-y-4 py-2">
+            <Label>Partner Organization</Label>
+            <LookupCombobox
+              kind="organizations"
+              value={orgIdB}
+              onChange={setOrgIdB}
+              placeholder="Select organization"
+              searchPlaceholder="Search organizations..."
+              params={{ excludeOrgId: orgId }}
+            />
+          </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!orgIdB.trim() || createMut.isPending}>Send Invitation</Button></DialogFooter></DialogContent></Dialog></>}>
       {isLoading ? <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
       : partnerships.length === 0 ? <div className="flex min-h-[200px] items-center justify-center rounded-xl border border-dashed border-border/60"><p className="text-sm text-muted-foreground">No partnerships yet.</p></div>

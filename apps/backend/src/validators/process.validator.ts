@@ -323,3 +323,10 @@ export const updateChecklistItemValidator = [
   body('itemId').notEmpty().withMessage('Checklist item ID is required'),
   body('completed').isBoolean().withMessage('Completed must be a boolean'),
 ];
+
+export const linkContentValidator = [
+  param('id').notEmpty().withMessage('Instance ID is required'),
+  body('contentType').isIn(['task', 'meeting', 'budget']).withMessage('Content type must be task, meeting, or budget'),
+  body('contentId').isMongoId().withMessage('Valid content ID is required'),
+  body('orgId').isMongoId().withMessage('Valid organization ID is required'),
+];

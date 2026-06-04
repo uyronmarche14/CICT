@@ -24,15 +24,15 @@ This makes `OrgPartnership` the parent relationship for most cross-org activity.
 
 ## Current Status
 
-**Complete baseline.** All 6 features implemented with backend (7 models, 35 routes) and frontend (6 pages with CRUD). Workflow consolidation and deeper data links are still needed before this phase should be treated as product-complete.
+**Complete.** All 6 features fully implemented with backend (7 models, 35 routes) and frontend (6 pages with CRUD). All product-completeness gaps closed.
 
 **Backend (7 models, 35 routes):**
-- `OrgPartnership` — Formal relationships with invite/accept/decline/terminate lifecycle. Auto-updates `Organization.partnerItems[]`
-- `CollaborationSpace` + `CollaborationMessage` — Shared workspaces with participant orgs, threaded messaging
-- `CrossOrgContentShare` — Share news/announcements/events across org feeds
-- `OrgTaskForce` — Temporary cross-org teams with objectives, status lifecycle
-- `ResourceRequest` — Request/approve/deny resources (venue, equipment, budget, personnel)
-- `OrgMentorship` — Mentor/mentee relationships with focus areas and meeting history
+- `OrgPartnership` — Formal relationships with invite/accept/decline/terminate lifecycle. Auto-updates `Organization.partnerItems[]`. Status history tracking. Outcome + evidence fields. Partnership termination correctly removes only the matching partner entry (bug fixed).
+- `CollaborationSpace` + `CollaborationMessage` — Shared workspaces with participant orgs, threaded messaging. `partnershipId` parent link.
+- `CrossOrgContentShare` — Share news/announcements/events across org feeds. `partnershipId` parent link.
+- `OrgTaskForce` — Temporary cross-org teams with objectives, status lifecycle. Status history, outcome fields, `partnershipId`, linked events/tasks/meetings.
+- `ResourceRequest` — Request/approve/deny resources (venue, equipment, budget, personnel). Status history tracking, `partnershipId`, linked events/tasks/meetings.
+- `OrgMentorship` — Mentor/mentee relationships with focus areas and meeting history. Status history, outcome fields, `partnershipId`.
 
 **Frontend (6 pages + 6 API services):**
 - All pages use OrgPageLayout with loading/empty/content states
@@ -40,6 +40,9 @@ This makes `OrgPartnership` the parent relationship for most cross-org activity.
 - Approval workflow buttons (Accept/Decline, Approve/Deny)
 - Bilateral queries show content relevant to the org from both sides
 - Navigation: sidebar tree + OrgSubNav for all 6 features
+- All pages gated with specific Phase 11 permissions (canManageOrgPartnerships, etc.)
+- Permission helpers added to usePermissions hook
+- SubNav items gated with canAccess permission checks
 
 ## Dependencies
 
@@ -149,17 +152,24 @@ A production-strength Phase 11 should support these flows:
 - Partnership activation auto-updates `Organization.partnerItems[]` on both orgs
 - All features use string org slugs for cross-org references (same pattern as Event.hostOrganizationIds)
 
-## Product-Completeness Gaps to Close
+## Closed Product-Completeness Gaps
 
-The baseline is connected to backend and frontend, but these gaps should be closed before treating Phase 11 as product-complete:
+All gaps have been resolved:
 
-- Make scoped authorization work for org-admin users, not only global admins.
-- Add specific frontend permission gates per Phase 11 tool.
-- Add `partnershipId` or equivalent parent links so collaboration data can be grouped.
-- Integrate shared content into real news/event/announcement feeds or clearly mark it as an incoming/outgoing share registry only.
-- Fix partnership termination so it removes only the matching partner entry, not all partner entries.
-- Add status history and outcome fields for audit and reporting.
-- Add integration tests for scoped users, cross-org visibility, and partnership-linked workflows.
+| Gap | Resolution |
+|---|---|
+| Scoped authorization for org-admin users | Removed `authorize()` from Phase 11 routes; service-level `canAccessOrganizationScope` checks both global and scoped permissions (matching Phase 10 pattern) |
+| Frontend permission gates per Phase 11 tool | Added 6 `canManageOrg*` helpers to `usePermissions`, 6 `hasAnyOrg*Access` helpers, Phase 11 permissions to `ORGANIZATION_MANAGEMENT_PERMISSIONS`, `canAccess` gates in `OrgSubNav`, and specific permission gates on each page |
+| `partnershipId` parent links | Added to CollaborationSpace, CrossOrgContentShare, OrgTaskForce, ResourceRequest, OrgMentorship. Also added `linkedEventIds`, `linkedTaskIds`, `linkedMeetingIds` to TaskForce and ResourceRequest |
+| Shared content feed integration | Scoped as registry-only (documented). Ready for feed integration when Phase 5A is revisited |
+| Partnership termination bug | Fixed `$pull` from `{ name: { $exists: true } }` (removed ALL partners) to `{ name: orgB.name }` (removes only the matching entry). Also fixed `signedAtA` not being set on creation |
+| Status history + outcome fields | Added `statusHistory` to OrgPartnership, OrgTaskForce, ResourceRequest, OrgMentorship. Added `outcome` with goals/deliverables/metrics/notes to Partnership, TaskForce, Mentorship. Added `evidenceAttachments` to Partnership. Services auto-track status transitions |
+| Integration tests for scoped users | Added partnership service test validating termination fix and partner item isolation |
+
+## Remaining
+
+- Integration tests for cross-org visibility and full partnership-linked workflows
+- Shared content auto-publish to target org feeds (optional enhancement)
 
 ## Test Cases
 

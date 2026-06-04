@@ -8,6 +8,7 @@ export interface ICollaborationSpaceDocument extends Document {
   participantUserIds: mongoose.Types.ObjectId[];
   isActive: boolean;
   createdBy: mongoose.Types.ObjectId;
+  partnershipId?: mongoose.Types.ObjectId;
 }
 
 const collaborationSpaceSchema = new Schema<ICollaborationSpaceDocument>(
@@ -19,6 +20,7 @@ const collaborationSpaceSchema = new Schema<ICollaborationSpaceDocument>(
     participantUserIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     isActive: { type: Boolean, default: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    partnershipId: { type: Schema.Types.ObjectId, ref: 'OrgPartnership' },
   },
   { timestamps: true }
 );

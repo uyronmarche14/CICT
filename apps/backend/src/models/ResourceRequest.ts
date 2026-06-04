@@ -9,9 +9,14 @@ export interface IResourceRequestDocument extends Document {
   dateNeeded?: Date;
   duration?: number;
   status: 'pending' | 'approved' | 'denied' | 'fulfilled' | 'cancelled';
-  reviewedBy?: mongoose.Types.ObjectId;
+  reviewedBy?: mongoose.Types.ObjectId | string;
   reviewNotes?: string;
   createdBy: mongoose.Types.ObjectId;
+  partnershipId?: mongoose.Types.ObjectId;
+  linkedEventIds: mongoose.Types.ObjectId[];
+  linkedTaskIds: mongoose.Types.ObjectId[];
+  linkedMeetingIds: mongoose.Types.ObjectId[];
+  statusHistory: Array<{ status: string; changedBy: string | mongoose.Types.ObjectId; changedAt: Date; reason?: string }>;
 }
 
 const resourceRequestSchema = new Schema<IResourceRequestDocument>(
@@ -35,6 +40,18 @@ const resourceRequestSchema = new Schema<IResourceRequestDocument>(
     reviewedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     reviewNotes: { type: String, trim: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    partnershipId: { type: Schema.Types.ObjectId, ref: 'OrgPartnership' },
+    linkedEventIds: [{ type: Schema.Types.ObjectId, ref: 'Event' }],
+    linkedTaskIds: [{ type: Schema.Types.ObjectId, ref: 'OrgTask' }],
+    linkedMeetingIds: [{ type: Schema.Types.ObjectId, ref: 'OrgMeeting' }],
+    statusHistory: [
+      {
+        status: { type: String, required: true },
+        changedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        changedAt: { type: Date, default: Date.now },
+        reason: String,
+      },
+    ],
   },
   { timestamps: true }
 );

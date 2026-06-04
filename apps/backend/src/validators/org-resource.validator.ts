@@ -7,6 +7,10 @@ export const createResourceRequestValidator = [
   body('quantity').optional().isInt({ min: 1 }),
   body('dateNeeded').optional().isISO8601().toDate(),
   body('duration').optional().isInt({ min: 1 }),
+  body('partnershipId').optional().isMongoId(),
+  body('linkedEventIds').optional().isArray(),
+  body('linkedTaskIds').optional().isArray(),
+  body('linkedMeetingIds').optional().isArray(),
 ];
 
 export const resourceIdValidator = [param('id').isMongoId().withMessage('Invalid request ID')];
