@@ -8,7 +8,7 @@ export interface IStatusHistoryEntry {
 }
 
 export interface IOrgTaskDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   title: string;
   description?: string;
   assigneeIds: mongoose.Types.ObjectId[];
@@ -32,7 +32,7 @@ export interface IOrgTaskDocument extends Document {
 
 const orgTaskSchema = new Schema<IOrgTaskDocument>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    organizationId: { type: String, required: true, lowercase: true, index: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     assigneeIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],

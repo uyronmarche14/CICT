@@ -2,7 +2,7 @@ import { Response } from 'express';
 import {
   pushTokenRegistrationRequestSchema,
   pushTokenUnregistrationRequestSchema,
-} from '@cict/contracts';
+} from '@cict/contracts/schemas';
 import { StudentAuthRequest } from '../middleware/studentAuth';
 import { AppError } from '../middleware/errorHandler';
 import PushToken from '../models/PushToken';

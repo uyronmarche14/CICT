@@ -10,7 +10,7 @@ import {
   Permission,
   StudentStatus,
   UserRole,
-} from '@cict/contracts';
+} from '@cict/contracts/enums';
 
 export {
   AnnouncementPriority,
@@ -495,7 +495,6 @@ export interface IOrganization extends Document {
   vision: string;
   values: string[];
   achievements: string[];
-  members: IOrganizationMember[];
   color: {
     primary: string;
     secondary: string;

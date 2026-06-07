@@ -12,7 +12,7 @@ import {
   MemberType,
   ProcessNodeType,
   ProcessInstanceStatus,
-} from '@cict/contracts';
+} from '@cict/contracts/enums';
 import type {
   AdminModuleKey,
   AdminScopes,
@@ -38,7 +38,7 @@ import type {
   VenueDetails,
   StudentEvent,
   NodeAssignment,
-} from '@cict/contracts';
+} from '@cict/contracts/types';
 
 export {
   AnnouncementPriority,

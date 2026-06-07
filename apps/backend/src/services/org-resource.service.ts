@@ -18,7 +18,7 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
 
 export const listOutgoing = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
-  return ResourceRequest.find({ organizationId: org._id }).sort({ createdAt: -1 }).lean();
+  return ResourceRequest.find({ organizationId: String(org._id) }).sort({ createdAt: -1 }).lean();
 };
 
 export const listIncoming = async (req: AuthRequest, orgId: string) => {
@@ -46,7 +46,7 @@ export const getRequest = async (req: AuthRequest, orgId: string, id: string) =>
   const org = await resolveOrg(req, orgId);
   const request = await ResourceRequest.findOne({
     _id: id,
-    $or: [{ organizationId: org._id }, { providingOrgId: org.id }],
+    $or: [{ organizationId: String(org._id) }, { providingOrgId: org.id }],
   }).lean();
   if (!request) {throw new AppError('Request not found', 404);}
   return request;
@@ -78,7 +78,7 @@ export const denyRequest = async (req: AuthRequest, orgId: string, id: string) =
 
 export const cancelRequest = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const request = await ResourceRequest.findOne({ _id: id, organizationId: org._id, status: { $in: ['pending', 'approved'] } });
+  const request = await ResourceRequest.findOne({ _id: id, organizationId: String(org._id), status: { $in: ['pending', 'approved'] } });
   if (!request) {throw new AppError('Request not found or cannot be cancelled', 404);}
   request.status = 'cancelled';
   request.statusHistory.push({ status: 'cancelled', changedBy: req.user!.userId, changedAt: new Date() });

@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrganizationMemberDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   userId?: mongoose.Types.ObjectId;
   id: string;
   name: string;
@@ -62,9 +62,9 @@ export interface IOrganizationMemberDocument extends Document {
 const organizationMemberSchema = new Schema<IOrganizationMemberDocument>(
   {
     organizationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organization',
+      type: String,
       required: true,
+      lowercase: true,
       index: true,
     },
     userId: {

@@ -1,19 +1,23 @@
 import {
   MembershipStatus,
-  type AttendanceLog,
-  type AttendanceScanResult,
-  type ContentOwnerType,
-  type EventRegistrationStatus,
-  type MemberType,
-  type NewsStatus,
-  type OrganizationMembership,
-  type OrganizationStatus,
-  type OrganizationType,
-  type StudentEvent,
-  type StudentIdentity,
-  type StudentProfile,
-  type StudentRegistration,
-} from '@cict/contracts';
+} from '@cict/contracts/enums';
+import type {
+  AttendanceScanResult,
+  ContentOwnerType,
+  EventRegistrationStatus,
+  MemberType,
+  NewsStatus,
+  OrganizationStatus,
+  OrganizationType,
+} from '@cict/contracts/enums';
+import type {
+  AttendanceLog,
+  OrganizationMembership,
+  StudentEvent,
+  StudentIdentity,
+  StudentProfile,
+  StudentRegistration,
+} from '@cict/contracts/types';
 
 export type {
   AttendanceLog,

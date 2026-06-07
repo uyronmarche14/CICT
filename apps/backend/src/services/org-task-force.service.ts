@@ -18,7 +18,7 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
 
 export const listTaskForces = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
-  return OrgTaskForce.find({ $or: [{ organizationId: org._id }, { participantOrgIds: org.id }] })
+  return OrgTaskForce.find({ $or: [{ organizationId: String(org._id) }, { participantOrgIds: org.id }] })
     .sort({ startDate: -1 }).lean();
 };
 
@@ -35,7 +35,7 @@ export const createTaskForce = async (req: AuthRequest, orgId: string) => {
 
 export const getTaskForce = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const tf = await OrgTaskForce.findOne({ _id: id, $or: [{ organizationId: org._id }, { participantOrgIds: org.id }] }).lean();
+  const tf = await OrgTaskForce.findOne({ _id: id, $or: [{ organizationId: String(org._id) }, { participantOrgIds: org.id }] }).lean();
   if (!tf) {throw new AppError('Task force not found', 404);}
   return tf;
 };
@@ -45,7 +45,7 @@ export const updateTaskForce = async (req: AuthRequest, orgId: string, id: strin
   if (Array.isArray(req.body.participantOrgIds)) {
     req.body.participantOrgIds = await ensureOrganizationsExist(req.body.participantOrgIds);
   }
-  const tf = await OrgTaskForce.findOne({ _id: id, organizationId: org._id });
+  const tf = await OrgTaskForce.findOne({ _id: id, organizationId: String(org._id) });
   if (!tf) {throw new AppError('Task force not found', 404);}
   if (req.body.status && tf.status !== req.body.status) {
     tf.statusHistory.push({ status: req.body.status, changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.reason });
@@ -57,6 +57,6 @@ export const updateTaskForce = async (req: AuthRequest, orgId: string, id: strin
 
 export const deleteTaskForce = async (req: AuthRequest, orgId: string, id: string) => {
   const org = await resolveOrg(req, orgId);
-  const tf = await OrgTaskForce.findOneAndDelete({ _id: id, organizationId: org._id });
+  const tf = await OrgTaskForce.findOneAndDelete({ _id: id, organizationId: String(org._id) });
   if (!tf) {throw new AppError('Task force not found', 404);}
 };

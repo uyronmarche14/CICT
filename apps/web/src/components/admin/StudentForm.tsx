@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { StudentStatus } from '@cict/contracts';
+import { StudentStatus } from '@cict/contracts/enums';
 import type { Program, Section, Student, YearLevel } from '@/types';
 import type { StudentMutationPayload } from '@/lib/api/students';
 

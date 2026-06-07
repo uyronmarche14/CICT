@@ -26,7 +26,7 @@ import {
 import { Loader2, Search, X, Download, UserPlus, Ban, CheckCheck, Clock, MoreHorizontal, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import { adminEventAPI, type AdminRegistration } from '@/lib/api/admin-events';
-import type { EventRegistrationStatus } from '@cict/contracts';
+import type { EventRegistrationStatus } from '@cict/contracts/enums';
 import { STATUS_OPTIONS, PAGE_SIZE, getStatusBadge, getPageNumbers } from './helpers';
 
 interface EventDetailRegistrationsProps {

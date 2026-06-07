@@ -94,23 +94,14 @@ const normalizePermissionMetadata = (payload: unknown): PermissionMetadataGroup[
   return fallbackPermissionMetadataGroups;
 };
 
-const endpoints = ['/auth/permission-metadata', '/meta/permissions'];
-
 export const permissionsMetadataAPI = {
   getAll: async (): Promise<PermissionMetadataGroup[]> => {
-    for (const endpoint of endpoints) {
-      try {
-        const response = await api.get<{ success?: boolean; data?: unknown }>(endpoint);
-        return normalizePermissionMetadata(response.data.data);
-      } catch (error) {
-        const status = (error as { response?: { status?: number } }).response?.status;
-        if (status && status !== 404) {
-          throw error;
-        }
-      }
+    try {
+      const response = await api.get<{ success?: boolean; data?: unknown }>('/auth/permission-metadata');
+      return normalizePermissionMetadata(response.data.data);
+    } catch {
+      return fallbackPermissionMetadataGroups;
     }
-
-    return fallbackPermissionMetadataGroups;
   },
 
   getFallback: () => fallbackPermissionMetadataGroups,

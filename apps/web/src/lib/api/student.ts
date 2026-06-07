@@ -7,7 +7,7 @@ import type {
   StudentProfile,
   StudentQrPayload,
   StudentRegistration,
-} from '@cict/contracts';
+} from '@cict/contracts/types';
 
 export type { AttendanceLog, StudentEvent, StudentRegistration };
 

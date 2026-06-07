@@ -51,6 +51,7 @@ const eventAttendanceLogSchema = new Schema<IEventAttendanceLog>(
 );
 
 eventAttendanceLogSchema.index({ eventId: 1, studentId: 1, createdAt: -1 });
+eventAttendanceLogSchema.index({ studentId: 1 });
 
 const EventAttendanceLog = mongoose.model<IEventAttendanceLog>(
   'EventAttendanceLog',

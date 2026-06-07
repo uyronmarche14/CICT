@@ -45,9 +45,9 @@ export const getOverview = async (req: AuthRequest, orgId: string) => {
   }
 
   const [totalTasks, completedTasks, meetings, activeMemberships] = await Promise.all([
-    OrgTask.countDocuments({ organizationId: oid }),
-    OrgTask.countDocuments({ organizationId: oid, status: 'done' }),
-    OrgMeeting.find({ organizationId: oid }).lean(),
+    OrgTask.countDocuments({ organizationId: String(oid) }),
+    OrgTask.countDocuments({ organizationId: String(oid), status: 'done' }),
+    OrgMeeting.find({ organizationId: String(oid) }).lean(),
     OrganizationMembership.countDocuments({ organizationId: orgId, status: 'active' }),
   ]);
 
@@ -58,8 +58,8 @@ export const getOverview = async (req: AuthRequest, orgId: string) => {
     : 0;
 
   // Budget utilization
-  const budget = await OrgBudget.findOne({ organizationId: oid }).lean();
-  const transactions = await OrgTransaction.find({ organizationId: oid }).lean();
+  const budget = await OrgBudget.findOne({ organizationId: String(oid) }).lean();
+  const transactions = await OrgTransaction.find({ organizationId: String(oid) }).lean();
   const totalExpenses = transactions.filter((t) => t.type === 'expense').reduce((s, t) => s + t.amount, 0);
   const budgetUtilization = budget && budget.totalBudget > 0 ? totalExpenses / budget.totalBudget : 0;
 
@@ -88,7 +88,7 @@ export const getTaskAnalytics = async (req: AuthRequest, orgId: string) => {
     return cached;
   }
 
-  const tasks = await OrgTask.find({ organizationId: oid }).lean();
+  const tasks = await OrgTask.find({ organizationId: String(oid) }).lean();
   const now = new Date();
 
   const byStatus = ['todo', 'in_progress', 'done'].map((s) => ({
@@ -164,8 +164,8 @@ export const getFinancialAnalytics = async (req: AuthRequest, orgId: string) => 
   }
 
   const [budget, transactions] = await Promise.all([
-    OrgBudget.findOne({ organizationId: oid }).lean(),
-    OrgTransaction.find({ organizationId: oid }).lean(),
+    OrgBudget.findOne({ organizationId: String(oid) }).lean(),
+    OrgTransaction.find({ organizationId: String(oid) }).lean(),
   ]);
 
   const totalIncome = transactions.filter((t) => t.type === 'income').reduce((s, t) => s + t.amount, 0);
@@ -236,7 +236,7 @@ export const getTaskForceAnalytics = async (req: AuthRequest, orgId: string) => 
   const cached = await analyticsCache.get(cacheKey);
   if (cached) {return cached;}
 
-  const total = await OrgTaskForce.countDocuments({ organizationId: oid });
+  const total = await OrgTaskForce.countDocuments({ organizationId: String(oid) });
   const byStatus = await OrgTaskForce.aggregate([
     { $match: { organizationId: oid } },
     { $group: { _id: '$status', count: { $sum: 1 } } },
@@ -262,7 +262,7 @@ export const getResourceAnalytics = async (req: AuthRequest, orgId: string) => {
   const cached = await analyticsCache.get(cacheKey);
   if (cached) {return cached;}
 
-  const total = await ResourceRequest.countDocuments({ organizationId: oid });
+  const total = await ResourceRequest.countDocuments({ organizationId: String(oid) });
   const byStatus = await ResourceRequest.aggregate([
     { $match: { organizationId: oid } },
     { $group: { _id: '$status', count: { $sum: 1 } } },

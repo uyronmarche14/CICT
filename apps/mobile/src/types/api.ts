@@ -10,7 +10,7 @@ export type {
   StudentQrPayload,
   StudentRegistrationResponse,
   StudentRegistrationsResponse,
-} from '@cict/contracts';
+} from '@cict/contracts/types';
 
 export type AnnouncementsResponse = {
   announcements: Announcement[];

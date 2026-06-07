@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IResourceRequestDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   providingOrgId?: string;
   resourceType: 'venue' | 'equipment' | 'budget' | 'personnel' | 'other';
   description: string;
@@ -21,7 +21,7 @@ export interface IResourceRequestDocument extends Document {
 
 const resourceRequestSchema = new Schema<IResourceRequestDocument>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    organizationId: { type: String, required: true, lowercase: true, index: true },
     providingOrgId: { type: String, trim: true, lowercase: true },
     resourceType: {
       type: String,

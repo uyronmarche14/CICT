@@ -5,7 +5,10 @@ import logger from '../../utils/logger';
 export async function up(): Promise<void> {
   logger.info('Running migration 002: Extracting organization members...');
 
-  const orgs = await Organization.find({}, { members: 1 }).lean();
+  const orgs = await Organization.aggregate([
+    { $match: {} },
+    { $project: { _id: 1, members: 1 } },
+  ]);
   let totalMigrated = 0;
 
   for (const org of orgs) {

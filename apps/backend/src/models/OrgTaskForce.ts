@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrgTaskForceDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   name: string;
   description?: string;
   participantOrgIds: string[];
@@ -24,7 +24,7 @@ export interface IOrgTaskForceDocument extends Document {
 
 const orgTaskForceSchema = new Schema<IOrgTaskForceDocument>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    organizationId: { type: String, required: true, lowercase: true, index: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     participantOrgIds: [{ type: String, trim: true, lowercase: true }],

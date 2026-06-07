@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrgBudgetDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   fiscalYear: string;
   totalBudget: number;
   categories: Array<{ name: string; allocated: number }>;
@@ -19,9 +19,10 @@ export interface IOrgBudgetDocument extends Document {
 const orgBudgetSchema = new Schema<IOrgBudgetDocument>(
   {
     organizationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organization',
+      type: String,
       required: true,
+      lowercase: true,
+      index: true,
     },
     fiscalYear: { type: String, required: true, trim: true },
     totalBudget: { type: Number, required: true, min: 0 },

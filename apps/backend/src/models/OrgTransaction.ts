@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrgTransactionDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   type: 'income' | 'expense';
   category: string;
   amount: number;
@@ -19,7 +19,7 @@ export interface IOrgTransactionDocument extends Document {
 
 const orgTransactionSchema = new Schema<IOrgTransactionDocument>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    organizationId: { type: String, required: true, lowercase: true, index: true },
     type: { type: String, enum: ['income', 'expense'], required: true },
     category: { type: String, required: true, trim: true },
     amount: { type: Number, required: true },

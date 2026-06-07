@@ -19,8 +19,8 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
 
 export const getBudget = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const budget = await OrgBudget.findOne({ organizationId: oid }).lean();
-  const transactions = await OrgTransaction.find({ organizationId: oid }).lean();
+  const budget = await OrgBudget.findOne({ organizationId: String(oid) }).lean();
+  const transactions = await OrgTransaction.find({ organizationId: String(oid) }).lean();
   const totalIncome = transactions.filter((t) => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpenses = transactions.filter((t) => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   return { budget, summary: { totalIncome, totalExpenses, balance: totalIncome - totalExpenses } };
@@ -40,7 +40,7 @@ export const createBudget = async (req: AuthRequest, orgId: string) => {
 
 export const updateBudget = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  let budget = await OrgBudget.findOne({ organizationId: oid });
+  let budget = await OrgBudget.findOne({ organizationId: String(oid) });
   if (!budget) {
     const createdBy = req.user?.userId;
     if (!createdBy) {throw new AppError('User not authenticated', 401);}
@@ -78,6 +78,6 @@ export const createTransaction = async (req: AuthRequest, orgId: string) => {
 
 export const deleteTransaction = async (req: AuthRequest, orgId: string, txId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const tx = await OrgTransaction.findOneAndDelete({ _id: txId, organizationId: oid });
+  const tx = await OrgTransaction.findOneAndDelete({ _id: txId, organizationId: String(oid) });
   if (!tx) {throw new AppError('Transaction not found', 404);}
 };

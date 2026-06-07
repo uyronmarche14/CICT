@@ -159,6 +159,7 @@ newsSchema.index({ status: 1, publishedAt: -1 });
 newsSchema.index({ author: 1 });
 newsSchema.index({ tags: 1 });
 newsSchema.index({ ownerType: 1, organizationId: 1 });
+newsSchema.index({ organizationId: 1, publishedAt: -1 });
 
 // Index for approval queue queries
 newsSchema.index({ status: 1, createdAt: -1 });

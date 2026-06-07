@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { academicAPI } from '@/lib/api/academic';
 import { studentsAPI, type StudentMutationPayload } from '@/lib/api/students';
-import { StudentStatus } from '@cict/contracts';
+import { StudentStatus } from '@cict/contracts/enums';
 import { Program, Section, Student, YearLevel } from '@/types';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';

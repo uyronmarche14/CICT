@@ -18,7 +18,7 @@ const resolveOrg = async (req: AuthRequest, orgId: string) => {
 
 export const listVotes = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
-  return OrgVote.find({ organizationId: oid }).sort({ startDate: -1 }).lean();
+  return OrgVote.find({ organizationId: String(oid) }).sort({ startDate: -1 }).lean();
 };
 
 export const createVote = async (req: AuthRequest, orgId: string) => {
@@ -30,7 +30,7 @@ export const createVote = async (req: AuthRequest, orgId: string) => {
 
 export const getVote = async (req: AuthRequest, orgId: string, voteId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const vote = await OrgVote.findOne({ _id: voteId, organizationId: oid }).lean();
+  const vote = await OrgVote.findOne({ _id: voteId, organizationId: String(oid) }).lean();
   if (!vote) {throw new AppError('Vote not found', 404);}
   return vote;
 };
@@ -38,7 +38,7 @@ export const getVote = async (req: AuthRequest, orgId: string, voteId: string) =
 export const updateVote = async (req: AuthRequest, orgId: string, voteId: string) => {
   const oid = await resolveOrg(req, orgId);
   const vote = await OrgVote.findOneAndUpdate(
-    { _id: voteId, organizationId: oid },
+    { _id: voteId, organizationId: String(oid) },
     { $set: req.body },
     { new: true, runValidators: true }
   );
@@ -48,13 +48,13 @@ export const updateVote = async (req: AuthRequest, orgId: string, voteId: string
 
 export const deleteVote = async (req: AuthRequest, orgId: string, voteId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const vote = await OrgVote.findOneAndDelete({ _id: voteId, organizationId: oid });
+  const vote = await OrgVote.findOneAndDelete({ _id: voteId, organizationId: String(oid) });
   if (!vote) {throw new AppError('Vote not found', 404);}
 };
 
 export const castBallot = async (req: AuthRequest, orgId: string, voteId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const vote = await OrgVote.findOne({ _id: voteId, organizationId: oid });
+  const vote = await OrgVote.findOne({ _id: voteId, organizationId: String(oid) });
   if (!vote) {throw new AppError('Vote not found', 404);}
   if (!vote.isActive) {throw new AppError('Voting is closed', 400);}
 
@@ -68,7 +68,7 @@ export const castBallot = async (req: AuthRequest, orgId: string, voteId: string
 
 export const getResults = async (req: AuthRequest, orgId: string, voteId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const vote = await OrgVote.findOne({ _id: voteId, organizationId: oid }).lean();
+  const vote = await OrgVote.findOne({ _id: voteId, organizationId: String(oid) }).lean();
   if (!vote) {throw new AppError('Vote not found', 404);}
 
   const ballots = await OrgVoteBallot.find({ voteId }).lean();

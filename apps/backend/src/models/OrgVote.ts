@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrgVoteDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   title: string;
   description?: string;
   positions: Array<{ title: string; description?: string; maxSelections: number }>;
@@ -16,9 +16,9 @@ export interface IOrgVoteDocument extends Document {
 const orgVoteSchema = new Schema<IOrgVoteDocument>(
   {
     organizationId: {
-      type: Schema.Types.ObjectId,
-      ref: 'Organization',
+      type: String,
       required: true,
+      lowercase: true,
       index: true,
     },
     title: { type: String, required: true, trim: true },

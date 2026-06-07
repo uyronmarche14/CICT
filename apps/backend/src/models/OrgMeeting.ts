@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrgMeetingDocument extends Document {
-  organizationId: mongoose.Types.ObjectId;
+  organizationId: string;
   title: string;
   description?: string;
   agenda: Array<{ topic: string; duration?: number; presenter?: string }>;
@@ -30,7 +30,7 @@ export interface IOrgMeetingDocument extends Document {
 
 const orgMeetingSchema = new Schema<IOrgMeetingDocument>(
   {
-    organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+    organizationId: { type: String, required: true, lowercase: true, index: true },
     title: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     agenda: [{ topic: { type: String, required: true }, duration: Number, presenter: String }],

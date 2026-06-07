@@ -46,7 +46,7 @@ export const createMeeting = async (req: AuthRequest, orgId: string) => {
 
 export const getMeeting = async (req: AuthRequest, orgId: string, meetingId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const meeting = await OrgMeeting.findOne({ _id: meetingId, organizationId: oid }).lean();
+  const meeting = await OrgMeeting.findOne({ _id: meetingId, organizationId: String(oid) }).lean();
   if (!meeting) {throw new AppError('Meeting not found', 404);}
   return meeting;
 };
@@ -55,7 +55,7 @@ export const updateMeeting = async (req: AuthRequest, orgId: string, meetingId: 
   const oid = await resolveOrg(req, orgId);
   await validateActionItemAssignees(req.body);
   const meeting = await OrgMeeting.findOneAndUpdate(
-    { _id: meetingId, organizationId: oid },
+    { _id: meetingId, organizationId: String(oid) },
     { $set: req.body },
     { new: true, runValidators: true }
   );
@@ -65,14 +65,14 @@ export const updateMeeting = async (req: AuthRequest, orgId: string, meetingId: 
 
 export const deleteMeeting = async (req: AuthRequest, orgId: string, meetingId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const meeting = await OrgMeeting.findOneAndDelete({ _id: meetingId, organizationId: oid });
+  const meeting = await OrgMeeting.findOneAndDelete({ _id: meetingId, organizationId: String(oid) });
   if (!meeting) {throw new AppError('Meeting not found', 404);}
 };
 
 export const updateMinutes = async (req: AuthRequest, orgId: string, meetingId: string) => {
   const oid = await resolveOrg(req, orgId);
   const meeting = await OrgMeeting.findOneAndUpdate(
-    { _id: meetingId, organizationId: oid },
+    { _id: meetingId, organizationId: String(oid) },
     { $set: { minutes: req.body.minutes } },
     { new: true }
   );
@@ -84,7 +84,7 @@ export const updateActionItems = async (req: AuthRequest, orgId: string, meeting
   const oid = await resolveOrg(req, orgId);
   await validateActionItemAssignees(req.body);
   const meeting = await OrgMeeting.findOneAndUpdate(
-    { _id: meetingId, organizationId: oid },
+    { _id: meetingId, organizationId: String(oid) },
     { $set: { actionItems: req.body.actionItems } },
     { new: true }
   );

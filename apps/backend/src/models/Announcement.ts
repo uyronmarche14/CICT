@@ -192,6 +192,7 @@ announcementSchema.index({ status: 1, priority: -1, publishedAt: -1 });
 announcementSchema.index({ author: 1 });
 announcementSchema.index({ expiresAt: 1 });
 announcementSchema.index({ ownerType: 1, organizationId: 1 });
+announcementSchema.index({ organizationId: 1, publishedAt: -1 });
 
 // Index for approval queue queries
 announcementSchema.index({ status: 1, createdAt: -1 });

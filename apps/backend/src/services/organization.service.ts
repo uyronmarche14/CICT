@@ -228,10 +228,9 @@ export const createOrganization = async (req: AuthRequest): Promise<any> => {
   const existingOrganization = await Organization.findOne({ id: organizationId })
   if (existingOrganization) {throw new AppError('Organization slug already exists', 409)}
 
-  const organization = await Organization.create({
-    ...(payload as Record<string, unknown>),
-    members: [],
-  })
+  const organization = await Organization.create(
+    payload as Record<string, unknown>
+  )
 
   await invalidateOrganization(organizationId)
   return organization
@@ -278,7 +277,7 @@ export const addMember = async (req: AuthRequest, orgId: string): Promise<any> =
   ensureCanManageOrganization(req, organization.id, Permission.CREATE_MEMBER)
 
   const member = await OrganizationMember.create({
-    organizationId: organization._id,
+    organizationId: String(organization._id),
     id: body.id ?? crypto.randomUUID(),
     name: body.name,
     position: body.position,
@@ -327,7 +326,7 @@ export const updateMember = async (req: AuthRequest, orgId: string, memberId: st
   ensureCanManageOrganization(req, organization.id, Permission.EDIT_MEMBER)
 
   const member = await OrganizationMember.findOne({
-    organizationId: organization._id,
+    organizationId: String(organization._id),
     id: memberId,
   })
 
@@ -347,7 +346,7 @@ export const deleteMember = async (req: AuthRequest, orgId: string, memberId: st
   ensureCanManageOrganization(req, organization.id, Permission.DELETE_MEMBER)
 
   const member = await OrganizationMember.findOneAndDelete({
-    organizationId: organization._id,
+    organizationId: String(organization._id),
     id: memberId,
   })
 

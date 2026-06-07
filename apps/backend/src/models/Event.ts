@@ -258,6 +258,7 @@ const eventSchema = new Schema<IEvent>(
 
 // Index for getting upcoming events
 eventSchema.index({ startDate: 1, status: 1 });
+eventSchema.index({ startDate: -1 });
 eventSchema.index({ ownerType: 1, organizationId: 1 });
 
 // Index for approval queue queries

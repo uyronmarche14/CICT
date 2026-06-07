@@ -54,7 +54,6 @@ const organizationSchema = new Schema<IOrganization>(
     achievements: [{
       type: String,
     }],
-    members: [{ type: Schema.Types.Mixed }],
     color: {
       primary: { type: String, required: true },
       secondary: { type: String, required: true },

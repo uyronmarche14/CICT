@@ -40,14 +40,14 @@ export const createTask = async (req: AuthRequest, orgId: string) => {
 
 export const getTask = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid }).lean();
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: String(oid) }).lean();
   if (!task) {throw new AppError('Task not found', 404);}
   return task;
 };
 
 export const updateTask = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid });
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: String(oid) });
   if (!task) {throw new AppError('Task not found', 404);}
   if (req.body.status && task.status !== req.body.status) {
     task.statusHistory.push({
@@ -80,13 +80,13 @@ const validateTaskReferenceData = async (body: Record<string, unknown>) => {
 
 export const deleteTask = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOneAndDelete({ _id: taskId, organizationId: oid });
+  const task = await OrgTask.findOneAndDelete({ _id: taskId, organizationId: String(oid) });
   if (!task) {throw new AppError('Task not found', 404);}
 };
 
 export const updateTaskStatus = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid });
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: String(oid) });
   if (!task) {throw new AppError('Task not found', 404);}
   if (task.status !== req.body.status) {
     task.statusHistory.push({
@@ -103,7 +103,7 @@ export const updateTaskStatus = async (req: AuthRequest, orgId: string, taskId: 
 
 export const toggleChecklistItem = async (req: AuthRequest, orgId: string, taskId: string) => {
   const oid = await resolveOrg(req, orgId);
-  const task = await OrgTask.findOne({ _id: taskId, organizationId: oid });
+  const task = await OrgTask.findOne({ _id: taskId, organizationId: String(oid) });
   if (!task) {throw new AppError('Task not found', 404);}
 
   const { index, completed } = req.body;
