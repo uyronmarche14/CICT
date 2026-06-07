@@ -47,6 +47,7 @@ import { Switch } from '@/components/ui/switch';
 import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 import { useReferenceData } from '@/hooks/use-reference-data';
+import { LookupCombobox, LookupMultiCombobox } from '@/components/ui/lookup-combobox';
 
 const newsSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -556,34 +557,35 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <FormLabel>Associated Event ID</FormLabel>
-                    <Input
-                      placeholder="Event ID"
+                    <FormLabel>Associated Event</FormLabel>
+                    <LookupCombobox
+                      kind="events"
                       value={associatedEventId}
-                      onChange={(e) => setAssociatedEventId(e.target.value)}
+                      onChange={setAssociatedEventId}
+                      placeholder="Select event"
+                      searchPlaceholder="Search events..."
                     />
                   </div>
                   <div className="space-y-2">
-                    <FormLabel>Associated Organization ID</FormLabel>
-                    <Input
-                      placeholder="Organization ID"
+                    <FormLabel>Associated Organization</FormLabel>
+                    <LookupCombobox
+                      kind="organizations"
                       value={associatedOrganizationId}
-                      onChange={(e) => setAssociatedOrganizationId(e.target.value)}
+                      onChange={setAssociatedOrganizationId}
+                      placeholder="Select organization"
+                      searchPlaceholder="Search organizations..."
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <FormLabel>Related Article IDs</FormLabel>
-                  <Input
-                    placeholder="id1, id2, id3"
-                    value={relatedArticleIds.join(', ')}
-                    onChange={(e) =>
-                      setRelatedArticleIds(
-                        e.target.value.split(',').map((s) => s.trim()).filter(Boolean)
-                      )
-                    }
+                  <FormLabel>Related Articles</FormLabel>
+                  <LookupMultiCombobox
+                    kind="news"
+                    value={relatedArticleIds}
+                    onChange={setRelatedArticleIds}
+                    placeholder="Select related articles"
+                    searchPlaceholder="Search news..."
                   />
-                  <p className="text-xs text-muted-foreground">Comma-separated IDs</p>
                 </div>
               </CardContent>
             </Card>

@@ -9,6 +9,7 @@ import { requireAdminAccess } from '../middleware/permissions';
 import { validate } from '../middleware/validate';
 import { 
   loginValidator, 
+  refreshTokenValidator,
   updatePasswordValidator 
 } from '../validators/auth.validator';
 
@@ -80,6 +81,13 @@ router.post(
   '/reset-password',
   createAuthLoginRateLimiter(),
   authController.resetPassword
+);
+
+router.post(
+  '/refresh',
+  createAuthSessionRateLimiter(),
+  validate(refreshTokenValidator),
+  authController.refreshToken
 );
 
 export default router;

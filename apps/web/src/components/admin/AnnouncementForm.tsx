@@ -55,6 +55,8 @@ import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
+import { LookupCombobox } from '@/components/ui/lookup-combobox';
+import { ReferenceDataSelect } from '@/components/ui/reference-data-select';
 
 const announcementSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -555,10 +557,16 @@ export function AnnouncementForm({
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <FormLabel>Subtype</FormLabel>
-                    <Input
-                      placeholder="leadership, recognition, general"
+                    <ReferenceDataSelect
+                      groupKey="announcementSubtypes"
                       value={subtype}
-                      onChange={(e) => setSubtype(e.target.value)}
+                      onChange={setSubtype}
+                      placeholder="Select subtype"
+                      fallback={[
+                        { value: 'leadership', label: 'Leadership' },
+                        { value: 'recognition', label: 'Recognition' },
+                        { value: 'general', label: 'General' },
+                      ]}
                     />
                   </div>
                   <div className="space-y-2">
@@ -595,17 +603,23 @@ export function AnnouncementForm({
               </CardHeader>
               <CardContent className="grid md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <FormLabel>Related Organization ID</FormLabel>
-                  <Input
+                  <FormLabel>Related Organization</FormLabel>
+                  <LookupCombobox
+                    kind="organizations"
                     value={relatedOrgId}
-                    onChange={(e) => setRelatedOrgId(e.target.value)}
+                    onChange={setRelatedOrgId}
+                    placeholder="Select organization"
+                    searchPlaceholder="Search organizations..."
                   />
                 </div>
                 <div className="space-y-2">
-                  <FormLabel>Related Event ID</FormLabel>
-                  <Input
+                  <FormLabel>Related Event</FormLabel>
+                  <LookupCombobox
+                    kind="events"
                     value={relatedEventId}
-                    onChange={(e) => setRelatedEventId(e.target.value)}
+                    onChange={setRelatedEventId}
+                    placeholder="Select event"
+                    searchPlaceholder="Search events..."
                   />
                 </div>
                 <div className="space-y-2">

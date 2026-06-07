@@ -45,6 +45,8 @@ export const DEFAULT_SETTINGS = {
     committees: 'Executive\nFinance\nEvents\nDocumentation\nCreatives\nMembership\nTechnical',
     officerPositions: 'President\nVice President\nSecretary\nTreasurer\nAuditor\nPublic Relations Officer',
     contentCategories: 'news\nfeature\nopinion\nannouncement\nevent\ngeneral',
+    announcementSubtypes: 'leadership\nrecognition\ngeneral',
+    awardCategories: 'award\nrecognition\nmilestone\nproject',
   },
 } as const;
 

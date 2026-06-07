@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, MapPin } from 'lucide-react';
 import api from '@/lib/api/axios';
-import { studentMembershipAPI } from '@/lib/api/student-membership';
+import { studentMembershipAPI } from '@/lib/api/student';
 import { appToast } from '@/lib/app-toast';
 import { Organization } from '@/types';
 

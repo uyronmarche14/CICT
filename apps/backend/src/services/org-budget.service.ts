@@ -5,6 +5,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureReferenceValuesAllowed } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -71,6 +72,7 @@ export const createTransaction = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
+  await ensureReferenceValuesAllowed('budgetCategories', [req.body.category], 'Invalid budget category');
   return OrgTransaction.create({ ...req.body, organizationId: oid, createdBy });
 };
 

@@ -3,6 +3,7 @@ import type {
   AttendanceLog,
   StudentEvent,
   StudentLoginResponse,
+  OrganizationMembership,
   StudentProfile,
   StudentQrPayload,
   StudentRegistration,
@@ -10,11 +11,13 @@ import type {
 
 export type { AttendanceLog, StudentEvent, StudentRegistration };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
 const studentApi = axios.create({
   baseURL: API_URL,
   withCredentials: true,
+  xsrfCookieName: 'csrf_token',
+  xsrfHeaderName: 'X-CSRF-Token',
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -83,5 +86,20 @@ export const studentRegistrationAPI = {
   getAttendanceHistory: async () => {
     const { data } = await studentApi.get('/student/attendance/history');
     return data.data.attendanceLogs as AttendanceLog[];
+  },
+};
+
+export const studentMembershipAPI = {
+  getMyMemberships: async () => {
+    const { data } = await studentApi.get('/student/memberships');
+    return data.data.memberships as OrganizationMembership[];
+  },
+  applyToOrg: async (orgId: string, message?: string) => {
+    const { data } = await studentApi.post(`/student/organizations/${orgId}/apply`, { message });
+    return data.data.membership as OrganizationMembership;
+  },
+  resignFromOrg: async (membershipId: string) => {
+    const { data } = await studentApi.post(`/student/memberships/${membershipId}/resign`);
+    return data.data.membership as OrganizationMembership;
   },
 };

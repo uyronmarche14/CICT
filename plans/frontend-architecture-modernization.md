@@ -628,16 +628,15 @@ Eliminate XSS-vulnerable token storage, add security headers, protect against co
 
 ### 6.1 Migrate Student Auth to httpOnly Cookies
 
-**Current state:** `StudentAuthContext.tsx` stores `student_access_token` and `student_refresh_token` in `localStorage`.
+**Resolved 2026-06-06:** The web student client no longer stores `student_access_token` or `student_refresh_token` in `localStorage`; membership calls use the cookie-based `student.ts` API client.
 
 **Target state:** Use httpOnly cookies set by the backend on login, matching the admin auth pattern.
 
 **Changes needed:**
 
 **Backend** (`apps/backend/src/controllers/studentAuth.controller.ts`):
-- On login success, set `student_access_token` as httpOnly cookie (same as admin login)
-- On refresh, set new cookie
-- On logout, clear cookie
+- Already sets httpOnly student cookies on login/refresh
+- On logout, clears student cookies
 
 **Frontend** (`src/context/StudentAuthContext.tsx`):
 - Remove all `localStorage.getItem/setItem` calls

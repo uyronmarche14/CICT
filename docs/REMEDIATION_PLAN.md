@@ -96,10 +96,10 @@ Phase 4 (Polish) ───────────── depends on ──→ Ev
 
 | Finding | Severity | Detail |
 |---|---|---|
-| Production MongoDB password | CRITICAL | `mongodb+srv://ronmarcheuy_db_user:VsjRHFT6uqxwnda5@...` in `.env`, `.env.production` |
-| Staging MongoDB password | CRITICAL | `mongodb+srv://ronmarcheuy_db_user:OhFNLkIGe4XewFDm@...` in `.env.staging` |
-| Cloudinary API key + secret | HIGH | `CLOUDINARY_API_KEY=883134646722524`, `CLOUDINARY_API_SECRET=x4_0HuGihy3nfzsaq_kAPOqmZzk` |
-| Resend SMTP password | HIGH | `SMTP_PASS=re_eyddStox_LmU1QriikSmPuk3ewpKZrvYR` in `.env` |
+| Production MongoDB password | CRITICAL | Production Atlas URI with embedded password in `.env`, `.env.production` (**redacted**) |
+| Staging MongoDB password | CRITICAL | Staging Atlas URI with embedded password in `.env.staging` (**redacted**) |
+| Cloudinary API key + secret | HIGH | Cloudinary credentials present in ignored env files (**redacted**) |
+| Resend SMTP password | HIGH | Resend SMTP password present in `.env` (**redacted**) |
 
 **Files to modify:**
 
@@ -139,15 +139,7 @@ git filter-repo --path apps/backend/.env.staging --invert-paths
 | `apps/backend/.env.production` | 3 | `NODE_ENV=development` → `NODE_ENV=production` |
 | `apps/backend/.env.staging` | 3 | `NODE_ENV=development` → `NODE_ENV=staging` |
 
-**`apps/backend/src/middleware/csrf.ts`** — Update the CSRF skip condition:
-```typescript
-// Current (line 34):
-if (process.env.NODE_ENV === 'development') {
-
-// Change to:
-if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'staging') {
-```
-Or better: add a `CSRF_DISABLED` env var for explicit control.
+Keep CSRF enabled in staging. If staging needs a temporary bypass for debugging, add an explicit `CSRF_DISABLED=true` environment variable rather than tying the bypass to `NODE_ENV=staging`.
 
 **Complexity:** S | **Risk:** LOW
 
@@ -159,7 +151,7 @@ Or better: add a `CSRF_DISABLED` env var for explicit control.
 |---|---|---|
 | All `/api/auth/` and `/api/student/auth/` routes skip CSRF entirely | HIGH | Lines 46-50 of `csrf.ts`. Login, register, forgot-password, reset-password are unprotected when using cookie-based auth. |
 
-**`apps/backend/src/middleware/csrf.ts`** — Replace blanket exemption with targeted per-route opt-out:
+**`apps/backend/src/middleware/csrf.ts`** — Replace blanket exemption with targeted public auth route opt-out:
 
 ```typescript
 // Current (lines 45-50):
@@ -168,19 +160,26 @@ if (path.startsWith('/api/auth/') || path.startsWith('/api/student/auth/')) {
   return
 }
 
-// Replace with:
-const csrfSafeAuthPaths = [
-  '/api/auth/profile',
-  '/api/auth/permission-metadata',
-  '/api/student/auth/me'
-];
-if (csrfSafeAuthPaths.includes(path) && req.method === 'GET') {
+// Replace with public auth endpoints that cannot send a CSRF token before login.
+const csrfExemptAuthRoutes = new Set([
+  'POST /api/auth/login',
+  'POST /api/auth/forgot-password',
+  'POST /api/auth/reset-password',
+  'POST /api/student/auth/register',
+  'POST /api/student/auth/login',
+  'POST /api/student/auth/forgot-password',
+  'POST /api/student/auth/reset-password',
+  'POST /api/student/auth/refresh',
+]);
+if (csrfExemptAuthRoutes.has(`${req.method} ${path}`)) {
   next();
   return;
 }
 ```
 
-**Complexity:** M | **Risk:** MEDIUM — login may break if CSRF token not being sent correctly from frontend. The admin axios instance already configures `xsrfCookieName: 'csrf_token'` and `xsrfHeaderName: 'X-CSRF-Token'`, so it should work.
+Also add `X-CSRF-Token` to backend CORS `allowedHeaders`; otherwise browser preflight can block protected mutating requests that send the CSRF header.
+
+**Complexity:** M | **Risk:** MEDIUM — protected mutating routes must send the CSRF token after login.
 
 ---
 
@@ -210,32 +209,18 @@ logger.info(`Password reset token generated for student ${studentNumber}`);
 
 ### 0.6 — Move Student Tokens from localStorage to httpOnly Cookies
 
+**Status:** Locally remediated on 2026-06-06 for the web client. Membership API calls now use `apps/web/src/lib/api/student.ts`; `apps/web/src/lib/api/student-membership.ts` was deleted.
+
 | Finding | Severity | Detail |
 |---|---|---|
-| Student tokens in localStorage | HIGH | `student-membership.ts` reads `student_access_token` from localStorage — XSS-vulnerable |
-| Duplicate Axios instances | MEDIUM | `student.ts` and `student-membership.ts` have incompatible auth handling |
+| Student tokens in localStorage | RESOLVED | `student-membership.ts` deleted; no web source reads `student_access_token` |
+| Duplicate Axios instances | RESOLVED | Membership functions moved into cookie-based `student.ts` |
 
 **Files to modify (5 files):**
 
 **Backend — `apps/backend/src/controllers/studentAuth.controller.ts`:**
 
-After generating tokens on login/refresh, set httpOnly cookies:
-```typescript
-res.cookie('student_token', accessToken, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  path: '/',
-});
-res.cookie('student_refresh_token', refreshToken, {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-  path: '/api/student/auth',
-});
-```
+Already sets httpOnly student cookies on login/refresh. Follow-up: stop returning web student tokens in JSON if the web and mobile flows are split into platform-specific responses.
 
 **Frontend — `apps/web/src/lib/api/student.ts`:**
 - Already uses `withCredentials: true` — will automatically send cookies
@@ -264,9 +249,11 @@ res.cookie('student_refresh_token', refreshToken, {
 
 ### 0.7 — Add Admin Refresh Token Mechanism
 
+**Status:** Deferred. The unused frontend helper was removed on 2026-06-06, so this is no longer required to fix a broken route. Revisit only if admin sessions need refresh rotation/revocation semantics.
+
 | Finding | Severity | Detail |
 |---|---|---|
-| No admin refresh endpoint | HIGH | Admin JWT is 7-day with no rotation. No `/api/auth/refresh-token` route exists despite `refreshToken.ts` calling it. |
+| No admin refresh endpoint | MEDIUM | Admin JWT is 7-day with no refresh rotation. The stale frontend helper has been removed. |
 
 **Backend — `apps/backend/src/routes/auth.routes.ts`:**
 
@@ -371,11 +358,13 @@ api.interceptors.response.use(
 
 ### 1.1 — Consolidate Web Student Axios Instances
 
+**Status:** Locally remediated on 2026-06-06.
+
 Already covered in Phase 0.6. The sub-steps are:
-1. Delete `apps/web/src/lib/api/student-membership.ts`
-2. Merge its functions into `apps/web/src/lib/api/student.ts`
-3. Update `StudentAuthContext.tsx` imports
-4. Update all files importing from `student-membership`
+1. Done — delete `apps/web/src/lib/api/student-membership.ts`
+2. Done — merge its functions into `apps/web/src/lib/api/student.ts`
+3. Done — no `StudentAuthContext.tsx` import changes were needed
+4. Done — update all files importing from `student-membership`
 5. Verify with `pnpm run web:typecheck`
 
 **Complexity:** S | **Risk:** LOW
@@ -388,8 +377,8 @@ Conduct a comprehensive endpoint audit. For each frontend API call without a mat
 
 | Frontend File | Missing Route | Action |
 |---|---|---|
-| `apps/web/src/lib/api/refreshToken.ts` | `POST /auth/refresh-token` | Add route (Phase 0.7) |
-| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `POST /media/presigned-url` | Either add the S3 presigned URL handler or remove the dead code |
+| `apps/web/src/lib/api/refreshToken.ts` | `POST /auth/refresh-token` | Resolved 2026-06-06: dead helper removed |
+| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `POST /media/presigned-url` | Resolved 2026-06-06: dead S3 helpers removed |
 | `apps/web/src/lib/api/permissions.ts` | `GET /meta/permissions` | Remove the fallback; primary endpoint works |
 
 **Complexity:** M | **Risk:** LOW

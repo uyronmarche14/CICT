@@ -63,9 +63,11 @@
 
 ### F1.1 — Student Auth: localStorage → httpOnly Cookies
 
+**Status:** Resolved on 2026-06-06 for the web client. Membership calls now use the cookie-based `lib/api/student.ts` client, and the old `student-membership.ts` localStorage client was removed.
+
 **Files:** `context/StudentAuthContext.tsx`, `lib/api/student.ts`, `app/student/layout.tsx`
 
-**Problem:** The student auth flow stores `accessToken` and `refreshToken` in `localStorage`:
+**Original problem:** The student auth flow stored `accessToken` and `refreshToken` in `localStorage`:
 ```ts
 const token = localStorage.getItem('student_access_token');
 localStorage.setItem('student_access_token', data.accessToken);
@@ -74,15 +76,15 @@ localStorage.setItem('student_refresh_token', data.refreshToken);
 
 This makes tokens accessible to any JavaScript executed in the same origin. The admin auth flow correctly uses `withCredentials: true` (httpOnly cookies set by the backend).
 
-**Implementation:**
+**Implementation status:**
 
-1. **Remove all `localStorage` calls** from `StudentAuthContext.tsx`:
+1. **Done:** Remove all web student `localStorage` token calls:
    - Remove `localStorage.getItem('student_access_token')` (line 35)
    - Remove `localStorage.setItem('student_access_token', ...)` (line 43)
    - Remove `localStorage.setItem('student_refresh_token', ...)` (line 44)
    - Remove all `localStorage.removeItem` calls
 
-2. **Update `lib/api/student.ts`** axios instance:
+2. **Done:** Update `lib/api/student.ts` axios instance:
    ```ts
    const client = axios.create({
      baseURL: `${NEXT_PUBLIC_API_URL}/student`,

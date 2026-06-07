@@ -1,6 +1,6 @@
 import { http, HttpResponse } from 'msw';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:4000/api';
 
 export const mockEvent = {
   _id: 'event-1',

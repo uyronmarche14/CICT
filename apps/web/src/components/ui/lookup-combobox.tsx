@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Check, ChevronsUpDown, Loader2, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,7 @@ interface LookupComboboxProps {
   params?: LookupParams;
   disabled?: boolean;
   className?: string;
+  clearable?: boolean;
 }
 
 interface LookupMultiComboboxProps {
@@ -43,6 +44,7 @@ interface LookupMultiComboboxProps {
   params?: LookupParams;
   disabled?: boolean;
   className?: string;
+  clearable?: boolean;
 }
 
 const lookupKey = (kind: LookupKind, search: string, params?: LookupParams) => [
@@ -85,9 +87,11 @@ export function LookupCombobox({
   params,
   disabled,
   className,
+  clearable = true,
 }: LookupComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
+  const [cachedSelectedItem, setCachedSelectedItem] = useState<LookupItem | undefined>();
 
   const { data, isFetching } = useQuery({
     queryKey: lookupKey(kind, search, params),
@@ -97,9 +101,24 @@ export function LookupCombobox({
   });
 
   const items = useMemo(() => data?.items ?? [], [data?.items]);
+
+  const { data: selectedData } = useQuery({
+    queryKey: lookupKey(kind, `selected:${value ?? ''}`, { ...params, ids: value }),
+    queryFn: () => lookupsAPI.get(kind, { ...params, ids: value, limit: 1 }),
+    enabled: !!value && !disabled,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    const hydrated = selectedData?.items?.[0];
+    if (hydrated) {
+      setCachedSelectedItem(hydrated);
+    }
+  }, [selectedData?.items]);
+
   const selectedItem = useMemo(
-    () => items.find((item) => item.value === value || item.id === value),
-    [items, value]
+    () => items.find((item) => item.value === value || item.id === value) ?? cachedSelectedItem,
+    [cachedSelectedItem, items, value]
   );
 
   return (
@@ -116,7 +135,32 @@ export function LookupCombobox({
           <span className="min-w-0 truncate text-left">
             {selectedItem?.label ?? value ?? placeholder}
           </span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="ml-2 flex shrink-0 items-center gap-1">
+            {clearable && value ? (
+              <span
+                role="button"
+                tabIndex={0}
+                aria-label="Clear selection"
+                className="rounded-sm opacity-60 hover:opacity-100"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setCachedSelectedItem(undefined);
+                  onChange('');
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setCachedSelectedItem(undefined);
+                    onChange('');
+                  }
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+              </span>
+            ) : null}
+            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+          </span>
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] min-w-[280px] p-0" align="start">
@@ -135,10 +179,11 @@ export function LookupCombobox({
                   <CommandItem
                     key={item.id}
                     value={`${item.label} ${item.description ?? ''}`}
-                    onSelect={() => {
-                      onChange(item.value, item);
-                      setOpen(false);
-                    }}
+	                    onSelect={() => {
+	                      setCachedSelectedItem(item);
+	                      onChange(item.value, item);
+	                      setOpen(false);
+	                    }}
                   >
                     <LookupOption item={item} selected={selected} />
                   </CommandItem>
@@ -167,6 +212,7 @@ export function LookupMultiCombobox({
   params,
   disabled,
   className,
+  clearable = true,
 }: LookupMultiComboboxProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -181,6 +227,26 @@ export function LookupMultiCombobox({
 
   const items = data?.items ?? [];
   const valueSet = new Set(value);
+
+  const { data: selectedData } = useQuery({
+    queryKey: lookupKey(kind, `selected:${value.join(',')}`, { ...params, ids: value }),
+    queryFn: () => lookupsAPI.get(kind, { ...params, ids: value, limit: Math.max(value.length, 1) }),
+    enabled: value.length > 0 && !disabled,
+    staleTime: 60_000,
+  });
+
+  useEffect(() => {
+    if (!selectedData?.items?.length) {
+      return;
+    }
+    setSelectedItems((current) => {
+      const next = { ...current };
+      selectedData.items.forEach((item) => {
+        next[item.value] = item;
+      });
+      return next;
+    });
+  }, [selectedData?.items]);
 
   const toggle = (item: LookupItem) => {
     const selected = valueSet.has(item.value);
@@ -244,17 +310,19 @@ export function LookupMultiCombobox({
           {value.map((id) => (
             <Badge key={id} variant="secondary" className="gap-1 pr-1">
               {selectedItems[id]?.label ?? id}
-              <button
-                type="button"
-                onClick={() => {
-                  const nextItems = { ...selectedItems };
-                  delete nextItems[id];
-                  onChange(value.filter((item) => item !== id), Object.values(nextItems));
-                  setSelectedItems(nextItems);
-                }}
-              >
-                <X className="h-3 w-3" />
-              </button>
+              {clearable ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const nextItems = { ...selectedItems };
+                    delete nextItems[id];
+                    onChange(value.filter((item) => item !== id), Object.values(nextItems));
+                    setSelectedItems(nextItems);
+                  }}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              ) : null}
             </Badge>
           ))}
         </div>

@@ -256,6 +256,8 @@ export default function AdminSettingsPage() {
                 { key: 'committees', label: 'Committees', type: 'textarea' },
                 { key: 'officerPositions', label: 'Officer Positions', type: 'textarea' },
                 { key: 'contentCategories', label: 'Content Categories', type: 'textarea' },
+                { key: 'announcementSubtypes', label: 'Announcement Subtypes', type: 'textarea' },
+                { key: 'awardCategories', label: 'Award Categories', type: 'textarea' },
               ]}
               values={forms.referenceData || {}}
               onChange={handleChange}

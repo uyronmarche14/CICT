@@ -25,7 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { appToast } from '@/lib/app-toast';
 import { orgTasksAPI } from '@/lib/api/org-tasks';
 import { LookupMultiCombobox } from '@/components/ui/lookup-combobox';
-import { useReferenceData } from '@/hooks/use-reference-data';
+import { ReferenceDataSelect } from '@/components/ui/reference-data-select';
 
 const formSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -68,7 +68,6 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
   const [tagInput, setTagInput] = useState('');
   const [checklist, setChecklist] = useState<Array<{ text: string; completed: boolean }>>([]);
   const [assigneeIds, setAssigneeIds] = useState<string[]>([]);
-  const { items: taskCategories } = useReferenceData('taskCategories');
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -149,20 +148,21 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
               )} />
               <Controller control={form.control} name="category" render={({ field }) => (
                 <FormItem><FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger><SelectValue placeholder="General" /></SelectTrigger></FormControl>
-                    <SelectContent>
-                      {(taskCategories.length > 0 ? taskCategories : [
+                  <FormControl>
+                    <ReferenceDataSelect
+                      groupKey="taskCategories"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="General"
+                      fallback={[
                         { value: 'General', label: 'General' },
                         { value: 'Event', label: 'Event' },
                         { value: 'Academic', label: 'Academic' },
                         { value: 'Admin', label: 'Admin' },
                         { value: 'Other', label: 'Other' },
-                      ]).map((category) => (
-                        <SelectItem key={category.value} value={category.value}>{category.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      ]}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )} />
@@ -206,10 +206,30 @@ export function TaskForm({ orgId, open, onOpenChange, item, onSuccess }: TaskFor
 
             <div className="grid grid-cols-2 gap-4">
               <Controller control={form.control} name="committee" render={({ field }) => (
-                <FormItem><FormLabel>Committee</FormLabel><FormControl><Input placeholder="e.g. Finance, Events" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Committee</FormLabel>
+                  <FormControl>
+                    <ReferenceDataSelect
+                      groupKey="committees"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select committee"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
               <Controller control={form.control} name="officerPosition" render={({ field }) => (
-                <FormItem><FormLabel>Officer Position</FormLabel><FormControl><Input placeholder="e.g. Treasurer" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem><FormLabel>Officer Position</FormLabel>
+                  <FormControl>
+                    <ReferenceDataSelect
+                      groupKey="officerPositions"
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="Select position"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
             </div>
 

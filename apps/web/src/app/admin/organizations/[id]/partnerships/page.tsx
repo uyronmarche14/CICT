@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { appToast } from '@/lib/app-toast';
 import { LookupCombobox } from '@/components/ui/lookup-combobox';
+import { ReferenceDataSelect } from '@/components/ui/reference-data-select';
 
 const statusColors: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', active: 'bg-green-100 text-green-700', declined: 'bg-red-100 text-red-700', terminated: 'bg-gray-100 text-gray-600' };
 
@@ -28,6 +29,7 @@ export default function OrgPartnershipsPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [orgIdB, setOrgIdB] = useState('');
+  const [partnershipType, setPartnershipType] = useState('');
 
   const { data: partnerships = [], isLoading } = useQuery({ queryKey: queryKeys.orgPartnerships.all(orgId), queryFn: () => orgPartnershipsAPI.list(orgId), enabled: !!orgId });
 
@@ -35,8 +37,8 @@ export default function OrgPartnershipsPage() {
   const declineMut = useMutation({ mutationFn: (id: string) => orgPartnershipsAPI.decline(orgId, id), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.orgPartnerships.all(orgId) }) });
   const terminateMut = useMutation({ mutationFn: (id: string) => orgPartnershipsAPI.terminate(orgId, id), onSuccess: () => qc.invalidateQueries({ queryKey: queryKeys.orgPartnerships.all(orgId) }) });
   const createMut = useMutation({
-    mutationFn: () => orgPartnershipsAPI.create(orgId, { orgIdB }),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.orgPartnerships.all(orgId) }); setOpen(false); setOrgIdB(''); appToast.success('Partnership created', 'Invitation sent.'); },
+    mutationFn: () => orgPartnershipsAPI.create(orgId, { orgIdB, partnershipType: partnershipType || undefined }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: queryKeys.orgPartnerships.all(orgId) }); setOpen(false); setOrgIdB(''); setPartnershipType(''); appToast.success('Partnership created', 'Invitation sent.'); },
     onError: () => appToast.error('Error', 'Failed to create partnership.'),
   });
 
@@ -51,15 +53,26 @@ export default function OrgPartnershipsPage() {
         <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent><DialogHeader><DialogTitle>New Partnership</DialogTitle><DialogDescription>Invite another organization to partner with.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
-            <Label>Partner Organization</Label>
-            <LookupCombobox
-              kind="organizations"
-              value={orgIdB}
-              onChange={setOrgIdB}
-              placeholder="Select organization"
-              searchPlaceholder="Search organizations..."
-              params={{ excludeOrgId: orgId }}
-            />
+            <div className="space-y-2">
+              <Label>Partner Organization</Label>
+              <LookupCombobox
+                kind="organizations"
+                value={orgIdB}
+                onChange={setOrgIdB}
+                placeholder="Select organization"
+                searchPlaceholder="Search organizations..."
+                params={{ excludeOrgId: orgId }}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Partnership Type</Label>
+              <ReferenceDataSelect
+                groupKey="partnershipTypes"
+                value={partnershipType}
+                onChange={setPartnershipType}
+                placeholder="Select type"
+              />
+            </div>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={() => createMut.mutate()} disabled={!orgIdB.trim() || createMut.isPending}>Send Invitation</Button></DialogFooter></DialogContent></Dialog></>}>
       {isLoading ? <div className="flex items-center justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>

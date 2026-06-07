@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureReferenceValuesAllowed } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -24,6 +25,7 @@ export const listMentorships = async (req: AuthRequest, orgId: string) => {
 export const createMentorship = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
   const { menteeOrgId, focusAreas, startDate, endDate } = req.body;
+  await ensureReferenceValuesAllowed('mentorshipFocusAreas', focusAreas ?? [], 'Invalid mentorship focus area');
 
   const menteeOrg = await Organization.findOne({ id: menteeOrgId }).select('_id');
   if (!menteeOrg) {throw new AppError('Mentee organization not found', 404);}

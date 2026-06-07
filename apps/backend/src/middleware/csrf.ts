@@ -42,9 +42,20 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
     return;
   }
 
-  // Skip CSRF for auth routes (they have their own rate limiting and auth)
+  // Public auth routes cannot present a CSRF token until after login.
   const path = req.path.toLowerCase()
-  if (path.startsWith('/api/auth/') || path.startsWith('/api/student/auth/')) {
+  const csrfExemptAuthRoutes = new Set([
+    'POST /api/auth/login',
+    'POST /api/auth/forgot-password',
+    'POST /api/auth/reset-password',
+    'POST /api/student/auth/register',
+    'POST /api/student/auth/login',
+    'POST /api/student/auth/forgot-password',
+    'POST /api/student/auth/reset-password',
+    'POST /api/student/auth/refresh',
+  ]);
+
+  if (csrfExemptAuthRoutes.has(`${req.method} ${path}`)) {
     next()
     return
   }

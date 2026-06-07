@@ -87,12 +87,14 @@ export const createNewsValidator = [
     .trim(),
 
   body('associatedEventId')
-    .optional()
-    .isString(),
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage('Associated event must be a valid event ID'),
 
   body('associatedOrganizationId')
-    .optional()
-    .isString(),
+    .optional({ checkFalsy: true })
+    .isString()
+    .withMessage('Associated organization ID must be a string'),
 
   body('spotlightLabel')
     .optional()
@@ -107,6 +109,10 @@ export const createNewsValidator = [
     .trim(),
 
   validateArrayField('relatedArticleIds'),
+  body('relatedArticleIds.*')
+    .optional()
+    .isMongoId()
+    .withMessage('Related article IDs must be valid news IDs'),
 ];
 
 export const updateNewsValidator = [
@@ -145,6 +151,22 @@ export const updateNewsValidator = [
   approvalSummaryNotEditable(),
 
   processInstanceNotEditable(),
+
+  body('associatedEventId')
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage('Associated event must be a valid event ID'),
+
+  body('associatedOrganizationId')
+    .optional({ checkFalsy: true })
+    .isString()
+    .withMessage('Associated organization ID must be a string'),
+
+  validateArrayField('relatedArticleIds'),
+  body('relatedArticleIds.*')
+    .optional()
+    .isMongoId()
+    .withMessage('Related article IDs must be valid news IDs'),
 ];
 
 export const newsIdValidator = [

@@ -40,6 +40,7 @@ import { parsePagination } from '../utils/pagination'
 import { TypedCache } from '../utils/cache'
 import { buildListCacheKey, hashScope } from '../utils/cacheHelpers'
 import { invalidateDashboardCache } from './dashboard.service'
+import { ensureOrganizationsExist } from './lookup.service'
 
 const EVENT_EDITABLE_FIELDS = [
   'title',
@@ -322,6 +323,13 @@ export const createEvent = async (req: AuthRequest): Promise<any> => {
   const resolvedCoverImage = normalizeMediaAsset(coverImage, { imageUrl, imageId })
 
   ensureValidEventDateRange(startDate, endDate)
+  await ensureOrganizationsExist(
+    [
+      ...(Array.isArray(hostOrganizationIds) ? hostOrganizationIds : []),
+      ...(Array.isArray(coHostOrganizationIds) ? coHostOrganizationIds : []),
+    ],
+    'Linked organization not found'
+  )
 
   const event = await Event.create({
     title,
@@ -430,6 +438,14 @@ export const updateEvent = async (id: string, req: AuthRequest): Promise<any> =>
       updates.endDate ?? existingEvent.endDate
     )
   }
+
+  await ensureOrganizationsExist(
+    [
+      ...(Array.isArray(updates.hostOrganizationIds) ? updates.hostOrganizationIds : []),
+      ...(Array.isArray(updates.coHostOrganizationIds) ? updates.coHostOrganizationIds : []),
+    ],
+    'Linked organization not found'
+  )
 
   if (bodyHtml !== undefined) {
     updates.bodyHtml = bodyHtml

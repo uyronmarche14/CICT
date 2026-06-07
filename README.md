@@ -13,6 +13,7 @@ New to the project? Start with the [Developer Guide](docs/DEVELOPER_GUIDE.md). I
 | Document | Purpose |
 |---|---|
 | [Developer Guide](docs/DEVELOPER_GUIDE.md) | Main onboarding guide for new developers |
+| [Lookup Protocol](docs/LOOKUP_PROTOCOL.md) | Rules for form lookups, reference data, enums, and backend validation |
 | [System Documentation](CICT_SYSTEM_DOCUMENTATION.md) | Deep current-state reference for modules, features, and gaps |
 | [CI/CD Pipeline](CICT_CICD_PIPELINE.md) | CI/CD tracker, deployment phases, and verification status |
 | [Agent Operational Reference](AGENTS.md) | Agent instructions, scripts, secrets, and branch protection notes |

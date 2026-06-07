@@ -4,7 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
-import { ensureUsersExist } from './lookup.service';
+import { ensureReferenceValuesAllowed, ensureUsersExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -31,6 +31,7 @@ export const createTask = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
+  await validateTaskReferenceData(req.body);
   if (Array.isArray(req.body.assigneeIds)) {
     req.body.assigneeIds = await ensureUsersExist(req.body.assigneeIds);
   }
@@ -56,12 +57,25 @@ export const updateTask = async (req: AuthRequest, orgId: string, taskId: string
       reason: req.body.reason,
     });
   }
+  await validateTaskReferenceData(req.body);
   if (Array.isArray(req.body.assigneeIds)) {
     req.body.assigneeIds = await ensureUsersExist(req.body.assigneeIds);
   }
   Object.assign(task, req.body);
   await task.save();
   return task;
+};
+
+const validateTaskReferenceData = async (body: Record<string, unknown>) => {
+  if (body.category) {
+    await ensureReferenceValuesAllowed('taskCategories', [body.category], 'Invalid task category');
+  }
+  if (body.committee) {
+    await ensureReferenceValuesAllowed('committees', [body.committee], 'Invalid committee');
+  }
+  if (body.officerPosition) {
+    await ensureReferenceValuesAllowed('officerPositions', [body.officerPosition], 'Invalid officer position');
+  }
 };
 
 export const deleteTask = async (req: AuthRequest, orgId: string, taskId: string) => {

@@ -16,12 +16,11 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { appToast } from '@/lib/app-toast';
 import { format } from 'date-fns';
 import { LookupCombobox } from '@/components/ui/lookup-combobox';
-import { useReferenceData } from '@/hooks/use-reference-data';
+import { ReferenceDataSelect } from '@/components/ui/reference-data-select';
 
 const statusColors: Record<string, string> = { pending: 'bg-amber-100 text-amber-700', approved: 'bg-green-100 text-green-700', denied: 'bg-red-100 text-red-700', fulfilled: 'bg-blue-100 text-blue-700', cancelled: 'bg-gray-100 text-gray-600' };
 const typeColors: Record<string, string> = { venue: 'bg-purple-100 text-purple-700', equipment: 'bg-cyan-100 text-cyan-700', budget: 'bg-emerald-100 text-emerald-700', personnel: 'bg-orange-100 text-orange-700', other: 'bg-gray-100 text-gray-600' };
@@ -34,7 +33,6 @@ export default function OrgResourcesPage() {
   const qc = useQueryClient();
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ resourceType: 'other', description: '', providingOrgId: '' });
-  const { items: resourceTypes } = useReferenceData('resourceTypes');
 
   const qk = { inc: queryKeys.orgResources.incoming(orgId), out: queryKeys.orgResources.outgoing(orgId) };
   const { data: outgoing = [], isLoading: outLoading } = useQuery({ queryKey: qk.out, queryFn: () => orgResourcesAPI.outgoing(orgId), enabled: !!orgId });
@@ -78,18 +76,20 @@ export default function OrgResourcesPage() {
         <DialogContent><DialogHeader><DialogTitle>Request Resource</DialogTitle><DialogDescription>Request a resource from another organization.</DialogDescription></DialogHeader>
           <div className="space-y-4 py-2">
             <div><Label>Resource Type</Label>
-              <Select value={form.resourceType} onValueChange={(v) => setForm({ ...form, resourceType: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {(resourceTypes.length > 0 ? resourceTypes : [
+              <ReferenceDataSelect
+                groupKey="resourceTypes"
+                value={form.resourceType}
+                onChange={(value) => setForm({ ...form, resourceType: value })}
+                placeholder="Select resource type"
+                fallback={[
                     { value: 'venue', label: 'venue' },
                     { value: 'equipment', label: 'equipment' },
                     { value: 'budget', label: 'budget' },
                     { value: 'personnel', label: 'personnel' },
                     { value: 'other', label: 'other' },
-                  ]).map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                </SelectContent>
-              </Select></div>
+                  ]}
+              />
+            </div>
             <div><Label>Description</Label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="What do you need?" /></div>
             <div><Label>Provider Organization (optional)</Label><LookupCombobox kind="organizations" value={form.providingOrgId} onChange={(value) => setForm({ ...form, providingOrgId: value })} placeholder="Select provider" searchPlaceholder="Search organizations..." params={{ excludeOrgId: orgId }} /></div>
           </div>

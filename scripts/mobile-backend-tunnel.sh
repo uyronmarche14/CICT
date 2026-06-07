@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-BACKEND_URL="${1:-http://localhost:5000}"
+BACKEND_URL="${1:-http://localhost:4000}"
 
 if ! command -v cloudflared >/dev/null 2>&1; then
   echo "cloudflared is required but was not found in PATH."

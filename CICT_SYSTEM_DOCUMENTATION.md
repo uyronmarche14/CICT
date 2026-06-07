@@ -3,7 +3,7 @@
 Last updated: 2026-05-24
 Source of truth: current codebase inspection of `/home/ronmarche14/projects/CICT/apps/backend`, `/home/ronmarche14/projects/CICT/apps/web`, `/home/ronmarche14/projects/CICT/apps/mobile`, and `/home/ronmarche14/projects/CICT/packages`
 
-New developers should start with `docs/DEVELOPER_GUIDE.md`. This file remains the deeper system status and reference document after onboarding.
+New developers should start with `docs/DEVELOPER_GUIDE.md`. For admin form dropdowns, reference data, enums, and backend validation rules, use `docs/LOOKUP_PROTOCOL.md`. This file remains the deeper system status and reference document after onboarding.
 
 ## 1. Document Purpose
 

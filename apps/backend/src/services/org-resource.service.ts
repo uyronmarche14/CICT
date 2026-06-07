@@ -4,7 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
-import { ensureOrganizationsExist } from './lookup.service';
+import { ensureOrganizationsExist, ensureReferenceValuesAllowed } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -28,6 +28,7 @@ export const listIncoming = async (req: AuthRequest, orgId: string) => {
 
 export const createRequest = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
+  await ensureReferenceValuesAllowed('resourceTypes', [req.body.resourceType], 'Invalid resource type');
   if (req.body.providingOrgId) {
     const [providingOrgId] = await ensureOrganizationsExist(
       [req.body.providingOrgId],

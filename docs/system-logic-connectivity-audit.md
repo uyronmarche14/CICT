@@ -30,9 +30,9 @@ The biggest gaps for a more dynamic feel are:
 - Some organization admin expansion modules are connected to backend APIs, but use manual IDs/slugs instead of search/picker relationships.
 - Some organization operation routes only require admin access, while the UI and contracts imply module-specific permissions should be enforced.
 - The updates hub merges client-side feeds from separate endpoints; a backend aggregate feed would support richer filtering, ranking, and cross-platform consistency.
-- Media upload has two active Cloudinary paths and one apparent unmatched S3 presigned helper.
-- Admin web has a refresh-token helper for `/auth/refresh-token`, but the backend exposes no matching admin refresh route.
-- `apps/backend/.env.example` is missing `STUDENT_REFRESH_SECRET`, even though `validateEnv` requires it.
+- Media upload uses Cloudinary; stale S3 presigned helpers were removed on 2026-06-06.
+- Admin web no longer has the stale `/auth/refresh-token` helper as of 2026-06-06.
+- `apps/backend/.env.example` now includes `STUDENT_REFRESH_SECRET` as of 2026-06-06.
 
 ## High-Level Architecture
 
@@ -120,8 +120,8 @@ Student auth exists for both web and mobile:
 
 | Gap | Why It Matters | Suggested Connection |
 |---|---|---|
-| Admin refresh helper calls `/auth/refresh-token`, but backend does not expose it | Dead or mismatched API code creates confusing auth behavior later | Either remove `apps/web/src/lib/api/refreshToken.ts` or add a real admin refresh-token flow |
-| `.env.example` lacks `STUDENT_REFRESH_SECRET` | Backend startup validation requires it | Add `STUDENT_REFRESH_SECRET` to `apps/backend/.env.example` |
+| Admin refresh helper calls `/auth/refresh-token`, but backend does not expose it | Resolved on 2026-06-06 | Removed `apps/web/src/lib/api/refreshToken.ts` |
+| `.env.example` lacks `STUDENT_REFRESH_SECRET` | Resolved on 2026-06-06 | Added `STUDENT_REFRESH_SECRET` to `apps/backend/.env.example` |
 | Student web and mobile use different token handling styles | It works, but cross-platform auth behavior can drift | Standardize documented student auth behavior: cookie for web, bearer token plus refresh token for mobile |
 
 ## Feature Connectivity Matrix
@@ -163,7 +163,7 @@ Status meanings:
 | Settings | System configuration | `settings.routes` | Admin settings page | Not mobile | Connected | Use settings to control public content flags, registration behavior, and maintenance messaging |
 | Audit logs | Activity log browsing and summary | `audit.routes`, activity logger | Admin logs API/page | Not mobile | Connected | Add filters by actor type, organization, content type, and export |
 | Push notifications | Student mobile reminders/tokens | `pushToken.routes`, push notification service | Not web | Mobile notification registration | Partly connected | Trigger notifications from publish, event registration, reminders, task assignments |
-| Media upload | Upload images to Cloudinary | `/api/uploads/images`, `/api/organizations/upload`, upload middleware | News/event/announcement/gallery/org forms | Not mobile | Partly connected | Unify media API and remove or implement unmatched S3 presigned helpers |
+| Media upload | Upload images to Cloudinary | `/api/uploads/images`, `/api/organizations/upload`, upload middleware | News/event/announcement/gallery/org forms | Not mobile | Connected | S3 presigned helpers removed on 2026-06-06; continue using Cloudinary path |
 | About/Academics/Admissions/Student Life | Public college info pages | No dedicated CMS module yet | ComingSoon placeholders | Not mobile | Placeholder | Add CMS-backed page sections or structured content records |
 | Contact page | Public contact path | No backend contact/settings module specific to page | Empty page shell | Not mobile | Placeholder | Connect to settings/org contact data and optional contact form |
 
@@ -382,9 +382,9 @@ Priority permission checks to add:
 
 | Client Code | Expected Backend | Finding |
 |---|---|---|
-| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `/api/media/presigned-url` | No matching backend route found; active backend media path is Cloudinary upload |
-| `apps/web/src/lib/api/media/uploadToS3.ts` | S3 presigned upload | No matching backend media route found; likely stale or planned |
-| `apps/web/src/lib/api/refreshToken.ts` | `/api/auth/refresh-token` | No matching admin auth route found |
+| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `/api/media/presigned-url` | Resolved on 2026-06-06: stale helper removed; active backend media path is Cloudinary upload |
+| `apps/web/src/lib/api/media/uploadToS3.ts` | S3 presigned upload | Resolved on 2026-06-06: stale helper removed |
+| `apps/web/src/lib/api/refreshToken.ts` | `/api/auth/refresh-token` | Resolved on 2026-06-06: stale helper removed |
 | Backend `event.routes` join/leave | `/api/events/:id/join`, `/leave` | Deprecated response says use student registration flow instead |
 
 ## Public Website Dynamic Gaps
@@ -423,10 +423,8 @@ These are not mandatory for correctness, but they would make the system feel ali
 
 ### Priority 1: Correctness and Security
 
-1. Add `STUDENT_REFRESH_SECRET` to `apps/backend/.env.example`.
-2. Decide whether admin refresh tokens exist. Remove `apps/web/src/lib/api/refreshToken.ts` or implement `/api/auth/refresh-token`.
-3. Remove or implement the unmatched S3 presigned media helpers.
-4. Add backend permission gates to organization operation routes, matching the permission names already in contracts.
+1. Add backend permission gates to organization operation routes, matching the permission names already in contracts.
+2. Continue Phase 0 secret rotation and git-history cleanup outside the codebase.
 
 ### Priority 2: Dynamic UX
 

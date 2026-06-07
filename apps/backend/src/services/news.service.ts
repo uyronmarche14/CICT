@@ -37,6 +37,7 @@ import { parsePagination } from '../utils/pagination'
 import { TypedCache } from '../utils/cache'
 import { buildListCacheKey, hashScope } from '../utils/cacheHelpers'
 import { invalidateDashboardCache } from './dashboard.service'
+import { ensureContentExists, ensureOrganizationsExist, ensureReferenceValuesAllowed } from './lookup.service'
 
 const NEWS_EDITABLE_FIELDS = [
   'title',
@@ -266,6 +267,18 @@ export const createNews = async (req: AuthRequest): Promise<any> => {
     ownership.ownerType,
     ownership.organizationId
   )
+  if (category) {
+    await ensureReferenceValuesAllowed('contentCategories', [category], 'Invalid content category')
+  }
+  if (associatedEventId) {
+    await ensureContentExists('events', associatedEventId)
+  }
+  if (associatedOrganizationId) {
+    await ensureOrganizationsExist([associatedOrganizationId], 'Associated organization not found')
+  }
+  if (Array.isArray(relatedArticleIds) && relatedArticleIds.length > 0) {
+    await Promise.all(relatedArticleIds.map((relatedId) => ensureContentExists('news', relatedId)))
+  }
 
   const bodyHtml =
     typeof rawBodyHtml === 'string' && rawBodyHtml.trim().length > 0
@@ -356,6 +369,18 @@ export const updateNews = async (id: string, req: AuthRequest): Promise<any> => 
   }
 
   const updates = buildUpdatePayload(req.body, NEWS_EDITABLE_FIELDS)
+  if (updates.category) {
+    await ensureReferenceValuesAllowed('contentCategories', [updates.category], 'Invalid content category')
+  }
+  if (updates.associatedEventId) {
+    await ensureContentExists('events', updates.associatedEventId as string)
+  }
+  if (updates.associatedOrganizationId) {
+    await ensureOrganizationsExist([updates.associatedOrganizationId], 'Associated organization not found')
+  }
+  if (Array.isArray(updates.relatedArticleIds) && updates.relatedArticleIds.length > 0) {
+    await Promise.all(updates.relatedArticleIds.map((relatedId) => ensureContentExists('news', relatedId)))
+  }
   const bodyHtml =
     typeof updates.bodyHtml === 'string'
       ? updates.bodyHtml

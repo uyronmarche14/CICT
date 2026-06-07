@@ -2,7 +2,7 @@ import axios from 'axios';
 import { safePush } from '@/lib/navigation';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -11,9 +11,39 @@ const api = axios.create({
   withCredentials: true,
 });
 
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  try {
+    const { data } = await axios.post(
+      `${api.defaults.baseURL}/auth/refresh`,
+      {},
+      { withCredentials: true }
+    );
+    return data.success === true;
+  } catch {
+    return false;
+  }
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        if (!refreshPromise) {
+          refreshPromise = refreshAccessToken();
+        }
+        const refreshed = await refreshPromise;
+        refreshPromise = null;
+        if (refreshed) return api(originalRequest);
+      } catch {
+        refreshPromise = null;
+      }
+    }
+
     const shouldForceAdminLogout =
       error.response?.status === 401 ||
       (error.response?.status === 403 &&

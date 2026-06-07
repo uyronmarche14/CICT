@@ -4,7 +4,9 @@ export const createSpaceValidator = [
   body('name').trim().notEmpty().withMessage('Space name is required'),
   body('description').optional().trim(),
   body('participantOrgIds').optional().isArray(),
+  body('participantOrgIds.*').optional().isString().trim().notEmpty().withMessage('Invalid participant organization ID'),
   body('participantUserIds').optional().isArray(),
+  body('participantUserIds.*').optional().isMongoId().withMessage('Invalid participant user ID'),
   body('partnershipId').optional().isMongoId(),
 ];
 
@@ -13,7 +15,9 @@ export const updateSpaceValidator = [
   body('name').optional().trim().notEmpty(),
   body('description').optional().trim(),
   body('participantOrgIds').optional().isArray(),
+  body('participantOrgIds.*').optional().isString().trim().notEmpty().withMessage('Invalid participant organization ID'),
   body('participantUserIds').optional().isArray(),
+  body('participantUserIds.*').optional().isMongoId().withMessage('Invalid participant user ID'),
   body('isActive').optional().isBoolean(),
   body('partnershipId').optional().isMongoId(),
 ];

@@ -67,6 +67,6 @@ Key routes:
 
 ## Known integration gaps
 
-- `refreshToken.ts` still points to `/auth/refresh-token`, but the backend does not define that route.
+- Resolved 2026-06-06: stale `refreshToken.ts` helper was removed; admin auth remains cookie-session based.
 - `auditAPI.ts` exists on the frontend, but the backend currently has no matching audit route group.
 - The public contact route is not yet part of this content workflow.

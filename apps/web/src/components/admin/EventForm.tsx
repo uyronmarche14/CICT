@@ -51,6 +51,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { sanitizeCoverAndGallery } from '@/lib/media';
 import { academicAPI } from '@/lib/api/academic';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { LookupMultiCombobox } from '@/components/ui/lookup-combobox';
 
 const parseDateTimeLocalValue = (value: string): number => new Date(value).getTime();
 
@@ -746,19 +747,23 @@ export function EventForm({ onSuccess }: EventFormProps) {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Host Organization IDs</Label>
-                  <Input
-                    placeholder="Comma-separated IDs"
-                    value={hostOrganizationIds.join(', ')}
-                    onChange={(e) => setHostOrganizationIds(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                  <Label className="text-sm font-medium">Host Organizations</Label>
+                  <LookupMultiCombobox
+                    kind="organizations"
+                    value={hostOrganizationIds}
+                    onChange={setHostOrganizationIds}
+                    placeholder="Select host organizations"
+                    searchPlaceholder="Search organizations..."
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Co-Host Organization IDs</Label>
-                  <Input
-                    placeholder="Comma-separated IDs"
-                    value={coHostOrganizationIds.join(', ')}
-                    onChange={(e) => setCoHostOrganizationIds(e.target.value.split(',').map((s) => s.trim()).filter(Boolean))}
+                  <Label className="text-sm font-medium">Co-Host Organizations</Label>
+                  <LookupMultiCombobox
+                    kind="organizations"
+                    value={coHostOrganizationIds}
+                    onChange={setCoHostOrganizationIds}
+                    placeholder="Select co-host organizations"
+                    searchPlaceholder="Search organizations..."
                   />
                 </div>
               </div>

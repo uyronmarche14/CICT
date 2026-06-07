@@ -8,6 +8,7 @@ export interface LookupItem {
   status?: string;
   badge?: string;
   imageUrl?: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface LookupResponse {
@@ -28,7 +29,24 @@ export interface ReferenceDataGroup {
   suggested: LookupItem[];
 }
 
-export type LookupKind = 'organizations' | 'users' | 'students' | 'content';
+export type LookupKind =
+  | 'organizations'
+  | 'users'
+  | 'students'
+  | 'org-members'
+  | 'org-officers'
+  | 'roles'
+  | 'programs'
+  | 'year-levels'
+  | 'sections'
+  | 'news'
+  | 'announcements'
+  | 'events'
+  | 'tasks'
+  | 'meetings'
+  | 'process-templates'
+  | 'org-templates'
+  | 'content';
 
 export interface LookupParams {
   search?: string;
@@ -37,12 +55,24 @@ export interface LookupParams {
   activeOnly?: boolean;
   orgId?: string;
   type?: 'news' | 'announcement' | 'event';
+  status?: string;
+  ownerType?: string;
+  ids?: string | string[];
+  programId?: string;
+  yearLevelId?: string;
 }
 
 const toQuery = (params: LookupParams = {}) => {
   const query: Record<string, string | number | boolean> = {};
 
   Object.entries(params).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        query[key] = value.join(',');
+      }
+      return;
+    }
+
     if (value !== undefined && value !== '') {
       query[key] = value;
     }

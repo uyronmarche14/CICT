@@ -11,6 +11,10 @@ export const loginValidator = [
     .withMessage('Password is required'),
 ];
 
+export const refreshTokenValidator = [
+  body('refreshToken').notEmpty().withMessage('Refresh token is required'),
+];
+
 export const updatePasswordValidator = [
   body('currentPassword')
     .notEmpty()

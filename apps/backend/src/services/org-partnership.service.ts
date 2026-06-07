@@ -4,6 +4,7 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { ensureReferenceValuesAllowed } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -24,6 +25,9 @@ export const listPartnerships = async (req: AuthRequest, orgId: string) => {
 export const createPartnership = async (req: AuthRequest, orgId: string) => {
   const org = await resolveOrg(req, orgId);
   const { orgIdB, partnershipType, terms } = req.body;
+  if (partnershipType) {
+    await ensureReferenceValuesAllowed('partnershipTypes', [partnershipType], 'Invalid partnership type');
+  }
 
   const targetOrg = await Organization.findOne({ id: orgIdB }).select('_id');
   if (!targetOrg) {throw new AppError('Target organization not found', 404);}

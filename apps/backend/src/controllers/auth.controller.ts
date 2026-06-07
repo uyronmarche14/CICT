@@ -169,6 +169,43 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   });
 };
 
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken: token } = req.body;
+  if (!token) {throw new AppError('Refresh token is required', 400);}
+
+  const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as IJWTPayload;
+  const user = await User.findById(decoded.userId);
+  if (!user?.isActive) {throw new AppError('Invalid refresh token', 401);}
+
+  const accessToken = jwt.sign(
+    { userId: String(user._id), email: user.email, role: user.role },
+    process.env.JWT_SECRET!,
+    { expiresIn: '7d' }
+  );
+  const newRefreshToken = jwt.sign(
+    { userId: String(user._id), email: user.email, role: user.role },
+    process.env.JWT_REFRESH_SECRET!,
+    { expiresIn: '30d' }
+  );
+
+  const authenticatedUser = await buildAuthenticatedUser(user);
+  const cookieOptions = getAuthCookieOptions();
+  res.cookie('token', accessToken, cookieOptions);
+  res.cookie('refresh_token', newRefreshToken, {
+    ...cookieOptions,
+    path: '/api/auth/refresh',
+  });
+
+  res.json({
+    success: true,
+    data: {
+      accessToken,
+      refreshToken: newRefreshToken,
+      user: await serializeAuthUser(authenticatedUser),
+    },
+  });
+};
+
 export const getPermissionMetadata = async (_req: Request, res: Response): Promise<void> => {
   res.status(200).json({
     success: true,

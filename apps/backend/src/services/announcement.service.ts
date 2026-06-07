@@ -40,6 +40,7 @@ import * as approvalService from './content-approval.service'
 import { TypedCache } from '../utils/cache'
 import { buildListCacheKey, hashScope } from '../utils/cacheHelpers'
 import { invalidateDashboardCache } from './dashboard.service'
+import { ensureContentExists, ensureOrganizationsExist, ensureReferenceValuesAllowed } from './lookup.service'
 
 const ANNOUNCEMENT_EDITABLE_FIELDS = [
   'title',
@@ -375,6 +376,15 @@ export const createAnnouncement = async (req: AuthRequest): Promise<any> => {
     ownership.ownerType,
     ownership.organizationId
   )
+  if (subtype) {
+    await ensureReferenceValuesAllowed('announcementSubtypes', [subtype], 'Invalid announcement subtype')
+  }
+  if (relatedOrganizationId) {
+    await ensureOrganizationsExist([relatedOrganizationId], 'Related organization not found')
+  }
+  if (relatedEventId) {
+    await ensureContentExists('events', relatedEventId)
+  }
 
   const bodyHtml =
     typeof rawBodyHtml === 'string' && rawBodyHtml.trim().length > 0
@@ -468,6 +478,15 @@ export const updateAnnouncement = async (id: string, req: AuthRequest): Promise<
   }
 
   const updates = buildUpdatePayload(req.body, ANNOUNCEMENT_EDITABLE_FIELDS)
+  if (updates.subtype) {
+    await ensureReferenceValuesAllowed('announcementSubtypes', [updates.subtype], 'Invalid announcement subtype')
+  }
+  if (updates.relatedOrganizationId) {
+    await ensureOrganizationsExist([updates.relatedOrganizationId], 'Related organization not found')
+  }
+  if (updates.relatedEventId) {
+    await ensureContentExists('events', updates.relatedEventId as string)
+  }
   const bodyHtml =
     typeof updates.bodyHtml === 'string'
       ? updates.bodyHtml

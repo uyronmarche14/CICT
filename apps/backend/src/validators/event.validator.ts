@@ -106,7 +106,15 @@ export const createEventValidator = [
     .trim(),
 
   validateArrayField('hostOrganizationIds'),
+  body('hostOrganizationIds.*')
+    .optional()
+    .isString()
+    .withMessage('Host organization IDs must be strings'),
   validateArrayField('coHostOrganizationIds'),
+  body('coHostOrganizationIds.*')
+    .optional()
+    .isString()
+    .withMessage('Co-host organization IDs must be strings'),
   validateArrayField('speakerItems'),
 
   body('audience')
@@ -207,6 +215,18 @@ export const updateEventValidator = [
     .optional()
     .isInt({ min: 0 })
     .withMessage('Max attendees must be a positive integer'),
+
+  validateArrayField('hostOrganizationIds'),
+  body('hostOrganizationIds.*')
+    .optional()
+    .isString()
+    .withMessage('Host organization IDs must be strings'),
+
+  validateArrayField('coHostOrganizationIds'),
+  body('coHostOrganizationIds.*')
+    .optional()
+    .isString()
+    .withMessage('Co-host organization IDs must be strings'),
 ];
 
 export const eventIdValidator = [

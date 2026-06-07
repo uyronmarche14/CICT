@@ -3,7 +3,7 @@ import { eventAPI, type EventMutationPayload } from './event';
 import { server } from '@/test/mocks/server';
 import { http, HttpResponse } from 'msw';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:4000/api';
 
 describe('eventAPI', () => {
   beforeEach(() => {

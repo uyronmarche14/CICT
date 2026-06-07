@@ -6,7 +6,7 @@ import { server } from '@/test/mocks/server';
 import { http, HttpResponse } from 'msw';
 import { type ReactNode } from 'react';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = 'http://localhost:4000/api';
 
 function createWrapper() {
   const queryClient = new QueryClient({

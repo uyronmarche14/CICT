@@ -199,9 +199,9 @@ Express 5 API (apps/backend)
 
 | Module | Issue | Severity |
 |---|---|---|
-| **S3 Media Upload** | `media/getPresignedUrl.ts` calls `POST /media/presigned-url` — no backend route exists | High |
-| **Admin Refresh Token** | `refreshToken.ts` calls `POST /auth/refresh-token` — no backend route exists | High |
-| **Web Student Token Management** | Two separate Axios instances (`student.ts` with cookies, `student-membership.ts` with localStorage Bearer) with no shared refresh logic | High |
+| **S3 Media Upload** | Resolved locally on 2026-06-06 by removing unused S3 presigned upload helpers; active upload path remains Cloudinary | Resolved |
+| **Admin Refresh Token** | Resolved locally on 2026-06-06 by removing unused `refreshToken.ts`; admin remains cookie-session based without refresh rotation | Resolved |
+| **Web Student Token Management** | Resolved locally on 2026-06-06 by merging membership calls into cookie-based `student.ts` and deleting `student-membership.ts` | Resolved |
 | **Email/Notification** | nodemailer in dependencies; `email.service.ts` exists but actual sending pipeline unclear | Medium |
 | **Push Notifications** | Expo push token registration exists; notification handler exists; actual delivery pipeline unclear | Medium |
 
@@ -243,8 +243,8 @@ Express 5 API (apps/backend)
 
 | File | Credential |
 |---|---|
-| `.env`, `.env.production` | `mongodb+srv://ronmarcheuy_db_user:VsjRHFT6uqxwnda5@cict-crm.wtgzgcc.mongodb.net/` |
-| `.env.staging` | `mongodb+srv://ronmarcheuy_db_user:OhFNLkIGe4XewFDm@cluster0.8zojny4.mongodb.net/` |
+| `.env`, `.env.production` | Production MongoDB Atlas URI with embedded password (**redacted**) |
+| `.env.staging` | Staging MongoDB Atlas URI with embedded password (**redacted**) |
 
 **Impact:** Full read/write access to both production and staging MongoDB databases. These passwords must be rotated immediately.
 
@@ -254,9 +254,9 @@ Express 5 API (apps/backend)
 
 | Service | Key | Value |
 |---|---|---|
-| Cloudinary | `CLOUDINARY_API_KEY` | `883134646722524` |
-| Cloudinary | `CLOUDINARY_API_SECRET` | `x4_0HuGihy3nfzsaq_kAPOqmZzk` |
-| Resend | `SMTP_PASS` | `re_eyddStox_LmU1QriikSmPuk3ewpKZrvYR` |
+| Cloudinary | `CLOUDINARY_API_KEY` | Present in ignored env files (**redacted**) |
+| Cloudinary | `CLOUDINARY_API_SECRET` | Present in ignored env files (**redacted**) |
+| Resend | `SMTP_PASS` | Present in ignored env files (**redacted**) |
 
 **Impact:** Full access to media management and email sending capabilities.
 
@@ -269,7 +269,7 @@ Express 5 API (apps/backend)
 | H1 | `NODE_ENV=development` in staging AND production | `.env.staging`, `.env.production` | CSRF is entirely disabled (line 34 of `csrf.ts`). Stack traces leak in error responses. Dev logging enabled in production. |
 | H2 | Auth routes fully exempt from CSRF | `csrf.ts:46-50` | `/api/auth/*` and `/api/student/auth/*` — including login, register, forgot-password, reset-password — bypass CSRF entirely. These are mutation endpoints vulnerable to cross-site request forgery when using cookie-based auth. |
 | H3 | Password reset tokens logged in plaintext | `password-reset.service.ts:33,80` | `logger.info(\`Password reset token generated for ${email}: ${resetToken}\`)` — anyone with log access can steal reset tokens and take over accounts. |
-| H4 | Web student tokens stored in localStorage | `apps/web/src/lib/api/student-membership.ts:13-14` | `localStorage.getItem('student_access_token')` — localStorage is accessible via XSS. No HttpOnly protection. |
+| H4 | Web student tokens stored in localStorage | Resolved 2026-06-06 | Deleted `student-membership.ts`; membership calls now use cookie-based `student.ts`. |
 
 ---
 
@@ -389,12 +389,12 @@ Contracts don't enforce a consistent paginated response shape. Frontend types ad
 | **Web Frontend** | 47/50 | **94%** |
 | **Mobile** | 17/17 | **100%** |
 
-### 8.2 Missing Backend Routes (3)
+### 8.2 Missing Backend Routes
 
 | Frontend File | Endpoint Called | Backend Route Exists? | Impact |
 |---|---|---|---|
-| `apps/web/src/lib/api/refreshToken.ts` | `POST /auth/refresh-token` | **No** | Dead code. Admin refresh not implemented. |
-| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `POST /media/presigned-url` | **No** | S3 upload path non-functional. |
+| `apps/web/src/lib/api/refreshToken.ts` | `POST /auth/refresh-token` | Removed | Dead frontend helper removed on 2026-06-06. |
+| `apps/web/src/lib/api/media/getPresignedUrl.ts` | `POST /media/presigned-url` | Removed | Dead S3 helper removed on 2026-06-06; Cloudinary upload remains active. |
 | `apps/web/src/lib/api/permissions.ts` | `GET /meta/permissions` (fallback) | **No** | Benign fallback; primary endpoint works. |
 
 ### 8.3 Token Management Inconsistency
@@ -402,11 +402,11 @@ Contracts don't enforce a consistent paginated response shape. Frontend types ad
 | Client | Storage | Auth Type | Refresh | Secure? |
 |---|---|---|---|---|
 | **Web Admin** (`axios.ts`) | HTTP-only cookie | Cookie | None (session-based) | ✅ Yes |
-| **Web Student** (`student.ts`) | HTTP-only cookie | Cookie | None (dead code) | ✅ Yes |
-| **Web Student** (`student-membership.ts`) | localStorage | Bearer token | Full refresh rotation | ❌ No (XSS) |
+| **Web Student** (`student.ts`) | HTTP-only cookie | Cookie | None | ✅ Yes |
+| **Web Student** (`student-membership.ts`) | Removed | Removed | Removed | ✅ Resolved |
 | **Mobile** (`client.ts`) | Expo SecureStore | Bearer token | Full refresh rotation | ✅ Yes |
 
-**Critical Issue**: The web student has **two separate Axios instances** with incompatible auth strategies. `student.ts` uses cookies, `student-membership.ts` uses localStorage Bearer tokens with refresh. They don't share state, and tokens can get out of sync.
+**Resolved 2026-06-06**: The web student client now uses the cookie-based `student.ts` path for auth, events, registrations, attendance, and memberships.
 
 ### 8.4 Auth Flow Summary
 
@@ -492,7 +492,7 @@ POST /student/auth/logout → Clear tokens
 
 | Area | Score | Key Points |
 |---|---|---|
-| **CI Pipeline** | 8/10 | 7-job pipeline with lint, typecheck, test, build, CodeQL, Gitleaks, dependency review. Missing: pnpm store caching, mobile build step |
+| **CI Pipeline** | 8/10 | 7-job pipeline with lint, typecheck, test, build, CodeQL, Gitleaks, dependency review. Uses pnpm cache via `actions/setup-node`; missing mobile build step |
 | **CD Pipeline** | 7/10 | Staging + production workflows exist with health checks, smoke tests, auto-tagging. Missing: all GitHub secrets are unconfigured |
 | **Docker** | 3/10 | MongoDB docker-compose only. No `Dockerfile` for any app service. No `.dockerignore` |
 | **Render Config** | 9/10 | Well-structured blueprints with health checks, env management, auto-generated secrets |
@@ -533,7 +533,6 @@ Both `main` and `staging` require:
 
 | Gap | Severity | Details |
 |---|---|---|
-| No dependency caching | Medium | CI reinstalls all deps from scratch each time |
 | Mobile CI lacks build step | Medium | Only lint/typecheck/test — no Expo build verification |
 | lint-staged misses mobile/contracts | Low | No pre-commit checks for `apps/mobile/` or `packages/contracts/` |
 | Security audit `continue-on-error: true` | Low | `pnpm audit` failures won't break CI |
@@ -555,8 +554,8 @@ Both `main` and `staging` require:
 
 ### High (Structural Fixes)
 
-7. **Fix/add missing backend routes** or remove dead frontend code (`/auth/refresh-token`, `/media/presigned-url`)
-8. **Consolidate web student token management** — single Axios instance with refresh, remove localStorage
+7. **Resolved 2026-06-06:** removed dead frontend code for `/auth/refresh-token` and `/media/presigned-url`
+8. **Resolved 2026-06-06:** consolidated web student token management into cookie-based `student.ts`
 9. **Remove `Organization.members` Mixed field** from schema (post-migration cleanup)
 10. **Reconcile `organizationId` typing** across all models (pick ObjectId or string, not both)
 11. **Move web student tokens from localStorage to httpOnly cookies**
@@ -599,11 +598,11 @@ Both `main` and `staging` require:
 
 | Service | Type | Value (redacted) | Location |
 |---|---|---|---|
-| MongoDB Production | Password | `VsjRHFT6uqxwnda5` | `.env`, `.env.production` |
-| MongoDB Staging | Password | `OhFNLkIGe4XewFDm` | `.env.staging` |
-| Cloudinary | API Key | `883134646722524` | All `.env` files |
-| Cloudinary | API Secret | `x4_0HuGihy3nfzsaq_kAPOqmZzk` | All `.env` files |
-| Resend SMTP | Password | `re_eyddStox_LmU1QriikSmPuk3ewpKZrvYR` | `.env` |
+| MongoDB Production | Password | **redacted** | `.env`, `.env.production` |
+| MongoDB Staging | Password | **redacted** | `.env.staging` |
+| Cloudinary | API Key | **redacted** | All `.env` files |
+| Cloudinary | API Secret | **redacted** | All `.env` files |
+| Resend SMTP | Password | **redacted** | `.env` |
 | Cloudinary (Web) | Cloud Name | `ddnxfpziq` | `apps/web/.env.example` |
 
 **Note:** These values exist on disk but are excluded from git via `.gitignore`. However, they are still accessible to anyone with local filesystem access or via CI/CD artifacts. All must be rotated after remediation.

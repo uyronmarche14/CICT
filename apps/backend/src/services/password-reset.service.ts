@@ -30,7 +30,7 @@ export const forgotPassword = async (email: string): Promise<void> => {
   u.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
   await u.save()
 
-  logger.info(`Password reset token generated for admin user ${email}: ${resetToken}`)
+  logger.info(`Password reset token generated for admin user ${email}`)
 
   const resetUrl = `${process.env.FRONTEND_URL ?? 'https://cict.edu.ph'}/auth/reset-password?token=${resetToken}`
   const emailContent = buildPasswordResetEmail(resetUrl)
@@ -77,7 +77,7 @@ export const forgotStudentPassword = async (studentNumber: string, email?: strin
   s.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
   await s.save()
 
-  logger.info(`Password reset token generated for student ${studentNumber}: ${resetToken}`)
+  logger.info(`Password reset token generated for student ${studentNumber}`)
 
   if (s.email) {
     const resetUrl = `${process.env.FRONTEND_URL ?? 'https://cict.edu.ph'}/student/auth/reset-password?token=${resetToken}`

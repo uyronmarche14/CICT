@@ -96,12 +96,14 @@ export const createAnnouncementValidator = [
     .withMessage('termEnd must be a valid ISO date'),
 
   body('relatedOrganizationId')
-    .optional()
-    .isString(),
+    .optional({ checkFalsy: true })
+    .isString()
+    .withMessage('Related organization ID must be a string'),
 
   body('relatedEventId')
-    .optional()
-    .isString(),
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage('Related event must be a valid event ID'),
 
   body('approvalSource')
     .optional()
@@ -178,6 +180,20 @@ export const updateAnnouncementValidator = [
   approvalSummaryNotEditable(),
 
   processInstanceNotEditable(),
+
+  body('subtype')
+    .optional()
+    .trim(),
+
+  body('relatedOrganizationId')
+    .optional({ checkFalsy: true })
+    .isString()
+    .withMessage('Related organization ID must be a string'),
+
+  body('relatedEventId')
+    .optional({ checkFalsy: true })
+    .isMongoId()
+    .withMessage('Related event must be a valid event ID'),
 ];
 
 export const announcementIdValidator = [

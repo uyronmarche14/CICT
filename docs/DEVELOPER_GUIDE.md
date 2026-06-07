@@ -169,6 +169,20 @@ When changing an API shape:
 4. Update web/mobile API clients and screens.
 5. Run typechecks for the affected apps.
 
+## 8A. Lookup And Form Protocol
+
+Admin forms must not invent their own dropdown sources. Use the [Lookup Protocol](LOOKUP_PROTOCOL.md) when adding or changing form fields.
+
+Simple rule:
+
+- Real records use backend lookups, such as organizations, users, students, events, news, tasks, and meetings.
+- Configurable business labels use settings reference data, such as resource types, committees, partnership types, mentorship focus areas, and content categories.
+- Workflow states use shared contract enums, such as status, priority, owner type, and permissions.
+
+The canonical admin lookup API is `GET /api/admin/lookups/:kind`. Shared frontend controls live in `apps/web/src/components/ui/lookup-combobox.tsx` and `apps/web/src/components/ui/reference-data-select.tsx`.
+
+Before saving a form change, confirm that backend validation uses the same source shown by the frontend and that edit mode hydrates readable selected labels.
+
 ## 9. Local Development
 
 ### Prerequisites

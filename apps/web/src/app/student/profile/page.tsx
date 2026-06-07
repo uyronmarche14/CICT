@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, User, Mail, GraduationCap, Building2, ArrowLeft } from 'lucide-react';
 import { useStudentAuth } from '@/context/StudentAuthContext';
-import { studentMembershipAPI } from '@/lib/api/student-membership';
+import { studentMembershipAPI } from '@/lib/api/student';
 import Link from 'next/link';
 
 export default function StudentProfilePage() {
