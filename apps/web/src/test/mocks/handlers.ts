@@ -98,6 +98,49 @@ export const mockUser = {
   visibleAdminModules: ['dashboard', 'events', 'news', 'announcements', 'roles', 'users', 'faq', 'logs'],
 };
 
+export const mockStudentEvent = {
+  _id: 'student-event-1',
+  title: 'Student Test Event',
+  description: 'A test student event description',
+  bodyHtml: '<p>Student event content</p>',
+  excerpt: 'Student test event excerpt',
+  startDate: '2030-06-01T09:00:00.000Z',
+  endDate: '2030-06-01T11:00:00.000Z',
+  location: 'Test Location',
+  status: 'published',
+  maxAttendees: 100,
+  registeredCount: 0,
+  isRegistrationOpen: true,
+  coverImage: undefined,
+  registration: null,
+  ownerType: 'system',
+  organizationId: null,
+  organizationName: null,
+  attendees: [],
+  checkedInCount: 0,
+  allowWalkIns: false,
+  approvalSummary: undefined,
+  processInstanceId: null,
+  gallery: [],
+  sections: [],
+  schedule: [],
+  tags: [],
+  createdAt: '2025-01-01T00:00:00.000Z',
+  updatedAt: '2025-01-01T00:00:00.000Z',
+};
+
+export const mockMembership = {
+  _id: 'membership-1',
+  studentId: 'student-1',
+  organizationId: 'org-1',
+  position: 'Member',
+  memberType: 'general',
+  status: 'active',
+  history: [],
+  createdAt: '2025-01-01T00:00:00.000Z',
+  updatedAt: '2025-01-01T00:00:00.000Z',
+};
+
 export const handlers = [
   // News
   http.get(`${API_URL}/news`, () => {
@@ -298,5 +341,49 @@ export const handlers = [
         refreshToken: 'refreshed-refresh-token',
       },
     });
+  }),
+
+  // Student Events
+  http.get(`${API_URL}/student/events`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        events: [mockStudentEvent],
+      },
+    });
+  }),
+
+  // Student Memberships
+  http.get(`${API_URL}/student/memberships`, () => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        memberships: [mockMembership],
+      },
+    });
+  }),
+
+  http.post(`${API_URL}/student/organizations/:orgId/apply`, async ({ params, request }) => {
+    const body = (await request.json().catch(() => ({}))) as { message?: string };
+    return HttpResponse.json({
+      success: true,
+      data: {
+        membership: { ...mockMembership, organizationId: params.orgId as string, _id: 'membership-new', message: body?.message },
+      },
+    });
+  }),
+
+  http.post(`${API_URL}/student/memberships/:membershipId/resign`, ({ params }) => {
+    return HttpResponse.json({
+      success: true,
+      data: {
+        membership: { ...mockMembership, _id: params.membershipId as string, status: 'resigned', resignedAt: '2025-01-01T00:00:00.000Z' },
+      },
+    });
+  }),
+
+  // Auth refresh (admin)
+  http.post(`${API_URL}/auth/refresh`, () => {
+    return HttpResponse.json({ success: true });
   }),
 ];
