@@ -17,6 +17,45 @@ import {
 
 const router: Router = Router();
 
+/**
+ * @openapi
+ * /api/announcements:
+ *   post:
+ *     tags:
+ *       - Announcements
+ *     summary: Create an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high]
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: Announcement created
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.post(
   '/',
   authenticate,
@@ -28,6 +67,23 @@ router.post(
   announcementController.createAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements:
+ *   get:
+ *     tags:
+ *       - Announcements
+ *     summary: Get all announcements
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of announcements
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.get(
   '/',
   authenticate,
@@ -35,6 +91,32 @@ router.get(
   announcementController.getAllAnnouncements
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}:
+ *   get:
+ *     tags:
+ *       - Announcements
+ *     summary: Get an announcement by ID
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Announcement details
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.get(
   '/:id',
   authenticate,
@@ -43,6 +125,51 @@ router.get(
   announcementController.getAnnouncementById
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}:
+ *   put:
+ *     tags:
+ *       - Announcements
+ *     summary: Update an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               priority:
+ *                 type: string
+ *                 enum: [low, medium, high]
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Announcement updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.put(
   '/:id',
   authenticate,
@@ -54,6 +181,32 @@ router.put(
   announcementController.updateAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}:
+ *   delete:
+ *     tags:
+ *       - Announcements
+ *     summary: Delete an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Announcement deleted
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.delete(
   '/:id',
   authenticate,
@@ -63,6 +216,32 @@ router.delete(
   announcementController.deleteAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}/submit:
+ *   patch:
+ *     tags:
+ *       - Announcements
+ *     summary: Submit announcement for approval
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Submitted for approval
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.patch(
   '/:id/submit',
   authenticate,
@@ -72,6 +251,32 @@ router.patch(
   announcementController.submitAnnouncementForApproval
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}/approve:
+ *   patch:
+ *     tags:
+ *       - Announcements
+ *     summary: Approve an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Announcement approved
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.patch(
   '/:id/approve',
   authenticate,
@@ -81,6 +286,43 @@ router.patch(
   announcementController.approveAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}/reject:
+ *   patch:
+ *     tags:
+ *       - Announcements
+ *     summary: Reject an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Announcement rejected
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.patch(
   '/:id/reject',
   authenticate,
@@ -90,6 +332,32 @@ router.patch(
   announcementController.rejectAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}/publish:
+ *   patch:
+ *     tags:
+ *       - Announcements
+ *     summary: Publish an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Announcement published
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.patch(
   '/:id/publish',
   authenticate,
@@ -99,6 +367,32 @@ router.patch(
   announcementController.publishAnnouncement
 );
 
+/**
+ * @openapi
+ * /api/announcements/{id}/archive:
+ *   patch:
+ *     tags:
+ *       - Announcements
+ *     summary: Archive an announcement
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Announcement ID
+ *     responses:
+ *       200:
+ *         description: Announcement archived
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: Announcement not found
+ */
 router.patch(
   '/:id/archive',
   authenticate,

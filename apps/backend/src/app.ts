@@ -3,6 +3,8 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './config/swagger';
 
 // Import routes
 import authRoutes from "./routes/auth.routes";
@@ -184,6 +186,9 @@ app.use("/api/admin/approvals", approvalRoutes);
 app.use("/api/admin/processes", processRoutes);
 app.use("/api/admin/settings", settingsRoutes);
 app.use("/api/admin/lookups", lookupRoutes);
+
+// Swagger API documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // 404 handler
 app.use(notFound);

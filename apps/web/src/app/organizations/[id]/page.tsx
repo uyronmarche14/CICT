@@ -151,6 +151,42 @@ export default function PublicOrganizationPage() {
           </CardContent>
         </Card>
 
+        {/* Long Description / About */}
+        {org.longDescription && org.longDescription !== org.description && (
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="text-lg">About</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">{org.longDescription}</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Mission & Vision */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Target className="w-5 h-5" /> Mission
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">{org.mission}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Star className="w-5 h-5" /> Vision
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground leading-relaxed">{org.vision}</p>
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Tags */}
         {org.tags && org.tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-8">

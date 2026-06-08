@@ -16,9 +16,35 @@ import {
 const router: Router = Router();
 
 /**
- * @route   POST /api/auth/login
- * @desc    Login user
- * @access  Public
+ * @openapi
+ * /api/auth/login:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Login user
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *       401:
+ *         description: Invalid credentials
+ *       429:
+ *         description: Too many requests
  */
 router.post(
   '/login',
@@ -27,8 +53,40 @@ router.post(
   authController.login
 );
 
+/**
+ * @openapi
+ * /api/auth/logout:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Logout user
+ *     responses:
+ *       200:
+ *         description: Logout successful
+ *       401:
+ *         description: Not authenticated
+ *       429:
+ *         description: Too many requests
+ */
 router.post('/logout', createAuthSessionRateLimiter(), authController.logout);
 
+/**
+ * @openapi
+ * /api/auth/permission-metadata:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Get permission metadata
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Permission metadata retrieved
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.get(
   '/permission-metadata',
   authenticate,
@@ -37,9 +95,21 @@ router.get(
 );
 
 /**
- * @route   GET /api/auth/profile
- * @desc    Get current user profile
- * @access  Private
+ * @openapi
+ * /api/auth/profile:
+ *   get:
+ *     tags:
+ *       - Auth
+ *     summary: Get current user profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Profile retrieved
+ *       401:
+ *         description: Not authenticated
+ *       429:
+ *         description: Too many requests
  */
 router.get(
   '/profile',
@@ -49,9 +119,39 @@ router.get(
 );
 
 /**
- * @route   PUT /api/auth/password
- * @desc    Update password
- * @access  Private
+ * @openapi
+ * /api/auth/password:
+ *   put:
+ *     tags:
+ *       - Auth
+ *     summary: Update password
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 format: password
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       429:
+ *         description: Too many requests
  */
 router.put(
   '/password',
@@ -62,9 +162,29 @@ router.put(
 );
 
 /**
- * @route   POST /api/auth/forgot-password
- * @desc    Request password reset email
- * @access  Public
+ * @openapi
+ * /api/auth/forgot-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Request password reset email
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: Reset email sent
+ *       429:
+ *         description: Too many requests
  */
 router.post(
   '/forgot-password',
@@ -73,9 +193,34 @@ router.post(
 );
 
 /**
- * @route   POST /api/auth/reset-password
- * @desc    Reset password using token
- * @access  Public
+ * @openapi
+ * /api/auth/reset-password:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Reset password using token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - newPassword
+ *             properties:
+ *               token:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password reset successful
+ *       400:
+ *         description: Invalid or expired token
+ *       429:
+ *         description: Too many requests
  */
 router.post(
   '/reset-password',
@@ -83,6 +228,32 @@ router.post(
   authController.resetPassword
 );
 
+/**
+ * @openapi
+ * /api/auth/refresh:
+ *   post:
+ *     tags:
+ *       - Auth
+ *     summary: Refresh access token
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Token refreshed
+ *       401:
+ *         description: Invalid refresh token
+ *       429:
+ *         description: Too many requests
+ */
 router.post(
   '/refresh',
   createAuthSessionRateLimiter(),

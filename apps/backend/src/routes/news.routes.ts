@@ -17,6 +17,44 @@ import {
 
 const router: Router = Router();
 
+/**
+ * @openapi
+ * /api/news:
+ *   post:
+ *     tags:
+ *       - News
+ *     summary: Create a news article
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - content
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               excerpt:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       201:
+ *         description: News article created
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ */
 router.post(
   '/',
   authenticate,
@@ -28,12 +66,43 @@ router.post(
   newsController.createNews
 );
 
+/**
+ * @openapi
+ * /api/news:
+ *   get:
+ *     tags:
+ *       - News
+ *     summary: Get all news articles
+ *     responses:
+ *       200:
+ *         description: List of news articles
+ */
 router.get(
   '/',
   optionalAuthenticate,
   newsController.getAllNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}:
+ *   get:
+ *     tags:
+ *       - News
+ *     summary: Get a news article by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: News article details
+ *       404:
+ *         description: News article not found
+ */
 router.get(
   '/:id',
   optionalAuthenticate,
@@ -41,6 +110,50 @@ router.get(
   newsController.getNewsById
 );
 
+/**
+ * @openapi
+ * /api/news/{id}:
+ *   put:
+ *     tags:
+ *       - News
+ *     summary: Update a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               content:
+ *                 type: string
+ *               excerpt:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: News article updated
+ *       400:
+ *         description: Validation error
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.put(
   '/:id',
   authenticate,
@@ -52,6 +165,32 @@ router.put(
   newsController.updateNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}:
+ *   delete:
+ *     tags:
+ *       - News
+ *     summary: Delete a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: News article deleted
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.delete(
   '/:id',
   authenticate,
@@ -61,6 +200,32 @@ router.delete(
   newsController.deleteNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}/submit:
+ *   patch:
+ *     tags:
+ *       - News
+ *     summary: Submit news article for approval
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: Submitted for approval
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.patch(
   '/:id/submit',
   authenticate,
@@ -70,6 +235,32 @@ router.patch(
   newsController.submitNewsForApproval
 );
 
+/**
+ * @openapi
+ * /api/news/{id}/approve:
+ *   patch:
+ *     tags:
+ *       - News
+ *     summary: Approve a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: News article approved
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.patch(
   '/:id/approve',
   authenticate,
@@ -79,6 +270,43 @@ router.patch(
   newsController.approveNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}/reject:
+ *   patch:
+ *     tags:
+ *       - News
+ *     summary: Reject a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reason
+ *             properties:
+ *               reason:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: News article rejected
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.patch(
   '/:id/reject',
   authenticate,
@@ -88,6 +316,32 @@ router.patch(
   newsController.rejectNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}/publish:
+ *   patch:
+ *     tags:
+ *       - News
+ *     summary: Publish a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: News article published
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.patch(
   '/:id/publish',
   authenticate,
@@ -97,6 +351,32 @@ router.patch(
   newsController.publishNews
 );
 
+/**
+ * @openapi
+ * /api/news/{id}/archive:
+ *   patch:
+ *     tags:
+ *       - News
+ *     summary: Archive a news article
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: News article ID
+ *     responses:
+ *       200:
+ *         description: News article archived
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Insufficient permissions
+ *       404:
+ *         description: News article not found
+ */
 router.patch(
   '/:id/archive',
   authenticate,

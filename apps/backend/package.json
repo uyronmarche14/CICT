@@ -49,6 +49,8 @@
     "nodemailer": "^8.0.9",
     "sanitize-html": "^2.17.4",
     "streamifier": "^0.1.1",
+    "swagger-jsdoc": "^6.3.0",
+    "swagger-ui-express": "^5.0.1",
     "typescript": "^5.9.3",
     "winston": "^3.18.3",
     "winston-daily-rotate-file": "^5.0.0"
@@ -61,6 +63,8 @@
     "@types/nodemailer": "^8.0.0",
     "@types/sanitize-html": "^2.16.1",
     "@types/supertest": "^7.2.0",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "^8.20.0",
     "@typescript-eslint/parser": "^8.20.0",
     "@vitest/coverage-v8": "^4.1.7",
