@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import DOMPurify from 'isomorphic-dompurify';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { announcementAPI } from '@/lib/api/announcements';
@@ -209,7 +210,7 @@ export default function AdminAnnouncementDetailPage() {
           {announcement.bodyHtml && (
             <div
               className="prose prose-sm dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: announcement.bodyHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(announcement.bodyHtml) }}
             />
           )}
 
@@ -221,7 +222,7 @@ export default function AdminAnnouncementDetailPage() {
                   {section.bodyHtml && (
                     <div
                       className="prose prose-sm dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.bodyHtml) }}
                     />
                   )}
                 </div>

@@ -25,10 +25,9 @@ export const forgotPassword = async (email: string): Promise<void> => {
   const resetToken = generateResetToken()
   const hashedToken = hashToken(resetToken)
 
-  const u = user as any
-  u.resetPasswordToken = hashedToken
-  u.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
-  await u.save()
+  user.resetPasswordToken = hashedToken
+  user.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
+  await user.save()
 
   logger.info(`Password reset token generated for admin user ${email}`)
 
@@ -48,13 +47,12 @@ export const resetPassword = async (token: string, newPassword: string): Promise
     throw new AppError('Invalid or expired reset token', 400)
   }
 
-  const u = user as any
-  u.password = newPassword
-  u.resetPasswordToken = undefined
-  u.resetPasswordExpires = undefined
-  await u.save()
+  user.password = newPassword
+  user.resetPasswordToken = undefined
+  user.resetPasswordExpires = undefined
+  await user.save()
 
-  logger.info(`Password reset successful for admin user: ${u.email}`)
+  logger.info(`Password reset successful for admin user: ${user.email}`)
 }
 
 // ——— Student Password Reset ———
@@ -72,17 +70,16 @@ export const forgotStudentPassword = async (studentNumber: string, email?: strin
   const resetToken = generateResetToken()
   const hashedToken = hashToken(resetToken)
 
-  const s = student as any
-  s.resetPasswordToken = hashedToken
-  s.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
-  await s.save()
+  student.resetPasswordToken = hashedToken
+  student.resetPasswordExpires = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS)
+  await student.save()
 
   logger.info(`Password reset token generated for student ${studentNumber}`)
 
-  if (s.email) {
+  if (student.email) {
     const resetUrl = `${process.env.FRONTEND_URL ?? 'https://cict.edu.ph'}/student/auth/reset-password?token=${resetToken}`
     const emailContent = buildPasswordResetEmail(resetUrl)
-    await sendEmail({ to: s.email, ...emailContent })
+    await sendEmail({ to: student.email, ...emailContent })
   }
 }
 
@@ -97,12 +94,11 @@ export const resetStudentPassword = async (token: string, newPassword: string): 
     throw new AppError('Invalid or expired reset token', 400)
   }
 
-  const s = student as any
   const rounds = parseInt(process.env.BCRYPT_ROUNDS ?? '10', 10)
-  s.passwordHash = await bcrypt.hash(newPassword, rounds)
-  s.resetPasswordToken = undefined
-  s.resetPasswordExpires = undefined
-  await s.save()
+  student.passwordHash = await bcrypt.hash(newPassword, rounds)
+  student.resetPasswordToken = undefined
+  student.resetPasswordExpires = undefined
+  await student.save()
 
-  logger.info(`Password reset successful for student: ${s.studentNumber}`)
+  logger.info(`Password reset successful for student: ${student.studentNumber}`)
 }

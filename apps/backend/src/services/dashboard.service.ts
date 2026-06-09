@@ -42,7 +42,8 @@ export const invalidateDashboardCache = async (): Promise<void> => {
 export const getDashboardSummary = async (
   currentUser: IAuthenticatedUser
 ): Promise<DashboardSummary> => {
-  const cached = await dashboardCache.get('summary')
+  const cacheKey = `summary:${currentUser.userId}`
+  const cached = await dashboardCache.get(cacheKey)
   if (cached) {return cached}
 
   const scopedOrganizationIdsByPermission = new Map<Permission, string[]>()
@@ -133,6 +134,6 @@ export const getDashboardSummary = async (
   }
 
   const summary: DashboardSummary = { cards, visibleModules }
-  await dashboardCache.set('summary', summary)
+  await dashboardCache.set(cacheKey, summary)
   return summary
 }

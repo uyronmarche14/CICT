@@ -35,7 +35,7 @@ const roleSchema = new Schema<IRole>(
 );
 
 // Prevent deletion of system roles
-roleSchema.pre('deleteOne', { document: true, query: false }, async function (this: any) {
+roleSchema.pre('deleteOne', { document: true, query: false }, async function (this: IRole) {
   if (this.isSystemRole) {
     throw new Error('Cannot delete system roles');
   }

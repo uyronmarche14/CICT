@@ -93,7 +93,7 @@ export async function createInstanceFromTemplate(
     linkedContentType: overrides.linkedContentType,
     linkedContentId: overrides.linkedContentId,
     organizationId: overrides.organizationId || null,
-    createdBy: overrides.createdBy as any,
+    createdBy: overrides.createdBy,
     assignedTo: overrides.assignedTo || [],
     nodeAssignments,
     nodesSnapshot,

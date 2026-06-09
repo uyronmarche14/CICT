@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import DOMPurify from 'isomorphic-dompurify';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { newsAPI } from '@/lib/api/news';
@@ -173,7 +174,7 @@ export default function AdminNewsDetailPage() {
           {news.bodyHtml && (
             <div
               className="prose prose-sm dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: news.bodyHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(news.bodyHtml) }}
             />
           )}
 
@@ -185,7 +186,7 @@ export default function AdminNewsDetailPage() {
                   {section.bodyHtml && (
                     <div
                       className="prose prose-sm dark:prose-invert max-w-none"
-                      dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
+                      dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(section.bodyHtml) }}
                     />
                   )}
                 </div>

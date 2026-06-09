@@ -34,7 +34,7 @@ export const createProcessTemplate = async (req: AuthRequest, res: Response): Pr
     description,
     processType,
     organizationScope: organizationScope || null,
-    createdBy: req.user.userId as any,
+    createdBy: req.user.userId,
     nodes: nodes || [],
     edges: edges || [],
     nodeAssignments: nodeAssignments || [],
@@ -190,7 +190,7 @@ export const createProcessInstance = async (req: AuthRequest, res: Response): Pr
       linkedContentId,
       organizationId,
       assignedTo,
-      createdBy: req.user.userId as any,
+      createdBy: req.user.userId,
     });
   } else {
     instance = await ProcessInstance.create({
@@ -199,7 +199,7 @@ export const createProcessInstance = async (req: AuthRequest, res: Response): Pr
       linkedContentType,
       linkedContentId,
       organizationId: organizationId || null,
-      createdBy: req.user.userId as any,
+      createdBy: req.user.userId,
       assignedTo: assignedTo || [],
       nodesSnapshot: [],
       edgesSnapshot: [],

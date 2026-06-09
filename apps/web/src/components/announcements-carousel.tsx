@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DOMPurify from 'isomorphic-dompurify';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -249,7 +250,7 @@ export default function AnnouncementsCarousel({
                     <p
                       className="text-muted-foreground leading-relaxed line-clamp-2"
                       dangerouslySetInnerHTML={{
-                        __html: announcement.bodyHtml || announcement.content || '',
+                        __html: DOMPurify.sanitize(announcement.bodyHtml || announcement.content || ''),
                       }}
                     />
                     {announcement.sections?.length ? (

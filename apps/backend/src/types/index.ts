@@ -702,7 +702,7 @@ export interface IProcessTemplate extends Document {
   description?: string;
   processType: string;
   organizationScope?: string | null;
-  createdBy: Types.ObjectId | IUser;
+  createdBy: string | IUser;
   nodes: IProcessNode[];
   edges: IProcessEdge[];
   nodeAssignments: INodeAssignment[];
@@ -720,7 +720,7 @@ export interface IProcessInstance extends Document {
   linkedContentType?: 'news' | 'announcement' | 'event' | 'task' | 'meeting' | 'budget';
   linkedContentId?: string;
   organizationId?: string | null;
-  createdBy: Types.ObjectId | IUser;
+  createdBy: string | IUser;
   assignedTo: string[];
   nodeAssignments: INodeAssignment[];
   nodesSnapshot: IProcessNode[];
