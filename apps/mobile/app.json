@@ -1,18 +1,19 @@
 {
   "expo": {
     "name": "CICT Mobile",
-    "slug": "cict-mobile",
+    "slug": "cict",
     "version": "1.0.0",
     "orientation": "portrait",
     "scheme": "cictmobile",
     "userInterfaceStyle": "automatic",
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-font"
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_EXPO_PROJECT_ID"
+        "projectId": "9be5b94d-34e5-429f-9ada-65e950cd0078"
       }
     },
     "android": {
@@ -26,6 +27,7 @@
     },
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "owner": "ronmarche201114"
   }
 }
