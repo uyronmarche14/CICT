@@ -7,6 +7,9 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { isStudentEligibleToVote } from './vote-eligibility.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const VOTE_ALLOWED = ['title', 'description', 'positions', 'candidates', 'startDate', 'endDate', 'isAnonymous', 'eligibleMemberTypes', 'resultsVisibility', 'allowAdminBallots'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -27,7 +30,7 @@ export const createVote = async (req: AuthRequest, orgId: string) => {
   const oid = await resolveOrg(req, orgId);
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
-  return OrgVote.create({ ...req.body, organizationId: oid, createdBy });
+  return OrgVote.create({ ...pickAllowedFields(req.body, VOTE_ALLOWED), organizationId: String(oid), createdBy });
 };
 
 export const getVote = async (req: AuthRequest, orgId: string, voteId: string) => {
@@ -41,7 +44,7 @@ export const updateVote = async (req: AuthRequest, orgId: string, voteId: string
   const oid = await resolveOrg(req, orgId);
   const vote = await OrgVote.findOneAndUpdate(
     { _id: voteId, organizationId: String(oid) },
-    { $set: req.body },
+    { $set: pickAllowedFields(req.body, VOTE_ALLOWED) },
     { new: true, runValidators: true }
   );
   if (!vote) {throw new AppError('Vote not found', 404);}

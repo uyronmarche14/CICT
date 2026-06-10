@@ -5,6 +5,9 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { ensureReferenceValuesAllowed, ensureUsersExist } from './lookup.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const TASK_ALLOWED = ['title', 'description', 'status', 'priority', 'dueDate', 'category', 'tags', 'assigneeIds', 'attachments', 'checklist', 'committee', 'fiscalYear', 'semester', 'meetingId', 'actionItemIndex'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -35,7 +38,7 @@ export const createTask = async (req: AuthRequest, orgId: string) => {
   if (Array.isArray(req.body.assigneeIds)) {
     req.body.assigneeIds = await ensureUsersExist(req.body.assigneeIds);
   }
-  return OrgTask.create({ ...req.body, organizationId: oid, createdBy });
+  return OrgTask.create({ ...pickAllowedFields(req.body, TASK_ALLOWED), organizationId: String(oid), createdBy });
 };
 
 export const getTask = async (req: AuthRequest, orgId: string, taskId: string) => {

@@ -4,6 +4,9 @@ import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const TASK_FORCE_ALLOWED = ['name', 'description', 'participantOrgIds', 'status', 'startDate', 'endDate', 'objectives', 'outcome'];
 import { ensureOrganizationsExist } from './lookup.service';
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
@@ -28,7 +31,7 @@ export const createTaskForce = async (req: AuthRequest, orgId: string) => {
     req.body.participantOrgIds = await ensureOrganizationsExist(req.body.participantOrgIds);
   }
   return OrgTaskForce.create({
-    ...req.body, organizationId: org._id, createdBy: req.user!.userId,
+    ...pickAllowedFields(req.body, TASK_FORCE_ALLOWED), organizationId: String(org._id), createdBy: req.user!.userId,
     statusHistory: [{ status: req.body.status || 'planning', changedBy: req.user!.userId, changedAt: new Date() }],
   });
 };
@@ -50,7 +53,10 @@ export const updateTaskForce = async (req: AuthRequest, orgId: string, id: strin
   if (req.body.status && tf.status !== req.body.status) {
     tf.statusHistory.push({ status: req.body.status, changedBy: req.user!.userId, changedAt: new Date(), reason: req.body.reason });
   }
-  Object.assign(tf, req.body);
+  const allowed = pickAllowedFields(req.body, TASK_FORCE_ALLOWED);
+  for (const [key, value] of Object.entries(allowed)) {
+    (tf as any)[key] = value;
+  }
   await tf.save();
   return tf;
 };

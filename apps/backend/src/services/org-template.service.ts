@@ -2,6 +2,9 @@ import OrgTemplate from '../models/OrgTemplate';
 import Organization from '../models/Organization';
 import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const TEMPLATE_ALLOWED = ['name', 'description', 'templateType', 'config', 'color', 'icon'];
 
 export const listTemplates = async (req: AuthRequest) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -10,7 +13,7 @@ export const listTemplates = async (req: AuthRequest) => {
 
 export const createTemplate = async (req: AuthRequest) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
-  return OrgTemplate.create({ ...req.body, createdBy: req.user.userId });
+  return OrgTemplate.create({ ...pickAllowedFields(req.body, TEMPLATE_ALLOWED), createdBy: req.user.userId });
 };
 
 export const getTemplate = async (req: AuthRequest, templateId: string) => {
@@ -22,7 +25,7 @@ export const getTemplate = async (req: AuthRequest, templateId: string) => {
 
 export const updateTemplate = async (req: AuthRequest, templateId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
-  const template = await OrgTemplate.findByIdAndUpdate(templateId, { $set: req.body }, { new: true, runValidators: true });
+  const template = await OrgTemplate.findByIdAndUpdate(templateId, { $set: pickAllowedFields(req.body, TEMPLATE_ALLOWED) }, { new: true, runValidators: true });
   if (!template) {throw new AppError('Template not found', 404);}
   return template;
 };

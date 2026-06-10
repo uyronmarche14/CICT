@@ -6,6 +6,9 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { ensureOrganizationsExist } from './lookup.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const COLLAB_ALLOWED = ['name', 'description', 'participantOrgIds', 'isActive'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -27,7 +30,7 @@ export const createSpace = async (req: AuthRequest, orgId: string) => {
   const participantOrgIds = Array.isArray(req.body.participantOrgIds)
     ? await ensureOrganizationsExist(req.body.participantOrgIds)
     : [];
-  return CollaborationSpace.create({ ...req.body, participantOrgIds: [...new Set([org.id, ...participantOrgIds])], createdBy: req.user!.userId });
+  return CollaborationSpace.create({ ...pickAllowedFields(req.body, COLLAB_ALLOWED), participantOrgIds: [...new Set([org.id, ...participantOrgIds])], createdBy: req.user!.userId });
 };
 
 export const getSpace = async (req: AuthRequest, orgId: string, id: string) => {
@@ -44,7 +47,7 @@ export const updateSpace = async (req: AuthRequest, orgId: string, id: string) =
   }
   const space = await CollaborationSpace.findOneAndUpdate(
     { _id: id, participantOrgIds: orgId },
-    { $set: req.body },
+    { $set: pickAllowedFields(req.body, COLLAB_ALLOWED) },
     { new: true, runValidators: true }
   );
   if (!space) {throw new AppError('Space not found', 404);}

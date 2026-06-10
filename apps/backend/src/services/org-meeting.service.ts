@@ -5,6 +5,9 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { ensureUsersExist } from './lookup.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const MEETING_ALLOWED = ['title', 'description', 'agenda', 'date', 'duration', 'location', 'meetingUrl', 'attendees', 'minutes', 'actionItems', 'fiscalYear', 'semester'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -41,7 +44,7 @@ export const createMeeting = async (req: AuthRequest, orgId: string) => {
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
   await validateActionItemAssignees(req.body);
-  return OrgMeeting.create({ ...req.body, organizationId: oid, createdBy });
+  return OrgMeeting.create({ ...pickAllowedFields(req.body, MEETING_ALLOWED), organizationId: String(oid), createdBy });
 };
 
 export const getMeeting = async (req: AuthRequest, orgId: string, meetingId: string) => {
@@ -56,7 +59,7 @@ export const updateMeeting = async (req: AuthRequest, orgId: string, meetingId: 
   await validateActionItemAssignees(req.body);
   const meeting = await OrgMeeting.findOneAndUpdate(
     { _id: meetingId, organizationId: String(oid) },
-    { $set: req.body },
+    { $set: pickAllowedFields(req.body, MEETING_ALLOWED) },
     { new: true, runValidators: true }
   );
   if (!meeting) {throw new AppError('Meeting not found', 404);}

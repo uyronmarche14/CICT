@@ -5,6 +5,9 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { ensureOrganizationsExist, ensureReferenceValuesAllowed } from './lookup.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const RESOURCE_ALLOWED = ['resourceType', 'description', 'providingOrgId', 'quantity', 'dateNeeded', 'duration'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('Not authenticated', 401);}
@@ -37,7 +40,7 @@ export const createRequest = async (req: AuthRequest, orgId: string) => {
     req.body.providingOrgId = providingOrgId;
   }
   return ResourceRequest.create({
-    ...req.body, organizationId: org._id, createdBy: req.user!.userId,
+    ...pickAllowedFields(req.body, RESOURCE_ALLOWED), organizationId: String(org._id), createdBy: req.user!.userId,
     statusHistory: [{ status: 'pending', changedBy: req.user!.userId, changedAt: new Date() }],
   });
 };

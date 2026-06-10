@@ -6,6 +6,10 @@ import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { Permission } from '../types';
 import { ensureReferenceValuesAllowed } from './lookup.service';
+import { pickAllowedFields } from '../utils/allowedFields';
+
+const BUDGET_ALLOWED = ['fiscalYear', 'totalBudget', 'categories', 'notes'];
+const TRANSACTION_ALLOWED = ['type', 'category', 'amount', 'description', 'date', 'vendor', 'paymentMethod', 'referenceNumber', 'receiptUrl', 'fiscalYear', 'semester'];
 
 const resolveOrg = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {throw new AppError('User not authenticated', 401);}
@@ -31,8 +35,8 @@ export const createBudget = async (req: AuthRequest, orgId: string) => {
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
   return OrgBudget.create({
-    ...req.body,
-    organizationId: oid,
+    ...pickAllowedFields(req.body, BUDGET_ALLOWED),
+    organizationId: String(oid),
     createdBy,
     statusHistory: [{ status: 'created', changedBy: createdBy, changedAt: new Date() }],
   });
@@ -44,7 +48,7 @@ export const updateBudget = async (req: AuthRequest, orgId: string) => {
   if (!budget) {
     const createdBy = req.user?.userId;
     if (!createdBy) {throw new AppError('User not authenticated', 401);}
-    budget = await OrgBudget.create({ ...req.body, organizationId: oid, createdBy });
+    budget = await OrgBudget.create({ ...pickAllowedFields(req.body, BUDGET_ALLOWED), organizationId: String(oid), createdBy });
     return budget;
   }
   if (req.body.totalBudget && budget.totalBudget !== req.body.totalBudget) {
@@ -55,7 +59,10 @@ export const updateBudget = async (req: AuthRequest, orgId: string) => {
       reason: req.body.reason,
     });
   }
-  Object.assign(budget, req.body);
+  const allowed = pickAllowedFields(req.body, BUDGET_ALLOWED);
+  for (const [key, value] of Object.entries(allowed)) {
+    (budget as any)[key] = value;
+  }
   await budget.save();
   return budget;
 };
@@ -73,7 +80,7 @@ export const createTransaction = async (req: AuthRequest, orgId: string) => {
   const createdBy = req.user?.userId;
   if (!createdBy) {throw new AppError('User not authenticated', 401);}
   await ensureReferenceValuesAllowed('budgetCategories', [req.body.category], 'Invalid budget category');
-  return OrgTransaction.create({ ...req.body, organizationId: oid, createdBy });
+  return OrgTransaction.create({ ...pickAllowedFields(req.body, TRANSACTION_ALLOWED), organizationId: String(oid), createdBy });
 };
 
 export const deleteTransaction = async (req: AuthRequest, orgId: string, txId: string) => {
