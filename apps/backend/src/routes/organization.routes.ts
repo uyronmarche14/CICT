@@ -13,6 +13,8 @@ import {
   deleteMember,
   uploadImage,
   getOrgActivityFeed,
+  getOrgFiles,
+  getOrgStorageQuota,
 } from '../controllers/organization.controller';
 import { authenticate as protect } from '../middleware/auth';
 import { authorize, requireAdminAccess } from '../middleware/permissions';
@@ -457,6 +459,18 @@ router.get(
   '/:orgId/activity',
   requireAdminAccess,
   getOrgActivityFeed
+);
+
+router.get(
+  '/:orgId/files',
+  requireAdminAccess,
+  getOrgFiles
+);
+
+router.get(
+  '/:orgId/files/quota',
+  requireAdminAccess,
+  getOrgStorageQuota
 );
 
 export default router;

@@ -795,3 +795,33 @@ export interface IOrganizationActivity extends Document {
   metadata?: Record<string, unknown>;
   createdAt: Date;
 }
+
+export interface IOrganizationFile extends Document {
+  organizationId: string;
+  provider: 'cloudinary' | 's3' | 'r2' | 'b2' | 'local_dev';
+  storageMode: 'platform_managed' | 'organization_managed';
+  folder: string;
+  publicId: string;
+  url: string;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  checksum?: string;
+  uploadedBy: string;
+  visibility: 'private' | 'organization' | 'public';
+  attachedTo?: Array<{ type: string; id: string; relation?: string }>;
+  lifecycleState: 'active' | 'archived' | 'deleted';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IOrganizationStorageQuota extends Document {
+  organizationId: string;
+  storageLimitMb: number;
+  monthlyUploadLimitMb: number;
+  maxFileSizeMb: number;
+  usedStorageBytes: number;
+  usedUploadBytesThisMonth: number;
+  allowedMimeTypes: string[];
+  blockedMimeTypes: string[];
+}

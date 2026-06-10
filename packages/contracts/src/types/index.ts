@@ -8,3 +8,4 @@ export * from './student';
 export * from './process';
 export * from './updates';
 export * from './organization-activity';
+export * from './storage';

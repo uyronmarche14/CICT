@@ -17,6 +17,7 @@ import {
 } from '../services/organization.service';
 
 import { getOrgActivity } from '../services/activity.service';
+import { getOrgFiles as getStorageFiles, getOrgQuota } from '../services/storage.service';
 
 export const getPublicMember = async (req: Request, res: Response) => {
   const memberId = req.params.memberId as string;
@@ -97,4 +98,24 @@ export const getOrgActivityFeed = async (req: AuthRequest, res: Response) => {
   });
 
   res.json({ success: true, data: { activities } });
+};
+
+export const getOrgFiles = async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+  const { mimeType, limit: limitStr, skip: skipStr } = req.query as Record<string, string | undefined>;
+
+  const result = await getStorageFiles(orgId, {
+    mimeType,
+    limit: limitStr ? parseInt(limitStr, 10) : undefined,
+    skip: skipStr ? parseInt(skipStr, 10) : undefined,
+  });
+
+  res.json({ success: true, data: result });
+};
+
+export const getOrgStorageQuota = async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+
+  const data = await getOrgQuota(orgId);
+  res.json({ success: true, data });
 };

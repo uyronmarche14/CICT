@@ -2,6 +2,9 @@ import ProcessTemplate from '../models/ProcessTemplate';
 import ProcessInstance from '../models/ProcessInstance';
 import { AppError } from '../middleware/errorHandler';
 import { IProcessNode } from '../types';
+import { resolveParticipants } from '../utils/processParticipants';
+import { executeAutomationActions } from './process-automation.service';
+import { recordActivity } from './activity.service';
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   draft: ['active'],
@@ -86,6 +89,17 @@ export async function createInstanceFromTemplate(
     assigneeId: a.assigneeId,
   })) || [];
 
+  const resolvedAssignees = new Set<string>();
+  for (const assignment of nodeAssignments) {
+    const resolved = await resolveParticipants(
+      assignment.assigneeType as any,
+      assignment.assigneeId,
+      overrides.organizationId
+    );
+    for (const id of resolved) {resolvedAssignees.add(id);}
+  }
+  const allAssignedTo = [...new Set([...(overrides.assignedTo || []), ...resolvedAssignees])];
+
   const instance = await ProcessInstance.create({
     templateId: template._id,
     title: overrides.title || template.title,
@@ -94,7 +108,7 @@ export async function createInstanceFromTemplate(
     linkedContentId: overrides.linkedContentId,
     organizationId: overrides.organizationId || null,
     createdBy: overrides.createdBy,
-    assignedTo: overrides.assignedTo || [],
+    assignedTo: allAssignedTo,
     nodeAssignments,
     nodesSnapshot,
     edgesSnapshot,
@@ -103,6 +117,16 @@ export async function createInstanceFromTemplate(
     comments: [],
     requirements: [],
     approvalSteps: [],
+  });
+
+  await recordActivity({
+    organizationId: overrides.organizationId || '',
+    actorType: 'admin',
+    actorId: overrides.createdBy,
+    action: 'created',
+    entityType: 'process_instance',
+    entityId: String(instance._id),
+    entityLabel: instance.title,
   });
 
   return instance;
@@ -129,6 +153,18 @@ export async function transitionInstanceStatus(
 
   if (toStatus === 'active' && !instance.startedAt) {
     updates.startedAt = new Date();
+  }
+
+  if (toStatus === 'active') {
+    await recordActivity({
+      organizationId: instance.organizationId || '',
+      actorType: 'admin',
+      actorId: _userId,
+      action: 'started',
+      entityType: 'process_instance',
+      entityId: instanceId,
+      entityLabel: instance.title,
+    });
   }
 
   if (toStatus === 'completed') {
@@ -181,6 +217,21 @@ export async function advanceInstance(
   if (isComplete) {
     updates.status = 'completed';
     updates.completedAt = new Date();
+  }
+
+  if (isComplete) {
+    await recordActivity({
+      organizationId: instance.organizationId || '',
+      actorType: 'system',
+      action: 'completed',
+      entityType: 'process_instance',
+      entityId: instanceId,
+      entityLabel: instance.title,
+    });
+  }
+
+  for (const nodeId of completedNodeIds) {
+    await executeAutomationActions(instance, nodeId);
   }
 
   const updated = await ProcessInstance.findByIdAndUpdate(
