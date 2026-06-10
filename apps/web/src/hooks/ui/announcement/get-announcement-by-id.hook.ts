@@ -17,6 +17,6 @@ export function useGetAnnouncementById(id: string) {
       return response.data.data.announcement;
     },
     enabled: !!id,
-    staleTime: 0,
+    staleTime: 30_000,
   });
 }

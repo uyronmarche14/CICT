@@ -5,6 +5,6 @@ export function useFAQContent() {
   return useQuery({
     queryKey: ['faq-content'],
     queryFn: () => faqAPI.get(),
-    staleTime: 0,
+    staleTime: 60_000,
   });
 }

@@ -62,22 +62,11 @@ export function EventDetailAttendance({ eventId, canViewRegistrations }: EventDe
   }, [logs, summary]);
 
   const handleExportCsv = () => {
-    const headers = ['Student Name', 'Student No.', 'Type', 'Result', 'Scanned By', 'Scanned At', 'Notes'];
-      const rows = logs.map((log) => [
-      `${log.studentId?.firstName ?? ''} ${log.studentId?.lastName ?? ''}`,
-      log.studentId?.studentNumber ?? '',
-      log.scanType,
-      log.result,
-      log.scannedByAdminId ? `${log.scannedByAdminId.firstName ?? ''} ${log.scannedByAdminId.lastName ?? ''}` : '',
-      log.scannedAt ? format(new Date(log.scannedAt), 'yyyy-MM-dd HH:mm') : '',
-      log.notes ?? '',
-    ]);
-    const csv = [headers.join(','), ...rows.map((r: string[]) => r.join(','))].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `attendance-${eventId}.csv`; a.click();
-    URL.revokeObjectURL(url);
+    const params = new URLSearchParams({ format: 'csv' });
+    if (logResultFilter !== 'all') params.set('result', logResultFilter);
+    if (logScanType !== 'all') params.set('scanType', logScanType);
+    if (logSearch) params.set('q', logSearch);
+    window.open(`/api/admin/events/${eventId}/attendance/logs/export?${params}`, '_blank');
   };
 
   if (!canViewRegistrations) {
