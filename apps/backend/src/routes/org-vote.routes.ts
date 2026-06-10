@@ -9,7 +9,8 @@ import {
   getResults,
 } from '../controllers/org-vote.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import {
@@ -21,7 +22,7 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_VOTES));
 
 router.get('/:orgId/votes', listVotes);
 router.post('/:orgId/votes', validate(createVoteValidator), logActivity('create', 'org_vote'), createVote);

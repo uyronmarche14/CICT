@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import {
@@ -13,7 +14,7 @@ import {
 } from '../validators/org-collaboration.validator';
 
 const router = express.Router();
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_COLLABORATION));
 
 router.get('/:orgId/collaborations', listSpaces);
 router.post('/:orgId/collaborations', validate(createSpaceValidator), logActivity('create', 'collab_space'), createSpace);

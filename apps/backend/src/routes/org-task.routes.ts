@@ -9,7 +9,8 @@ import {
   toggleChecklistItem,
 } from '../controllers/org-task.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import {
@@ -22,7 +23,7 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_TASKS));
 
 router.get('/:orgId/tasks', listTasks);
 router.post('/:orgId/tasks', validate(createTaskValidator), logActivity('create', 'org_task'), createTask);

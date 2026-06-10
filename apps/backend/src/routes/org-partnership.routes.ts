@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import {
@@ -10,7 +11,7 @@ import {
 import { createPartnershipValidator, partnershipActionValidator } from '../validators/org-partnership.validator';
 
 const router = express.Router();
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_PARTNERSHIPS));
 
 router.get('/:orgId/partnerships', listPartnerships);
 router.post('/:orgId/partnerships', validate(createPartnershipValidator), logActivity('create', 'org_partnership'), createPartnership);

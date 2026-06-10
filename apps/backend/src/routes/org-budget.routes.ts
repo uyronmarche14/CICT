@@ -8,7 +8,8 @@ import {
   deleteTransaction,
 } from '../controllers/org-budget.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import {
@@ -20,7 +21,7 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_BUDGET));
 
 router.get('/:orgId/budget', getBudget);
 router.post('/:orgId/budget', validate(createBudgetValidator), logActivity('create', 'org_budget'), createBudget);

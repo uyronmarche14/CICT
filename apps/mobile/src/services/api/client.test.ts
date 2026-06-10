@@ -138,8 +138,8 @@ describe('api client', () => {
 
     it('attempts refresh and retries original request on successful refresh', async () => {
       const state = defaultState();
-      state.accessToken = 'old-at';
-      state.refreshToken = 'old-rt';
+      (state as any).accessToken = 'old-at';
+      (state as any).refreshToken = 'old-rt';
       mockGetState.mockReturnValue(state);
 
       const mockPost = client.post as jest.Mock;
@@ -176,8 +176,8 @@ describe('api client', () => {
 
     it('clears session when refresh fails', async () => {
       const state = defaultState();
-      state.accessToken = 'old-at';
-      state.refreshToken = 'old-rt';
+      (state as any).accessToken = 'old-at';
+      (state as any).refreshToken = 'old-rt';
       mockGetState.mockReturnValue(state);
 
       (client.post as jest.Mock).mockRejectedValue(new Error('refresh failed'));
@@ -194,8 +194,8 @@ describe('api client', () => {
 
     it('shares a single refresh promise for concurrent 401s', async () => {
       const state = defaultState();
-      state.accessToken = 'old-at';
-      state.refreshToken = 'old-rt';
+      (state as any).accessToken = 'old-at';
+      (state as any).refreshToken = 'old-rt';
       mockGetState.mockReturnValue(state);
 
       let resolvePost!: (value: unknown) => void;

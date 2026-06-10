@@ -1,13 +1,14 @@
 import express from 'express';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { listOutgoing, listIncoming, createRequest, getRequest, approveRequest, denyRequest, cancelRequest } from '../controllers/org-resource.controller';
 import { createResourceRequestValidator, resourceIdValidator, reviewResourceValidator } from '../validators/org-resource.validator';
 
 const router = express.Router();
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_RESOURCE_POOLING));
 
 router.get('/:orgId/resource-requests/outgoing', listOutgoing);
 router.get('/:orgId/resource-requests/incoming', listIncoming);

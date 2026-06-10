@@ -1,13 +1,14 @@
 import express from 'express';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { listMentorships, createMentorship, getMentorship, updateMentorshipStatus, deleteMentorship } from '../controllers/org-mentorship.controller';
 import { createMentorshipValidator, mentorshipIdValidator, mentorshipStatusValidator } from '../validators/org-mentorship.validator';
 
 const router = express.Router();
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_MENTORSHIP));
 
 router.get('/:orgId/mentorships', listMentorships);
 router.post('/:orgId/mentorships', validate(createMentorshipValidator), logActivity('create', 'org_mentorship'), createMentorship);

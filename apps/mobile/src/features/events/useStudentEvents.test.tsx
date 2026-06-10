@@ -57,12 +57,13 @@ function wrapper({ children }: { children: React.ReactNode }) {
   );
 }
 
+const originalConsoleError = console.error;
 beforeEach(() => {
   jest.clearAllMocks();
   jest.spyOn(console, 'error').mockImplementation((...args) => {
     const first = typeof args[0] === 'string' ? args[0] : '';
     if (first.includes('not wrapped in act')) return;
-    console.error.__proto__.call(console, ...args);
+    originalConsoleError.call(console, ...args);
   });
 });
 

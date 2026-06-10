@@ -1,13 +1,14 @@
 import express from 'express';
 import { authenticate as protect } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { listTaskForces, createTaskForce, getTaskForce, updateTaskForce, deleteTaskForce } from '../controllers/org-task-force.controller';
 import { createTaskForceValidator, updateTaskForceValidator, taskForceIdValidator } from '../validators/org-task-force.validator';
 
 const router = express.Router();
-router.use(protect, requireAdminAccess);
+router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_TASK_FORCES));
 
 router.get('/:orgId/task-forces', listTaskForces);
 router.post('/:orgId/task-forces', validate(createTaskForceValidator), logActivity('create', 'org_task_force'), createTaskForce);
