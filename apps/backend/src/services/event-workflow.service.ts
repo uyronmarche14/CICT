@@ -3,6 +3,7 @@ import { AppError } from '../middleware/errorHandler';
 import { AuthRequest } from '../middleware/auth';
 import { EventStatus, Permission } from '../types';
 import { ensureCanManageOwnedContent } from '../utils/organizationScope';
+import { recordContentApprovalAction } from '../utils/contentApproval';
 import * as approvalService from './content-approval.service';
 import logger from '../utils/logger';
 
@@ -76,6 +77,15 @@ export const cancel = async (id: string, req: AuthRequest) => {
   event.cancelledAt = new Date();
   await event.save();
 
+  await recordContentApprovalAction({
+    contentType: 'event',
+    contentId: id,
+    actorUserId: req.user!.userId,
+    action: 'cancelled',
+    fromStatus: EventStatus.PUBLISHED,
+    toStatus: EventStatus.CANCELLED,
+  });
+
   logger.info(`Event cancelled: ${id} by user ${req.user?.userId}`);
   return event;
 };
@@ -101,6 +111,15 @@ export const complete = async (id: string, req: AuthRequest) => {
   event.status = EventStatus.COMPLETED;
   event.completedAt = new Date();
   await event.save();
+
+  await recordContentApprovalAction({
+    contentType: 'event',
+    contentId: id,
+    actorUserId: req.user!.userId,
+    action: 'completed',
+    fromStatus: EventStatus.PUBLISHED,
+    toStatus: EventStatus.COMPLETED,
+  });
 
   logger.info(`Event completed: ${id} by user ${req.user?.userId}`);
   return event;

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { authenticate } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { eventIdValidator, eventRegIdValidator } from '../validators/event.validator';
 import {
@@ -29,6 +30,6 @@ router.post('/:id/registrations', validate(eventIdValidator), adminCreateRegistr
 router.post('/:id/registrations/:regId/cancel', validate(eventRegIdValidator), adminCancelRegistration);
 router.patch('/:id/registrations/:regId', validate(eventRegIdValidator), adminUpdateRegistrationStatus);
 router.post('/:id/registrations/:regId/undo-checkin', validate(eventRegIdValidator), adminUndoCheckIn);
-router.post('/:id/attendance/scan', validate(eventIdValidator), scanEventAttendance);
+router.post('/:id/attendance/scan', validate(eventIdValidator), authorize(Permission.SCAN_EVENT_ATTENDANCE), scanEventAttendance);
 
 export default router;

@@ -28,6 +28,7 @@ const EVENTS_MODULE_PERMISSIONS: Permission[] = [
   Permission.PUBLISH_EVENT,
   Permission.CANCEL_EVENT,
   Permission.COMPLETE_EVENT,
+  Permission.SCAN_EVENT_ATTENDANCE,
 ];
 
 const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [

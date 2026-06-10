@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { eventAPI } from '@/lib/api/event';
 import { adminEventAPI, AdminRegistration } from '@/lib/api/admin-events';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
+import { Permission } from '@cict/contracts/enums';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import QrCameraScanner from '@/components/admin/QrCameraScanner';
 import { Button } from '@/components/ui/button';
@@ -42,8 +43,8 @@ export default function AdminScanPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const eventId = params.id as string;
-  const { canAccessEventsModule } = usePermissions();
-  const { shouldRender } = useAdminPageAccess(canAccessEventsModule());
+  const { hasPermission } = usePermissions();
+  const { shouldRender } = useAdminPageAccess(hasPermission(Permission.SCAN_EVENT_ATTENDANCE));
   const [scanMethod, setScanMethod] = useState<ScanMethod>('camera');
   const [scanResult, setScanResult] = useState<{ result: string; studentName?: string } | null>(null);
   const [loading, setLoading] = useState(false);
