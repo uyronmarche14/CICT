@@ -3,6 +3,10 @@ import { authenticateStudent } from '../middleware/studentAuth';
 import * as studentController from '../controllers/student.controller';
 import * as studentEventController from '../controllers/student-event.controller';
 import * as voteController from '../controllers/org-vote.controller';
+import {
+  getStudentNotifications,
+  markNotificationRead,
+} from '../controllers/student.controller';
 import { validate } from '../middleware/validate';
 import { eventIdValidator } from '../validators/event.validator';
 import { getMyMemberships, getMyMembershipStatus, applyToOrganization, resignMembership } from '../controllers/organization-membership.controller';
@@ -36,5 +40,7 @@ router.get('/organizations/:orgId/votes', voteController.studentListVotes);
 router.get('/organizations/:orgId/votes/:voteId', voteController.studentGetVote);
 router.post('/organizations/:orgId/votes/:voteId/cast', voteController.studentCastBallot);
 router.get('/organizations/:orgId/votes/:voteId/results', voteController.studentGetResults);
+router.get('/notifications', getStudentNotifications);
+router.patch('/notifications/:id/read', markNotificationRead);
 
 export default router;

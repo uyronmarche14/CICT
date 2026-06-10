@@ -834,3 +834,14 @@ export interface IOrganizationCommittee extends Document {
   memberIds: string[];
   status: 'active' | 'inactive';
 }
+
+export interface INotification extends Document {
+  userId: string;
+  type: 'membership' | 'task' | 'meeting' | 'vote' | 'resource' | 'budget' | 'storage' | 'content';
+  title: string;
+  body: string;
+  data?: Record<string, unknown>;
+  read: boolean;
+  readAt?: Date;
+  createdAt: Date;
+}
