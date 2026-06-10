@@ -13,6 +13,7 @@ import AdminMemberManager from '@/components/organizations/AdminMemberManager';
 import AdminOrganizationForm from '@/components/organizations/AdminOrganizationForm';
 import OrganizationMembershipsTab from '@/components/organizations/OrganizationMembershipsTab';
 import OrganizationContentPreview from '@/components/organizations/OrganizationContentPreview';
+import { OrganizationDashboard } from '@/components/admin/OrganizationDashboard';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { organizationService } from '@/services/organizationService';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
@@ -81,6 +82,7 @@ export default function AdminOrganizationManagePage() {
   const tabs = useMemo(
     () =>
       [
+        { value: 'overview', label: 'Overview' },
         canManageMembers ? { value: 'members', label: 'Members' } : null,
         canViewScopedAdmins ? { value: 'memberships', label: 'Memberships' } : null,
         canViewScopedAdmins ? { value: 'admins', label: 'Scoped Admins' } : null,
@@ -89,7 +91,7 @@ export default function AdminOrganizationManagePage() {
       ].filter((tab): tab is { value: string; label: string } => tab !== null),
     [canManageMembers, canViewScopedAdmins]
   );
-  const defaultTab = tabs[0]?.value ?? 'content';
+  const defaultTab = 'overview';
 
   if (loading) {
      return (
@@ -298,15 +300,19 @@ export default function AdminOrganizationManagePage() {
           {/* Main Content Area */}
           <div className="space-y-6">
              <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList>
-                   {tabs.map((tab) => (
-                     <TabsTrigger key={tab.value} value={tab.value}>
-                       {tab.label}
-                     </TabsTrigger>
-                   ))}
-                </TabsList>
-                
-                {canManageMembers ? (
+                 <TabsList>
+                    {tabs.map((tab) => (
+                      <TabsTrigger key={tab.value} value={tab.value}>
+                        {tab.label}
+                      </TabsTrigger>
+                    ))}
+                 </TabsList>
+
+                 <TabsContent value="overview" className="mt-6">
+                    <OrganizationDashboard orgId={organization.id} />
+                 </TabsContent>
+
+                 {canManageMembers ? (
                   <TabsContent value="members" className="mt-6">
                      <div className="rounded-xl border bg-card p-6">
                         <AdminMemberManager 
