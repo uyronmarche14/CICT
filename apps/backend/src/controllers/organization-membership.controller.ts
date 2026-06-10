@@ -342,6 +342,21 @@ const getPendingMemberships = async (req: AuthRequest, res: Response) => {
   res.json({ success: true, data: { memberships: enriched } });
 };
 
+const getMyMembershipStatus = async (req: StudentAuthRequest, res: Response) => {
+  const { orgId } = req.params;
+  const studentId = new mongoose.Types.ObjectId(req.student!.studentId);
+
+  const membership = await OrganizationMembership.findOne({
+    studentId,
+    organizationId: orgId,
+  }).select('status').lean();
+
+  res.json({
+    success: true,
+    data: { status: (membership?.status as string) ?? 'none' },
+  });
+};
+
 export {
   getOrganizationMemberships,
   createMembership,
@@ -353,4 +368,5 @@ export {
   applyToOrganization,
   resignMembership,
   getPendingMemberships,
+  getMyMembershipStatus,
 };
