@@ -36,6 +36,9 @@ const formSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
   isAnonymous: z.boolean().default(true),
+  eligibleMemberTypes: z.array(z.string()).optional(),
+  resultsVisibility: z.string().default('admins_only'),
+  allowAdminBallots: z.boolean().default(true),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -47,7 +50,7 @@ interface VoteFormProps {
   orgId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item?: { _id: string; title: string; description?: string; startDate: string; endDate: string; isAnonymous: boolean; positions?: Position[]; candidates?: Candidate[] } | null;
+  item?: { _id: string; title: string; description?: string; startDate: string; endDate: string; isAnonymous: boolean; eligibleMemberTypes?: string[]; resultsVisibility?: string; allowAdminBallots?: boolean; positions?: Position[]; candidates?: Candidate[] } | null;
   onSuccess: () => void;
 }
 
@@ -68,6 +71,9 @@ export function VoteForm({ orgId, open, onOpenChange, item, onSuccess }: VoteFor
         startDate: item?.startDate ? new Date(item.startDate).toISOString().split('T')[0] : '',
         endDate: item?.endDate ? new Date(item.endDate).toISOString().split('T')[0] : '',
         isAnonymous: item?.isAnonymous ?? true,
+        eligibleMemberTypes: item?.eligibleMemberTypes ?? [],
+        resultsVisibility: item?.resultsVisibility ?? 'admins_only',
+        allowAdminBallots: item?.allowAdminBallots ?? true,
       });
       setPositions(item?.positions ?? []);
       setCandidates(item?.candidates ?? []);
@@ -117,6 +123,47 @@ export function VoteForm({ orgId, open, onOpenChange, item, onSuccess }: VoteFor
               <FormItem className="flex items-center gap-2">
                 <FormControl><Checkbox checked={!!field.value} onCheckedChange={field.onChange} /></FormControl>
                 <FormLabel className="!mt-0">Anonymous voting</FormLabel>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <Controller control={form.control} name="allowAdminBallots" render={({ field }) => (
+              <FormItem className="flex items-center gap-2">
+                <FormControl><Checkbox checked={!!field.value} onCheckedChange={field.onChange} /></FormControl>
+                <FormLabel className="!mt-0">Allow admin ballots</FormLabel>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <Controller control={form.control} name="resultsVisibility" render={({ field }) => (
+              <FormItem><FormLabel>Results visibility</FormLabel>
+                <FormControl>
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admins_only">Admins only</SelectItem>
+                      <SelectItem value="members_after_close">Members after voting ends</SelectItem>
+                      <SelectItem value="public_after_close">Public after voting ends</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+            <Controller control={form.control} name="eligibleMemberTypes" render={({ field }) => (
+              <FormItem><FormLabel>Eligible member types</FormLabel>
+                <div className="flex flex-wrap gap-2">
+                  {['officer', 'general', 'alumni', 'honorary', 'advisor'].map((type) => (
+                    <label key={type} className="flex items-center gap-1 text-sm">
+                      <Checkbox
+                        checked={field.value?.includes(type)}
+                        onCheckedChange={(checked) => {
+                          const current = field.value ?? [];
+                          field.onChange(checked ? [...current, type] : current.filter((t: string) => t !== type));
+                        }}
+                      />
+                      {type.charAt(0).toUpperCase() + type.slice(1)}
+                    </label>
+                  ))}
+                </div>
                 <FormMessage />
               </FormItem>
             )} />

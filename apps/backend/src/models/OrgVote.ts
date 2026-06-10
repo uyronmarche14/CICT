@@ -11,6 +11,9 @@ export interface IOrgVoteDocument extends Document {
   isAnonymous: boolean;
   isActive: boolean;
   createdBy: mongoose.Types.ObjectId;
+  eligibleMemberTypes?: string[];
+  resultsVisibility: string;
+  allowAdminBallots: boolean;
 }
 
 const orgVoteSchema = new Schema<IOrgVoteDocument>(
@@ -42,6 +45,9 @@ const orgVoteSchema = new Schema<IOrgVoteDocument>(
     endDate: { type: Date, required: true },
     isAnonymous: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
+    eligibleMemberTypes: [{ type: String, enum: ['officer', 'general', 'alumni', 'honorary', 'advisor'] }],
+    resultsVisibility: { type: String, enum: ['admins_only', 'members_after_close', 'public_after_close'], default: 'admins_only' },
+    allowAdminBallots: { type: Boolean, default: true },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }

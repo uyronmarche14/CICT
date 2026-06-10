@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authenticateStudent } from '../middleware/studentAuth';
 import * as studentController from '../controllers/student.controller';
 import * as studentEventController from '../controllers/student-event.controller';
+import * as voteController from '../controllers/org-vote.controller';
 import { validate } from '../middleware/validate';
 import { eventIdValidator } from '../validators/event.validator';
 import { getMyMemberships, getMyMembershipStatus, applyToOrganization, resignMembership } from '../controllers/organization-membership.controller';
@@ -31,5 +32,9 @@ router.get('/memberships', getMyMemberships);
 router.get('/organizations/:orgId/membership-status', getMyMembershipStatus);
 router.post('/organizations/:orgId/apply', validate(applyToOrgValidator), applyToOrganization);
 router.post('/memberships/:id/resign', validate(membershipIdValidator), resignMembership);
+router.get('/organizations/:orgId/votes', voteController.studentListVotes);
+router.get('/organizations/:orgId/votes/:voteId', voteController.studentGetVote);
+router.post('/organizations/:orgId/votes/:voteId/cast', voteController.studentCastBallot);
+router.get('/organizations/:orgId/votes/:voteId/results', voteController.studentGetResults);
 
 export default router;
