@@ -780,3 +780,18 @@ export interface ISystemConfig extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface IOrganizationActivity extends Document {
+  organizationId: string;
+  actorType: 'admin' | 'student' | 'system';
+  actorId?: string;
+  actorName?: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  entityLabel?: string;
+  sourceType?: string;
+  sourceId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: Date;
+}

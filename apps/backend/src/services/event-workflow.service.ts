@@ -4,6 +4,7 @@ import { AuthRequest } from '../middleware/auth';
 import { EventStatus, Permission } from '../types';
 import { ensureCanManageOwnedContent } from '../utils/organizationScope';
 import { recordContentApprovalAction } from '../utils/contentApproval';
+import { recordActivity } from './activity.service';
 import * as approvalService from './content-approval.service';
 import logger from '../utils/logger';
 
@@ -86,6 +87,16 @@ export const cancel = async (id: string, req: AuthRequest) => {
     toStatus: EventStatus.CANCELLED,
   });
 
+  await recordActivity({
+    organizationId: event.organizationId ?? '',
+    actorType: 'admin',
+    actorId: req.user?.userId,
+    action: 'cancelled',
+    entityType: 'event',
+    entityId: id,
+    metadata: { fromStatus: 'published', toStatus: 'cancelled' },
+  });
+
   logger.info(`Event cancelled: ${id} by user ${req.user?.userId}`);
   return event;
 };
@@ -119,6 +130,16 @@ export const complete = async (id: string, req: AuthRequest) => {
     action: 'completed',
     fromStatus: EventStatus.PUBLISHED,
     toStatus: EventStatus.COMPLETED,
+  });
+
+  await recordActivity({
+    organizationId: event.organizationId ?? '',
+    actorType: 'admin',
+    actorId: req.user?.userId,
+    action: 'completed',
+    entityType: 'event',
+    entityId: id,
+    metadata: { fromStatus: 'published', toStatus: 'completed' },
   });
 
   logger.info(`Event completed: ${id} by user ${req.user?.userId}`);

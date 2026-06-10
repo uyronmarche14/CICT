@@ -10,6 +10,7 @@ import { parsePagination } from '../utils/pagination';
 import { IMembershipHistoryEntry, Permission } from '../types';
 import { isFeatureEnabled } from '../utils/features';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
+import { recordActivity } from '../services/activity.service';
 
 const buildHistoryEntry = (
   field: string,
@@ -175,6 +176,16 @@ const approveMembership = async (req: AuthRequest, res: Response) => {
   );
   await membership.save();
 
+  await recordActivity({
+    organizationId: orgId,
+    actorType: 'admin',
+    actorId: req.user?.userId,
+    action: 'approved',
+    entityType: 'membership',
+    entityId: id,
+    metadata: { fromStatus: 'applied', toStatus: 'active' },
+  });
+
   const populated = await OrganizationMembership.findById(membership._id)
     .populate('studentId', 'studentNumber firstName lastName profilePhoto')
     .lean();
@@ -200,6 +211,16 @@ const rejectMembership = async (req: AuthRequest, res: Response) => {
     buildHistoryEntry('status', prevStatus, 'rejected', req.user?.userId)
   );
   await membership.save();
+
+  await recordActivity({
+    organizationId: orgId,
+    actorType: 'admin',
+    actorId: req.user?.userId,
+    action: 'rejected',
+    entityType: 'membership',
+    entityId: id,
+    metadata: { fromStatus: prevStatus, toStatus: 'rejected' },
+  });
 
   res.json({ success: true, data: { membership } });
 };
@@ -249,6 +270,15 @@ const applyToOrganization = async (req: StudentAuthRequest, res: Response) => {
   });
 
   res.status(201).json({ success: true, data: { membership } });
+
+  await recordActivity({
+    organizationId: orgId,
+    actorType: 'student',
+    actorId: req.student?.studentId,
+    action: 'joined',
+    entityType: 'membership',
+    entityId: String(membership._id),
+  });
 };
 
 const resignMembership = async (req: StudentAuthRequest, res: Response) => {
@@ -266,6 +296,16 @@ const resignMembership = async (req: StudentAuthRequest, res: Response) => {
   membership.resignedAt = new Date();
   membership.history.push(buildHistoryEntry('status', 'active', 'resigned'));
   await membership.save();
+
+  await recordActivity({
+    organizationId: membership.organizationId,
+    actorType: 'student',
+    actorId: req.student?.studentId,
+    action: 'resigned',
+    entityType: 'membership',
+    entityId: id,
+    metadata: { fromStatus: 'active', toStatus: 'resigned' },
+  });
 
   res.json({ success: true, data: { membership } });
 };

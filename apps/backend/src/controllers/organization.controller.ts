@@ -16,6 +16,8 @@ import {
   getPublicMember as getPublicMemberService,
 } from '../services/organization.service';
 
+import { getOrgActivity } from '../services/activity.service';
+
 export const getPublicMember = async (req: Request, res: Response) => {
   const memberId = req.params.memberId as string;
   const data = await getPublicMemberService(memberId);
@@ -82,4 +84,17 @@ export const deleteMember = async (req: AuthRequest, res: Response) => {
 export const uploadImage = async (req: AuthRequest, res: Response) => {
   const data = await uploadImageService(req);
   res.status(200).json({ success: true, data });
+};
+
+export const getOrgActivityFeed = async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+  const { entityType, action, limit: limitStr } = req.query as Record<string, string | undefined>;
+
+  const activities = await getOrgActivity(orgId, {
+    entityType,
+    action,
+    limit: limitStr ? parseInt(limitStr, 10) : undefined,
+  });
+
+  res.json({ success: true, data: { activities } });
 };

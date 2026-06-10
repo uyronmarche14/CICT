@@ -12,6 +12,7 @@ import {
   updateMember,
   deleteMember,
   uploadImage,
+  getOrgActivityFeed,
 } from '../controllers/organization.controller';
 import { authenticate as protect } from '../middleware/auth';
 import { authorize, requireAdminAccess } from '../middleware/permissions';
@@ -450,6 +451,12 @@ router.delete(
   validate(memberIdValidator),
   logActivity('delete', 'organization_member'),
   deleteMember
+);
+
+router.get(
+  '/:orgId/activity',
+  requireAdminAccess,
+  getOrgActivityFeed
 );
 
 export default router;
