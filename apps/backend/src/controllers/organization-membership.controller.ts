@@ -270,8 +270,19 @@ const resignMembership = async (req: StudentAuthRequest, res: Response) => {
   res.json({ success: true, data: { membership } });
 };
 
-const getPendingMemberships = async (_req: AuthRequest, res: Response) => {
-  const memberships = await OrganizationMembership.find({ status: 'applied' })
+const getPendingMemberships = async (req: AuthRequest, res: Response) => {
+  const query: Record<string, unknown> = { status: 'applied' };
+
+  if (req.user && !req.user.canAccessAdmin) {
+    const scopedOrgIds = Object.entries(req.user.scopedAdminModulesByOrganization ?? {})
+      .filter(([, modules]) => modules.includes('organizations'))
+      .map(([orgId]) => orgId);
+    if (scopedOrgIds.length > 0) {
+      query.organizationId = { $in: scopedOrgIds };
+    }
+  }
+
+  const memberships = await OrganizationMembership.find(query)
     .populate('studentId', 'studentNumber firstName lastName profilePhoto programId yearLevelId')
     .sort({ appliedAt: -1 })
     .limit(50)

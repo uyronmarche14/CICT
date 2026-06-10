@@ -17,6 +17,9 @@ New to the project? Start with the [Developer Guide](docs/DEVELOPER_GUIDE.md). I
 | [Workflow, Architecture, and Process Audit](docs/audits/CICT_WORKFLOW_ARCHITECTURE_AND_PROCESS_AUDIT.md) | Evidence-based audit of module connections, approvals, RBAC, QR attendance, mobile flows, and architecture gaps |
 | [Module Connection and Approval Flow Map](docs/architecture/CICT_MODULE_CONNECTION_AND_APPROVAL_FLOW_MAP.md) | Mermaid-based map of system architecture, approval flows, QR attendance, dashboard, process, and disconnected flows |
 | [Workflow Gaps and Next-Steps Plan](docs/plans/CICT_WORKFLOW_GAPS_AND_NEXT_STEPS.md) | Prioritized remediation backlog for workflow, approval, QR attendance, mobile, RBAC, and architecture gaps |
+| [Organization System Connection Architecture](docs/architecture/CICT_ORGANIZATION_SYSTEM_CONNECTION_ARCHITECTURE.md) | Organization-specific connection map for memberships, tasks, meetings, events, budget, voting, storage, activity, notifications, and analytics |
+| [Organization Storage and BYOK/BYOS Decision](docs/plans/CICT_ORGANIZATION_STORAGE_BYOK_DECISION.md) | Storage architecture decision, full optional BYOK/BYOS process, and recommendation to use platform-managed storage with org quotas first |
+| [Organization System Implementation Plan](docs/plans/CICT_ORGANIZATION_SYSTEM_IMPLEMENTATION_PLAN.md) | Phased organization-system plan for dashboard, activity timeline, storage metadata, mobile membership, voting, files, calendar, notifications, and future BYOS |
 | [System Documentation](CICT_SYSTEM_DOCUMENTATION.md) | Deep current-state reference for modules, features, and gaps |
 | [CI/CD Pipeline](CICT_CICD_PIPELINE.md) | CI/CD tracker, deployment phases, and verification status |
 | [Agent Operational Reference](AGENTS.md) | Agent instructions, scripts, secrets, and branch protection notes |

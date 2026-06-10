@@ -6,3 +6,4 @@ export * from './announcement';
 export * from './organization';
 export * from './student';
 export * from './process';
+export * from './updates';

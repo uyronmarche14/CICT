@@ -21,10 +21,10 @@ import { validate } from '../middleware/validate';
 const router = express.Router();
 
 router.use(authenticate);
-router.use(requireAdminAccess);
 
 router.get(
   '/memberships/pending',
+  requireAdminAccess,
   authorizeAny(Permission.MANAGE_MEMBER_ROLES, Permission.VIEW_MEMBER),
   getPendingMemberships
 );

@@ -456,26 +456,23 @@ export default function UpdatesHubClient() {
                   <div className="space-y-3">
                     <div className="flex flex-wrap gap-1.5">
                       <Badge variant="outline" className="text-[10px] capitalize">
-                        {topPriorityAnnouncement.priority}
+                        {topPriorityAnnouncement.priorityOrType ?? topPriorityAnnouncement.kind}
                       </Badge>
                       <Badge variant="outline" className="text-[10px] capitalize">
-                        {topPriorityAnnouncement.type}
+                        {topPriorityAnnouncement.kind}
                       </Badge>
                     </div>
                     <h3 className="text-sm font-semibold leading-snug text-foreground">
                       {topPriorityAnnouncement.title}
                     </h3>
                     <p className="line-clamp-3 text-xs leading-5 text-muted-foreground">
-                      {(topPriorityAnnouncement.content ?? topPriorityAnnouncement.bodyHtml ?? '')
-                        .replace(/<[^>]+>/g, ' ')
-                        .replace(/\s+/g, ' ')
-                        .trim()}
+                      {topPriorityAnnouncement.summary}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {formatDate(topPriorityAnnouncement.publishedAt ?? topPriorityAnnouncement.createdAt)}
+                      {formatDate(topPriorityAnnouncement.sortDate)}
                     </p>
                     <Button asChild variant="ghost" size="sm" className="w-full justify-between px-0 text-xs">
-                      <Link href={`/announcements/${topPriorityAnnouncement._id}`}>
+                      <Link href={topPriorityAnnouncement.href}>
                         View announcement
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
@@ -499,20 +496,19 @@ export default function UpdatesHubClient() {
                 {upcomingEvent ? (
                   <div className="space-y-3">
                     <Badge variant="outline" className="text-[10px]">
-                      {formatDate(upcomingEvent.startDate)}
+                      {formatDate(upcomingEvent.sortDate)}
                     </Badge>
                     <h3 className="text-sm font-semibold leading-snug text-foreground">
                       {upcomingEvent.title}
                     </h3>
                     <p className="line-clamp-3 text-xs leading-5 text-muted-foreground">
-                      {upcomingEvent.excerpt || upcomingEvent.description || 'Join the next CICT activity.'}
+                      {upcomingEvent.summary}
                     </p>
                     <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                      <div>{upcomingEvent.location}</div>
-                      <div>{new Date(upcomingEvent.startDate).toLocaleString()}</div>
+                      <div>{new Date(upcomingEvent.sortDate).toLocaleString()}</div>
                     </div>
                     <Button asChild variant="ghost" size="sm" className="w-full justify-between px-0 text-xs">
-                      <Link href={`/events/${upcomingEvent._id}`}>
+                      <Link href={upcomingEvent.href}>
                         View event
                         <ArrowRight className="h-3.5 w-3.5" />
                       </Link>

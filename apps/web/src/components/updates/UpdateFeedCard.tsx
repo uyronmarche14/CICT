@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate } from '@/lib/updates-hub';
 import { cn } from '@/lib/utils';
-import { type UpdateFeedItem } from '@/lib/updates-hub';
+import type { UpdateFeedItem } from '@cict/contracts/types';
 
 interface UpdateFeedCardProps {
   item: UpdateFeedItem;
