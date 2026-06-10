@@ -1,6 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import DOMPurify from 'isomorphic-dompurify';
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -348,7 +349,7 @@ export default function AdminAnnouncementDetailPage() {
                   {announcement.officerItems.map((item: OfficerItem, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                       {item.photo?.imageUrl && (
-                        <img src={item.photo.imageUrl} alt={item.name} className="w-10 h-10 rounded-full object-cover" />
+                        <Image src={item.photo.imageUrl} alt={item.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                       )}
                       <div>
                         <p className="text-sm font-medium">{item.name}</p>
@@ -372,7 +373,7 @@ export default function AdminAnnouncementDetailPage() {
                   {announcement.outgoingOfficerItems.map((item: OfficerItem, i: number) => (
                     <div key={i} className="flex items-center gap-3">
                       {item.photo?.imageUrl && (
-                        <img src={item.photo.imageUrl} alt={item.name} className="w-10 h-10 rounded-full object-cover" />
+                        <Image src={item.photo.imageUrl} alt={item.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                       )}
                       <div>
                         <p className="text-sm font-medium">{item.name}</p>

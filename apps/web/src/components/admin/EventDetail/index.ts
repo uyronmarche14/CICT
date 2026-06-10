@@ -1,5 +1,7 @@
 export { EventOverview } from './EventOverview';
 export { EventQrDialog } from './EventQrDialog';
+export { EventDetailHeader } from './EventDetailHeader';
+export { EventInfoPanel } from './EventInfoPanel';
 export { EventDetailRegistrations } from './EventDetailRegistrations';
 export { EventDetailAttendance } from './EventDetailAttendance';
 export {

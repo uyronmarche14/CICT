@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Bell, Calendar, ExternalLink, Loader2, Paperclip, Share2, User } from 'lucide-react';
@@ -114,7 +115,7 @@ export default function AnnouncementDetailPage() {
               {announcement.officerItems!.map((officer, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 rounded-lg border bg-secondary/10">
                   {officer.photo ? (
-                    <img src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} className="w-10 h-10 rounded-full object-cover" />
+                    <Image src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                   ) : <User className="w-10 h-10 p-2 bg-muted rounded-full" />}
                   <div>
                     <p className="font-medium text-sm">{officer.position}</p>
@@ -133,7 +134,7 @@ export default function AnnouncementDetailPage() {
               {announcement.outgoingOfficerItems!.map((officer, i) => (
                 <div key={i} className="flex items-center gap-3 p-4 rounded-lg border bg-secondary/10">
                   {officer.photo ? (
-                    <img src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} className="w-10 h-10 rounded-full object-cover" />
+                    <Image src={officer.photo.imageUrl} alt={officer.photo.alt || officer.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                   ) : <User className="w-10 h-10 p-2 bg-muted rounded-full" />}
                   <div>
                     <p className="font-medium text-sm">{officer.position}</p>

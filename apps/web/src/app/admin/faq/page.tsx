@@ -3,10 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { faqAPI } from '@/lib/api/faq';
 import { FAQContent } from '@/types';
-import { FAQEditor } from '@/components/admin/FAQEditor';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { appToast } from '@/lib/app-toast';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
+import { FaqForm } from '@/components/admin/faq/FaqForm';
+import { FaqList } from '@/components/admin/faq/FaqList';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, AlertCircle } from 'lucide-react';
+import FAQSectionContent from '@/components/sections/landingpage/FAQSectionContent';
 
 const createEmptyTopic = (index: number) => ({
   id: `topic-${index + 1}`,
@@ -64,8 +68,6 @@ export default function FAQAdminPage() {
     () => initialForm !== JSON.stringify({ title: form.title, subtitle: form.subtitle, topics: form.topics, questions: form.questions }),
     [initialForm, form.title, form.subtitle, form.topics, form.questions]
   );
-
-
 
   const loadFAQ = useCallback(async () => {
     setLoading(true);
@@ -192,7 +194,7 @@ export default function FAQAdminPage() {
               question.category === current.topics[index]?.id
                 ? { ...question, category: normalizeTopicId(value) }
                 : question
-            )
+          )
           : current.questions,
     }));
   };
@@ -273,26 +275,64 @@ export default function FAQAdminPage() {
 
   if (!shouldRender) return null;
 
+  if (loading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
-    <FAQEditor
-      form={form}
-      errors={errors as Record<string, unknown>}
-      topicOptions={topicOptions}
-      isDirty={isDirty}
-      saving={saving}
-      loading={loading}
-      activeTopicFilter={activeTopicFilter}
-      onFormChange={(updates) => setForm((f) => ({ ...f, ...updates }))}
-      onSave={handleSave}
-      onAddTopic={() => setForm((f) => ({ ...f, topics: [...f.topics, createEmptyTopic(f.topics.length)] }))}
-      onUpdateTopic={updateTopic}
-      onMoveTopic={moveTopic}
-      onRemoveTopic={removeTopic}
-      onAddQuestion={addQuestion}
-      onUpdateQuestion={updateQuestion}
-      onMoveQuestion={moveQuestion}
-      onRemoveQuestion={removeQuestion}
-      onTopicFilterChange={setActiveTopicFilter}
-    />
+    <div ref={formRef} className="space-y-6">
+      <FaqForm
+        title={form.title}
+        subtitle={form.subtitle}
+        titleError={errors.title}
+        subtitleError={errors.subtitle}
+        isDirty={isDirty}
+        saving={saving}
+        onTitleChange={(title) => setForm((f) => ({ ...f, title }))}
+        onSubtitleChange={(subtitle) => setForm((f) => ({ ...f, subtitle }))}
+        onSave={handleSave}
+      />
+
+      {errors.global && (
+        <div className="border border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 shrink-0" />
+          <p className="text-sm text-red-700 dark:text-red-300">{errors.global}</p>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <FaqList
+            topics={form.topics}
+            questions={form.questions}
+            topicOptions={topicOptions}
+            activeTopicFilter={activeTopicFilter}
+            topicErrors={errors.topics}
+            questionErrors={errors.questions}
+            onAddTopic={() => setForm((f) => ({ ...f, topics: [...f.topics, createEmptyTopic(f.topics.length)] }))}
+            onUpdateTopic={updateTopic}
+            onMoveTopic={moveTopic}
+            onRemoveTopic={removeTopic}
+            onAddQuestion={addQuestion}
+            onUpdateQuestion={updateQuestion}
+            onMoveQuestion={moveQuestion}
+            onRemoveQuestion={removeQuestion}
+            onTopicFilterChange={setActiveTopicFilter}
+          />
+        </div>
+        <div className="xl:sticky xl:top-8 xl:self-start lg:col-span-1">
+          <Card className="overflow-hidden">
+            <CardHeader><CardTitle className="text-base">Live Preview</CardTitle></CardHeader>
+            <CardContent className="max-h-[70vh] overflow-y-auto p-0">
+              <FAQSectionContent data={form} previewLabel="Admin preview" />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

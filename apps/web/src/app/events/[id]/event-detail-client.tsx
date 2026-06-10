@@ -201,7 +201,7 @@ export function EventDetailsPageClient({ id }: { id: string }) {
                   {event.speakerItems?.map((speaker, i) => (
                     <div key={i} className="flex items-center gap-3 p-4 bg-secondary/20 rounded-lg">
                       {speaker.photo?.imageUrl ? (
-                        <img src={speaker.photo.imageUrl} alt={speaker.name} className="w-12 h-12 rounded-full object-cover" />
+                        <Image src={speaker.photo.imageUrl} alt={speaker.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                       ) : <User className="w-12 h-12 p-2 bg-muted rounded-full" />}
                       <div>
                         <p className="font-medium">{speaker.name}</p>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +60,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
         <div className="flex items-start gap-6 mb-8">
           {org.logo && (
             <div className="w-20 h-20 rounded-xl overflow-hidden border bg-muted shrink-0">
-              <img src={org.logo} alt={org.name} className="w-full h-full object-cover" />
+              <Image src={org.logo} alt={org.name} width={80} height={80} className="w-full h-full object-cover" />
             </div>
           )}
           <div className="flex-1">
@@ -248,7 +249,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
                 {org.adviserItems.map((a, i) => (
                   <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
                     {a.photo && (
-                      <img src={a.photo} alt={a.name} className="w-10 h-10 rounded-full object-cover" />
+                      <Image src={a.photo} alt={a.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                     )}
                     <div>
                       <p className="font-medium text-sm">{a.name}</p>
@@ -325,7 +326,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
                 <CardContent className="space-y-3">
                   {org.partnerItems.map((p, i) => (
                     <div key={i} className="flex items-center gap-3 p-3 rounded-lg border">
-                      {p.logo && <img src={p.logo} alt={p.name} className="w-10 h-10 rounded object-contain" />}
+                      {p.logo && <Image src={p.logo} alt={p.name} width={40} height={40} className="w-10 h-10 rounded object-contain" />}
                       <div>
                         <p className="font-medium text-sm">{p.name}</p>
                         {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
@@ -420,7 +421,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
                 <div key={member.id} className="p-4 rounded-lg border">
                   <div className="flex items-center gap-3 mb-2">
                     {member.photo ? (
-                      <img src={member.photo} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
+                      <Image src={member.photo} alt={member.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                         <span className="text-lg font-bold text-primary">{member.name.charAt(0)}</span>
@@ -459,7 +460,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
               {advisers.map((member) => (
                 <div key={member.id} className="flex items-center gap-3 p-4 rounded-lg border">
                   {member.photo ? (
-                    <img src={member.photo} alt={member.name} className="w-12 h-12 rounded-full object-cover" />
+                    <Image src={member.photo} alt={member.name} width={48} height={48} className="w-12 h-12 rounded-full object-cover" />
                   ) : (
                     <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                       <span className="text-lg font-bold text-primary">{member.name.charAt(0)}</span>
@@ -486,7 +487,7 @@ export function PublicOrganizationPageClient({ id }: { id: string }) {
               {general.map((member) => (
                 <div key={member.id} className="flex items-center gap-3 p-4 rounded-lg border">
                   {member.photo ? (
-                    <img src={member.photo} alt={member.name} className="w-10 h-10 rounded-full object-cover" />
+                    <Image src={member.photo} alt={member.name} width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
                   ) : (
                     <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
                       <span className="text-sm font-medium text-muted-foreground">{member.name.charAt(0)}</span>

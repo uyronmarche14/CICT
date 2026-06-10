@@ -10,11 +10,12 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { Button } from '@/components/ui/button';
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
+  Tabs, TabsContent, TabsList, TabsTrigger,
 } from '@/components/ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { StudentFilters } from '@/components/admin/students/StudentFilters';
+import { StudentTable } from '@/components/admin/students/StudentTable';
+import { StudentFormModal } from '@/components/admin/students/StudentFormModal';
 
 const emptyStudentForm: StudentMutationPayload = {
   studentNumber: '',
@@ -48,9 +49,6 @@ const emptyStudentForm: StudentMutationPayload = {
     sms: false,
   },
 };
-
-import { StudentForm } from '@/components/admin/StudentForm';
-import { StudentDirectory } from '@/components/admin/StudentDirectory';
 
 export default function StudentsPage() {
   const { canAccessStudentsModule } = usePermissions();
@@ -121,7 +119,6 @@ export default function StudentsPage() {
   useEffect(() => {
     void loadStudents();
   }, [loadStudents]);
-
 
   const resetForm = () => {
     setEditingStudent(null);
@@ -216,7 +213,7 @@ export default function StudentsPage() {
         </TabsList>
 
         <TabsContent value="form" className="mt-6">
-          <StudentForm
+          <StudentFormModal
             form={form}
             editingStudent={editingStudent}
             programs={programs}
@@ -231,25 +228,34 @@ export default function StudentsPage() {
         </TabsContent>
 
         <TabsContent value="directory" className="mt-6">
-          <StudentDirectory
-            students={students}
-            programs={programs}
-            yearLevels={yearLevels}
-            sections={sections}
-            loading={loading}
-            search={search}
-            programFilter={programFilter}
-            yearFilter={yearFilter}
-            sectionFilter={sectionFilter}
-            statusFilter={statusFilter}
-            onSearchChange={setSearch}
-            onProgramFilterChange={setProgramFilter}
-            onYearFilterChange={setYearFilter}
-            onSectionFilterChange={setSectionFilter}
-            onStatusFilterChange={setStatusFilter}
-            onEdit={handleEdit}
-            onStatusToggle={(s) => void handleStatusToggle(s)}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle>Student Directory</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StudentFilters
+                search={search}
+                programFilter={programFilter}
+                yearFilter={yearFilter}
+                sectionFilter={sectionFilter}
+                statusFilter={statusFilter}
+                programs={programs}
+                yearLevels={yearLevels}
+                sections={sections}
+                onSearchChange={setSearch}
+                onProgramFilterChange={setProgramFilter}
+                onYearFilterChange={setYearFilter}
+                onSectionFilterChange={setSectionFilter}
+                onStatusFilterChange={setStatusFilter}
+              />
+              <StudentTable
+                students={students}
+                loading={loading}
+                onEdit={handleEdit}
+                onStatusToggle={(s) => void handleStatusToggle(s)}
+              />
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
