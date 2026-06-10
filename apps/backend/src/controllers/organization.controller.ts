@@ -18,6 +18,7 @@ import {
 
 import { getOrgActivity } from '../services/activity.service';
 import { getOrgFiles as getStorageFiles, getOrgQuota } from '../services/storage.service';
+import { getOrgCalendar as getCalendarService } from '../services/org-calendar.service';
 
 export const getPublicMember = async (req: Request, res: Response) => {
   const memberId = req.params.memberId as string;
@@ -118,4 +119,12 @@ export const getOrgStorageQuota = async (req: AuthRequest, res: Response) => {
 
   const data = await getOrgQuota(orgId);
   res.json({ success: true, data });
+};
+
+export const getOrgCalendar = async (req: AuthRequest, res: Response) => {
+  const { orgId } = req.params;
+  const { startDate, endDate } = req.query as Record<string, string | undefined>;
+
+  const items = await getCalendarService(orgId, startDate, endDate);
+  res.json({ success: true, data: { items } });
 };

@@ -825,3 +825,12 @@ export interface IOrganizationStorageQuota extends Document {
   allowedMimeTypes: string[];
   blockedMimeTypes: string[];
 }
+
+export interface IOrganizationCommittee extends Document {
+  organizationId: string;
+  name: string;
+  description?: string;
+  headMembershipId?: string;
+  memberIds: string[];
+  status: 'active' | 'inactive';
+}

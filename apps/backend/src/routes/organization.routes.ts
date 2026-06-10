@@ -15,6 +15,7 @@ import {
   getOrgActivityFeed,
   getOrgFiles,
   getOrgStorageQuota,
+  getOrgCalendar,
 } from '../controllers/organization.controller';
 import { authenticate as protect } from '../middleware/auth';
 import { authorize, requireAdminAccess } from '../middleware/permissions';
@@ -471,6 +472,12 @@ router.get(
   '/:orgId/files/quota',
   requireAdminAccess,
   getOrgStorageQuota
+);
+
+router.get(
+  '/:orgId/calendar',
+  requireAdminAccess,
+  getOrgCalendar
 );
 
 export default router;
