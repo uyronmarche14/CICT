@@ -11,6 +11,7 @@ import { validate } from '../middleware/validate';
 import { eventIdValidator } from '../validators/event.validator';
 import { getMyMemberships, getMyMembershipStatus, applyToOrganization, resignMembership } from '../controllers/organization-membership.controller';
 import { applyToOrgValidator, membershipIdValidator } from '../validators/organization-membership.validator';
+import { castBallotValidator, voteIdValidator } from '../validators/org-vote.validator';
 
 const router = Router();
 
@@ -37,9 +38,9 @@ router.get('/organizations/:orgId/membership-status', getMyMembershipStatus);
 router.post('/organizations/:orgId/apply', validate(applyToOrgValidator), applyToOrganization);
 router.post('/memberships/:id/resign', validate(membershipIdValidator), resignMembership);
 router.get('/organizations/:orgId/votes', voteController.studentListVotes);
-router.get('/organizations/:orgId/votes/:voteId', voteController.studentGetVote);
-router.post('/organizations/:orgId/votes/:voteId/cast', voteController.studentCastBallot);
-router.get('/organizations/:orgId/votes/:voteId/results', voteController.studentGetResults);
+router.get('/organizations/:orgId/votes/:voteId', validate(voteIdValidator), voteController.studentGetVote);
+router.post('/organizations/:orgId/votes/:voteId/cast', validate(castBallotValidator), voteController.studentCastBallot);
+router.get('/organizations/:orgId/votes/:voteId/results', validate(voteIdValidator), voteController.studentGetResults);
 router.get('/notifications', getStudentNotifications);
 router.patch('/notifications/:id/read', markNotificationRead);
 

@@ -1,21 +1,24 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useLocalSearchParams } from 'expo-router';
-import { Image, ImageBackground, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Image, ImageBackground, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LoadingState } from '@/components/feedback/LoadingState';
+import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppScreen } from '@/components/ui/AppScreen';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { useApplyToOrg, useMyMemberships, useResignFromOrg } from '@/features/memberships/useMemberships';
 import { useOrganization } from '@/features/orgs/useOrganizations';
+import { useOrgVotes } from '@/features/votes/useVotes';
 import { useTheme } from '@/theme/ThemeContext';
 import { fontSizes, radii, spacing } from '@/theme/tokens';
 import type { OrganizationMember } from '@/types/models';
+import { getErrorMessage } from '@/utils/error';
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
-import { Pressable } from 'react-native';
 
 function ValueChip({ label, color }: { label: string; color: string }) {
-  const { colors } = useTheme();
   return (
     <View style={[styles.chip, { backgroundColor: color + '18', borderColor: color + '40' }]}>
       <Text style={[styles.chipText, { color }]}>{label}</Text>
@@ -59,8 +62,14 @@ function MemberCard({ member, accentColor }: { member: OrganizationMember; accen
 
 export default function OrgDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { colors, isDark } = useTheme();
+  const router = useRouter();
+  const { colors } = useTheme();
   const orgQuery = useOrganization(id ?? '');
+  const membershipsQuery = useMyMemberships();
+  const votesQuery = useOrgVotes(id ?? '');
+  const applyMutation = useApplyToOrg();
+  const resignMutation = useResignFromOrg();
+  const [membershipMessage, setMembershipMessage] = useState<string | null>(null);
 
   if (orgQuery.isPending) {
     return (
@@ -83,6 +92,49 @@ export default function OrgDetailScreen() {
 
   const org = orgQuery.data;
   const accent = org.color?.primary || colors.primary;
+  const membership = (membershipsQuery.data ?? []).find(
+    (item) => item.organizationId === org.id
+  );
+  const membershipStatus = membership?.status ?? 'none';
+  const membershipTone =
+    membershipStatus === 'active'
+      ? 'success'
+      : membershipStatus === 'applied' || membershipStatus === 'invited'
+        ? 'warning'
+        : membershipStatus === 'rejected'
+          ? 'danger'
+          : membershipStatus === 'resigned'
+            ? 'neutral'
+            : 'info';
+
+  const handleApply = async () => {
+    setMembershipMessage(null);
+    try {
+      await applyMutation.mutateAsync(org.id);
+      setMembershipMessage('Your application has been submitted.');
+    } catch (error) {
+      setMembershipMessage(getErrorMessage(error, 'Could not submit your application.'));
+    }
+  };
+
+  const handleResign = async () => {
+    if (!membership?._id) {
+      return;
+    }
+
+    setMembershipMessage(null);
+    try {
+      await resignMutation.mutateAsync({ membershipId: membership._id, orgId: org.id });
+      setMembershipMessage('You have left this organization.');
+    } catch (error) {
+      setMembershipMessage(getErrorMessage(error, 'Could not leave this organization.'));
+    }
+  };
+  const now = Date.now();
+  const visibleVotes = (votesQuery.data ?? [])
+    .filter((vote) => vote.isActive)
+    .sort((a, b) => new Date(a.endDate).getTime() - new Date(b.endDate).getTime())
+    .slice(0, 3);
 
   return (
     <AppScreen scroll={false}>
@@ -157,6 +209,61 @@ export default function OrgDetailScreen() {
           </View>
         </View>
 
+        <View style={styles.section}>
+          <AppCard variant="elevated" style={styles.membershipCard}>
+            <View style={styles.membershipHeader}>
+              <View style={styles.membershipTitleRow}>
+                <Ionicons name="person-add-outline" size={18} color={accent} />
+                <Text style={[styles.membershipTitle, { color: colors.text }]}>
+                  Membership
+                </Text>
+              </View>
+              <StatusPill
+                label={membershipStatus === 'none' ? 'Not joined' : membershipStatus}
+                tone={membershipTone}
+              />
+            </View>
+            <Text style={[styles.membershipBody, { color: colors.textMuted }]}>
+              {membershipStatus === 'active'
+                ? `You are an active ${membership?.memberType ?? 'member'} of ${org.name}.`
+                : membershipStatus === 'applied'
+                  ? 'Your application is waiting for organization review.'
+                  : membershipStatus === 'invited'
+                    ? 'You have been invited to join this organization.'
+                    : membershipStatus === 'rejected'
+                      ? 'Your previous application was rejected. You may apply again if applications are open.'
+                      : membershipStatus === 'resigned'
+                        ? 'You previously left this organization. You may apply again if applications are open.'
+                        : 'Apply to join this organization and wait for an officer or admin to review your application.'}
+            </Text>
+            {membershipMessage ? (
+              <Text style={[styles.membershipMessage, { color: colors.textMuted }]}>
+                {membershipMessage}
+              </Text>
+            ) : null}
+            {membershipStatus === 'active' ? (
+              <AppButton
+                variant="danger"
+                loading={resignMutation.isPending}
+                onPress={() => void handleResign()}
+              >
+                Leave Organization
+              </AppButton>
+            ) : membershipStatus === 'applied' || membershipStatus === 'invited' ? (
+              <AppButton variant="secondary" disabled>
+                Review Pending
+              </AppButton>
+            ) : (
+              <AppButton
+                loading={applyMutation.isPending}
+                onPress={() => void handleApply()}
+              >
+                Apply to Join
+              </AppButton>
+            )}
+          </AppCard>
+        </View>
+
         {org.longDescription ? (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>About</Text>
@@ -211,6 +318,56 @@ export default function OrgDetailScreen() {
                 <Text style={[styles.achievementText, { color: colors.text }]}>{achievement}</Text>
               </View>
             ))}
+          </View>
+        ) : null}
+
+        {visibleVotes.length > 0 ? (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Voting</Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.textMuted }]}>
+              Active elections and polls for {org.name}
+            </Text>
+            {visibleVotes.map((vote) => {
+              const startsAt = new Date(vote.startDate).getTime();
+              const endsAt = new Date(vote.endDate).getTime();
+              const hasStarted = now >= startsAt;
+              const hasEnded = now > endsAt;
+              const tone = hasEnded ? 'neutral' : hasStarted ? 'success' : 'warning';
+              const statusLabel = hasEnded ? 'Ended' : hasStarted ? 'Open' : 'Upcoming';
+
+              return (
+                <AppCard key={vote._id} variant="elevated" style={styles.voteCard}>
+                  <View style={styles.voteHeader}>
+                    <View style={styles.voteTitleGroup}>
+                      <Ionicons name="checkbox-outline" size={18} color={accent} />
+                      <Text style={[styles.voteTitle, { color: colors.text }]} numberOfLines={2}>
+                        {vote.title}
+                      </Text>
+                    </View>
+                    <StatusPill label={statusLabel} tone={tone} />
+                  </View>
+                  {vote.description ? (
+                    <Text style={[styles.bodyText, { color: colors.textMuted }]} numberOfLines={3}>
+                      {vote.description}
+                    </Text>
+                  ) : null}
+                  <View style={styles.voteMetaRow}>
+                    <Text style={[styles.voteMeta, { color: colors.textMuted }]}>
+                      {vote.positions.length} position{vote.positions.length === 1 ? '' : 's'}
+                    </Text>
+                    <Text style={[styles.voteMeta, { color: colors.textMuted }]}>
+                      Ends {new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' }).format(new Date(vote.endDate))}
+                    </Text>
+                  </View>
+                  <AppButton
+                    variant={hasStarted && !hasEnded ? 'primary' : 'secondary'}
+                    onPress={() => router.push(`/(tabs)/orgs/${org.id}/votes/${vote._id}`)}
+                  >
+                    {hasStarted && !hasEnded ? 'Open Ballot' : 'View Details'}
+                  </AppButton>
+                </AppCard>
+              );
+            })}
           </View>
         ) : null}
 
@@ -361,6 +518,32 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     fontWeight: '700',
   },
+  membershipCard: {
+    gap: spacing.md,
+  },
+  membershipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  membershipTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  membershipTitle: {
+    fontSize: fontSizes.md,
+    fontWeight: '900',
+  },
+  membershipBody: {
+    fontSize: fontSizes.sm,
+    lineHeight: 21,
+  },
+  membershipMessage: {
+    fontSize: fontSizes.xs,
+    lineHeight: 18,
+  },
   dualSection: {
     flexDirection: 'row',
     paddingHorizontal: spacing.lg,
@@ -447,5 +630,34 @@ const styles = StyleSheet.create({
   memberBio: {
     fontSize: fontSizes.xs,
     lineHeight: 16,
+  },
+  voteCard: {
+    gap: spacing.md,
+  },
+  voteHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.md,
+  },
+  voteTitleGroup: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  voteTitle: {
+    flex: 1,
+    fontSize: fontSizes.md,
+    fontWeight: '900',
+  },
+  voteMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+  },
+  voteMeta: {
+    fontSize: fontSizes.xs,
+    fontWeight: '700',
   },
 });

@@ -1,5 +1,8 @@
 import { AppError } from '../middleware/errorHandler';
 import { type IAuthenticatedUser, type Permission, ContentOwnerType, type IApprovalSummary } from '../types';
+import ProcessTemplate from '../models/ProcessTemplate';
+import ProcessInstance from '../models/ProcessInstance';
+import { createInstanceFromTemplate, advanceInstance } from './process-engine.service';
 import {
   buildApprovedApprovalSummary,
   buildRejectedApprovalSummary,
@@ -12,6 +15,60 @@ import {
   type WorkflowStatus,
 } from '../utils/contentApproval';
 import { ensureCanManageOwnedContent } from '../utils/organizationScope';
+import logger from '../utils/logger';
+
+async function maybeCreateLinkedProcessInstance(
+  item: ContentDocument,
+  contentType: string,
+  userId: string
+): Promise<string | null> {
+  const orgId = item.organizationId;
+  if (!orgId) {return null;}
+
+  try {
+    const template = await ProcessTemplate.findOne({
+      organizationScope: orgId,
+      isActive: true,
+    });
+
+    if (!template) {return null;}
+
+    const contentId = item._id.toString();
+    const instance = await createInstanceFromTemplate(template._id.toString(), {
+      title: `${contentType} approval: ${contentId.slice(-8)}`,
+      linkedContentType: contentType as any,
+      linkedContentId: contentId,
+      organizationId: orgId,
+      createdBy: userId,
+    });
+
+    logger.info(`[ProcessIntegration] Created process instance ${instance._id} for ${contentType} ${contentId}`);
+    return String(instance._id);
+  } catch (error) {
+    logger.error('[ProcessIntegration] Failed to create linked process instance:', error);
+    return null;
+  }
+}
+
+async function maybeAdvanceLinkedProcess(
+  item: ContentDocument
+): Promise<void> {
+  try {
+    const instance = await ProcessInstance.findOne({
+      linkedContentId: item._id.toString(),
+      status: 'active',
+    });
+
+    if (!instance) {return;}
+
+    const nodeIds = instance.currentNodeIds;
+    if (nodeIds.length === 0) {return;}
+
+    await advanceInstance(instance._id.toString(), [nodeIds[0]]);
+  } catch (error) {
+    logger.error('[ProcessIntegration] Failed to advance linked process instance:', error);
+  }
+}
 
 const buildPublishedApprovalSummary = (userId: string, existing?: IApprovalSummary): IApprovalSummary => ({
   ...(existing ? {
@@ -94,6 +151,8 @@ export async function submitForApproval(
     comment,
   });
 
+  await maybeCreateLinkedProcessInstance(item, contentType, user!.userId);
+
   return item;
 }
 
@@ -136,6 +195,8 @@ export async function approve(
     toStatus: item.status as WorkflowStatus,
     comment,
   });
+
+  await maybeAdvanceLinkedProcess(item);
 
   return item;
 }
@@ -186,6 +247,8 @@ export async function reject(
     comment,
   });
 
+  await maybeAdvanceLinkedProcess(item);
+
   return item;
 }
 
@@ -233,6 +296,8 @@ export async function publish(
     fromStatus: fromStatus as WorkflowStatus,
     toStatus: item.status as WorkflowStatus,
   });
+
+  await maybeAdvanceLinkedProcess(item);
 
   return item;
 }

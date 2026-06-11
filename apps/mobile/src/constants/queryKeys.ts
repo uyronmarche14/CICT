@@ -11,4 +11,12 @@ export const queryKeys = {
   newsDetail: (id: string) => ['news', id] as const,
   announcements: ['announcements'] as const,
   announcementDetail: (id: string) => ['announcements', id] as const,
+  memberships: ['student', 'memberships'] as const,
+  membershipStatus: (orgId: string) => ['student', 'membership-status', orgId] as const,
+  organizations: ['organizations'] as const,
+  organizationDetail: (id: string) => ['organizations', id] as const,
+  orgVotes: (orgId: string) => ['student', 'org-votes', orgId] as const,
+  orgVote: (orgId: string, voteId: string) => ['student', 'org-votes', orgId, voteId] as const,
+  orgVoteResults: (orgId: string, voteId: string) =>
+    ['student', 'org-votes', orgId, voteId, 'results'] as const,
 };
