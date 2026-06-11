@@ -3,6 +3,7 @@ import OrgTask from '../models/OrgTask';
 import OrgMeeting from '../models/OrgMeeting';
 import OrgBudget from '../models/OrgBudget';
 import OrgTransaction from '../models/OrgTransaction';
+import OrgVote from '../models/OrgVote';
 import OrganizationMembership from '../models/OrganizationMembership';
 import Event from '../models/Event';
 import EventRegistration from '../models/EventRegistration';
@@ -14,6 +15,8 @@ import CollaborationSpace from '../models/CollaborationSpace';
 import CollaborationMessage from '../models/CollaborationMessage';
 import OrgMentorship from '../models/OrgMentorship';
 import CrossOrgContentShare from '../models/CrossOrgContentShare';
+import OrganizationActivity from '../models/OrganizationActivity';
+import OrganizationStorageQuota from '../models/OrganizationStorageQuota';
 import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
@@ -21,6 +24,30 @@ import { Permission } from '../types';
 import { TypedCache } from '../utils/cache';
 
 const analyticsCache = new TypedCache<unknown>({ namespace: 'org:analytics', ttlMs: 60_000 });
+
+type DashboardTransaction = {
+  type?: string;
+  amount?: number;
+};
+
+type DashboardActionDoc = {
+  _id: unknown;
+  title?: string;
+  description?: string;
+  priority?: string;
+  dueDate?: Date;
+  dateNeeded?: Date;
+  appliedAt?: Date;
+  createdAt?: Date;
+};
+
+type DashboardCalendarDoc = {
+  _id: unknown;
+  title: string;
+  date?: Date;
+  startDate?: Date;
+  endDate?: Date;
+};
 
 const checkAccess = async (req: AuthRequest, orgId: string) => {
   if (!req.user) {
@@ -34,6 +61,196 @@ const checkAccess = async (req: AuthRequest, orgId: string) => {
     throw new AppError('Organization not found', 404);
   }
   return org._id;
+};
+
+export const getDashboard = async (req: AuthRequest, orgId: string) => {
+  const oid = await checkAccess(req, orgId);
+  const organizationObjectId = String(oid);
+  const cacheKey = `dashboard:${orgId}`;
+  const cached = await analyticsCache.get(cacheKey);
+  if (cached) {
+    return cached;
+  }
+
+  const now = new Date();
+
+  const [
+    activeMembers,
+    pendingApplications,
+    tasksOpen,
+    tasksOverdue,
+    upcomingMeetings,
+    upcomingEvents,
+    activeVotes,
+    pendingResourceRequests,
+    recentActivity,
+    quota,
+    budget,
+    transactions,
+    pendingMemberships,
+    overdueTasks,
+    upcomingMeetingDocs,
+    upcomingEventDocs,
+    activeVoteDocs,
+    pendingResourceDocs,
+  ] = await Promise.all([
+    OrganizationMembership.countDocuments({ organizationId: orgId, status: 'active' }),
+    OrganizationMembership.countDocuments({ organizationId: orgId, status: 'applied' }),
+    OrgTask.countDocuments({ organizationId: organizationObjectId, status: { $ne: 'done' } }),
+    OrgTask.countDocuments({
+      organizationId: organizationObjectId,
+      status: { $ne: 'done' },
+      dueDate: { $lt: now },
+    }),
+    OrgMeeting.countDocuments({ organizationId: organizationObjectId, date: { $gte: now } }),
+    Event.countDocuments({ organizationId: orgId, status: 'published', startDate: { $gte: now } }),
+    OrgVote.countDocuments({
+      organizationId: organizationObjectId,
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    }),
+    ResourceRequest.countDocuments({ organizationId: organizationObjectId, status: 'pending' }),
+    OrganizationActivity.find({ organizationId: orgId })
+      .sort({ createdAt: -1 })
+      .limit(8)
+      .lean(),
+    OrganizationStorageQuota.findOne({ organizationId: orgId }).lean(),
+    OrgBudget.findOne({ organizationId: organizationObjectId }).sort({ fiscalYear: -1 }).lean(),
+    OrgTransaction.find({ organizationId: organizationObjectId }).lean(),
+    OrganizationMembership.find({ organizationId: orgId, status: 'applied' })
+      .sort({ appliedAt: -1, createdAt: -1 })
+      .limit(3)
+      .populate('studentId', 'firstName lastName studentNumber')
+      .lean(),
+    OrgTask.find({
+      organizationId: organizationObjectId,
+      status: { $ne: 'done' },
+      dueDate: { $lt: now },
+    })
+      .sort({ dueDate: 1 })
+      .limit(3)
+      .select('title dueDate priority status')
+      .lean(),
+    OrgMeeting.find({ organizationId: organizationObjectId, date: { $gte: now } })
+      .sort({ date: 1 })
+      .limit(3)
+      .select('title date')
+      .lean(),
+    Event.find({ organizationId: orgId, status: 'published', startDate: { $gte: now } })
+      .sort({ startDate: 1 })
+      .limit(3)
+      .select('title startDate')
+      .lean(),
+    OrgVote.find({
+      organizationId: organizationObjectId,
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    })
+      .sort({ endDate: 1 })
+      .limit(3)
+      .select('title endDate')
+      .lean(),
+    ResourceRequest.find({ organizationId: organizationObjectId, status: 'pending' })
+      .sort({ dateNeeded: 1, createdAt: -1 })
+      .limit(3)
+      .select('description dateNeeded resourceType status')
+      .lean(),
+  ]);
+
+  const totalExpenses = (transactions as DashboardTransaction[])
+    .filter((transaction) => transaction.type === 'expense')
+    .reduce((sum, transaction) => sum + (transaction.amount ?? 0), 0);
+  const budgetUtilization =
+    budget && budget.totalBudget > 0 ? totalExpenses / budget.totalBudget : 0;
+  const storageUtilization =
+    quota && quota.storageLimitMb > 0
+      ? quota.usedStorageBytes / (quota.storageLimitMb * 1024 * 1024)
+      : 0;
+
+  const result = {
+    summary: {
+      activeMembers,
+      pendingApplications,
+      tasksOpen,
+      tasksOverdue,
+      upcomingMeetings,
+      upcomingEvents,
+      activeVotes,
+      pendingResourceRequests,
+      budgetUtilization,
+      storageUtilization,
+    },
+    pendingActions: [
+      ...(pendingMemberships as DashboardActionDoc[]).map((membership) => ({
+        type: 'membership',
+        id: String(membership._id),
+        label: 'Review membership application',
+        priority: 'normal',
+        dueAt: membership.appliedAt ?? membership.createdAt,
+      })),
+      ...(overdueTasks as DashboardActionDoc[]).map((task) => ({
+        type: 'task',
+        id: String(task._id),
+        label: task.title,
+        priority: task.priority === 'urgent' ? 'high' : task.priority,
+        dueAt: task.dueDate,
+      })),
+      ...(pendingResourceDocs as DashboardActionDoc[]).map((request) => ({
+        type: 'resource_request',
+        id: String(request._id),
+        label: request.description,
+        priority: 'normal',
+        dueAt: request.dateNeeded,
+      })),
+    ].slice(0, 8),
+    calendar: [
+      ...(upcomingMeetingDocs as DashboardCalendarDoc[]).map((meeting) => ({
+        type: 'meeting',
+        id: String(meeting._id),
+        title: meeting.title,
+        date: meeting.date,
+      })),
+      ...(upcomingEventDocs as DashboardCalendarDoc[]).map((event) => ({
+        type: 'event',
+        id: String(event._id),
+        title: event.title,
+        date: event.startDate,
+      })),
+      ...(activeVoteDocs as DashboardCalendarDoc[]).map((vote) => ({
+        type: 'vote',
+        id: String(vote._id),
+        title: vote.title,
+        date: vote.endDate,
+      })),
+    ]
+      .sort((a, b) => {
+        const aTime = a.date ? new Date(a.date).getTime() : Number.MAX_SAFE_INTEGER;
+        const bTime = b.date ? new Date(b.date).getTime() : Number.MAX_SAFE_INTEGER;
+        return aTime - bTime;
+      })
+      .slice(0, 8),
+    recentActivity,
+    alerts: [
+      ...(tasksOverdue > 0
+        ? [{ type: 'tasks', label: `${tasksOverdue} overdue task${tasksOverdue === 1 ? '' : 's'}`, severity: 'warning' }]
+        : []),
+      ...(budgetUtilization >= 0.9
+        ? [{ type: 'budget', label: 'Budget is nearly exhausted', severity: 'critical' }]
+        : budgetUtilization >= 0.75
+          ? [{ type: 'budget', label: 'Budget usage is high', severity: 'warning' }]
+          : []),
+      ...(storageUtilization >= 0.9
+        ? [{ type: 'storage', label: 'Storage quota is nearly full', severity: 'critical' }]
+        : storageUtilization >= 0.75
+          ? [{ type: 'storage', label: 'Storage usage is high', severity: 'warning' }]
+          : []),
+    ],
+  };
+
+  await analyticsCache.set(cacheKey, result);
+  return result;
 };
 
 export const getOverview = async (req: AuthRequest, orgId: string) => {

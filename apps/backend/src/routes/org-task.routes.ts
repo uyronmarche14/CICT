@@ -9,7 +9,7 @@ import {
   toggleChecklistItem,
 } from '../controllers/org-task.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { authorizeOrganizationScope, requireAdminAccess } from '../middleware/permissions';
 import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
@@ -23,14 +23,16 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_TASKS));
+router.use(protect, requireAdminAccess);
 
-router.get('/:orgId/tasks', listTasks);
-router.post('/:orgId/tasks', validate(createTaskValidator), logActivity('create', 'org_task'), createTask);
-router.get('/:orgId/tasks/:taskId', validate(taskIdValidator), getTask);
-router.put('/:orgId/tasks/:taskId', validate(updateTaskValidator), logActivity('update', 'org_task'), updateTask);
-router.delete('/:orgId/tasks/:taskId', validate(taskIdValidator), logActivity('delete', 'org_task'), deleteTask);
-router.patch('/:orgId/tasks/:taskId/status', validate(updateTaskStatusValidator), logActivity('update', 'org_task_status'), updateTaskStatus);
-router.patch('/:orgId/tasks/:taskId/checklist', validate(toggleChecklistValidator), logActivity('update', 'org_task_checklist'), toggleChecklistItem);
+const canManageTasks = authorizeOrganizationScope(Permission.MANAGE_ORG_TASKS);
+
+router.get('/:orgId/tasks', canManageTasks, listTasks);
+router.post('/:orgId/tasks', canManageTasks, validate(createTaskValidator), logActivity('create', 'org_task'), createTask);
+router.get('/:orgId/tasks/:taskId', canManageTasks, validate(taskIdValidator), getTask);
+router.put('/:orgId/tasks/:taskId', canManageTasks, validate(updateTaskValidator), logActivity('update', 'org_task'), updateTask);
+router.delete('/:orgId/tasks/:taskId', canManageTasks, validate(taskIdValidator), logActivity('delete', 'org_task'), deleteTask);
+router.patch('/:orgId/tasks/:taskId/status', canManageTasks, validate(updateTaskStatusValidator), logActivity('update', 'org_task_status'), updateTaskStatus);
+router.patch('/:orgId/tasks/:taskId/checklist', canManageTasks, validate(toggleChecklistValidator), logActivity('update', 'org_task_checklist'), toggleChecklistItem);
 
 export default router;

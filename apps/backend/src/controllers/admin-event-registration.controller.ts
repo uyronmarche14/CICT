@@ -153,7 +153,7 @@ export const adminUpdateRegistrationStatus = async (
   res: Response
 ): Promise<void> => {
   const { id: eventId, regId } = req.params;
-  const { status } = req.body as { status?: string };
+  const { status, reason } = req.body as { status?: string; reason?: string };
 
   if (!status || !Object.values(EventRegistrationStatus).includes(status as EventRegistrationStatus)) {
     throw new AppError('Valid status is required', 400);
@@ -218,12 +218,14 @@ export const adminUpdateRegistrationStatus = async (
 
   if (nextStatus === EventRegistrationStatus.CANCELLED && !registration.cancelledAt) {
     registration.cancelledAt = new Date();
+    if (reason) {registration.cancelledReason = reason;}
     await releaseCapacity(eventId);
   }
 
   if (nextStatus === EventRegistrationStatus.REGISTERED && prevStatus === EventRegistrationStatus.CANCELLED) {
     await Event.findByIdAndUpdate(eventId, { $inc: { registeredCount: 1 } });
     registration.cancelledAt = undefined;
+    registration.cancelledReason = undefined;
   }
 
   if (nextStatus === EventRegistrationStatus.CHECKED_IN && prevStatus === EventRegistrationStatus.CANCELLED) {
@@ -231,6 +233,7 @@ export const adminUpdateRegistrationStatus = async (
     registration.checkedInAt = new Date();
     registration.scanCount += 1;
     registration.cancelledAt = undefined;
+    registration.cancelledReason = undefined;
   } else if (nextStatus === EventRegistrationStatus.CHECKED_IN && !registration.checkedInAt) {
     registration.checkedInAt = new Date();
     registration.scanCount += 1;
@@ -342,6 +345,7 @@ export const adminUndoCheckIn = async (
   res: Response
 ): Promise<void> => {
   const { id: eventId, regId } = req.params;
+  const { reason } = req.body as { reason?: string };
 
   const event = await Event.findById(eventId);
   if (!event) {
@@ -371,6 +375,7 @@ export const adminUndoCheckIn = async (
   registration.status = EventRegistrationStatus.REGISTERED;
   registration.checkedInAt = undefined;
   registration.scanCount = Math.max(0, (registration.scanCount || 1) - 1);
+  if (reason) {registration.cancelledReason = reason;}
   await registration.save();
 
   await Event.findOneAndUpdate(

@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -59,18 +60,20 @@ export function EventDetailRegistrations({
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['admin', 'event', eventId] });
 
   const cancelMutation = useMutation({
-    mutationFn: (params: { regId: string }) => adminEventAPI.cancelRegistration(eventId, params.regId),
+    mutationFn: (params: { regId: string; reason?: string }) =>
+      adminEventAPI.cancelRegistration(eventId, params.regId, params.reason),
     onSuccess: invalidate,
   });
 
   const undoCheckInMutation = useMutation({
-    mutationFn: (params: { regId: string }) => adminEventAPI.undoCheckIn(eventId, params.regId),
+    mutationFn: (params: { regId: string; reason?: string }) =>
+      adminEventAPI.undoCheckIn(eventId, params.regId, params.reason),
     onSuccess: invalidate,
   });
 
   const updateStatusMutation = useMutation({
-    mutationFn: (params: { regId: string; status: string }) =>
-      adminEventAPI.updateRegistrationStatus(eventId, params.regId, { status: params.status }),
+    mutationFn: (params: { regId: string; status: string; reason?: string }) =>
+      adminEventAPI.updateRegistrationStatus(eventId, params.regId, { status: params.status, reason: params.reason }),
     onSuccess: invalidate,
   });
 
@@ -78,6 +81,27 @@ export function EventDetailRegistrations({
     mutationFn: () => adminEventAPI.adminCreateRegistration(eventId, { studentNumber: addRegStudentNo.trim() }),
     onSuccess: () => { invalidate(); setAddRegOpen(false); setAddRegStudentNo(''); },
   });
+
+  const [reasonDialog, setReasonDialog] = useState<{
+    open: boolean;
+    action: 'cancel' | 'undo' | 'status';
+    regId: string;
+    status?: string;
+  }>({ open: false, action: 'cancel', regId: '' });
+  const [reasonText, setReasonText] = useState('');
+
+  const handleActionWithReason = (action: 'cancel' | 'undo' | 'status', regId: string, status?: string) => {
+    setReasonDialog({ open: true, action, regId, status });
+    setReasonText('');
+  };
+
+  const confirmReasonAction = () => {
+    const { action, regId, status } = reasonDialog;
+    if (action === 'cancel') cancelMutation.mutate({ regId, reason: reasonText || undefined });
+    else if (action === 'undo') undoCheckInMutation.mutate({ regId, reason: reasonText || undefined });
+    else if (action === 'status' && status) updateStatusMutation.mutate({ regId, status, reason: reasonText || undefined });
+    setReasonDialog({ open: false, action: 'cancel', regId: '' });
+  };
 
   const registrations = regData ?? [];
 
@@ -291,20 +315,20 @@ export function EventDetailRegistrations({
                                 </DropdownMenuItem>
                               )}
                               {reg.status === 'checked_in' && (
-                                <DropdownMenuItem onClick={() => undoCheckInMutation.mutate({ regId: reg._id })}>
+                                <DropdownMenuItem onClick={() => handleActionWithReason('undo', reg._id)}>
                                   <Clock className="w-4 h-4 mr-2" /> Undo Check-in
                                 </DropdownMenuItem>
                               )}
                               {reg.status !== 'cancelled' && (
                                 <>
                                   <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-destructive" onClick={() => cancelMutation.mutate({ regId: reg._id })}>
+                                  <DropdownMenuItem className="text-destructive" onClick={() => handleActionWithReason('cancel', reg._id)}>
                                     <Ban className="w-4 h-4 mr-2" /> Cancel Registration
                                   </DropdownMenuItem>
                                 </>
                               )}
                               {reg.status === 'cancelled' && (
-                                <DropdownMenuItem onClick={() => updateStatusMutation.mutate({ regId: reg._id, status: 'registered' })}>
+                                <DropdownMenuItem onClick={() => handleActionWithReason('status', reg._id, 'registered')}>
                                   <Users className="w-4 h-4 mr-2" /> Restore Registration
                                 </DropdownMenuItem>
                               )}
@@ -352,6 +376,34 @@ export function EventDetailRegistrations({
           )}
         </CardContent>
       </Card>
+      {/* Reason Dialog */}
+      <Dialog open={reasonDialog.open} onOpenChange={(open) => setReasonDialog({ ...reasonDialog, open })}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {reasonDialog.action === 'cancel' ? 'Cancel Registration' :
+               reasonDialog.action === 'undo' ? 'Undo Check-in' : 'Restore Registration'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Please provide a reason for this action.
+            </p>
+            <Textarea
+              placeholder="Enter reason..."
+              value={reasonText}
+              onChange={(e) => setReasonText(e.target.value)}
+              className="min-h-[80px]"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReasonDialog({ ...reasonDialog, open: false })}>
+              Cancel
+            </Button>
+            <Button onClick={confirmReasonAction}>Confirm</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

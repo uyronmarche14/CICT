@@ -34,6 +34,10 @@ const eventRegistrationSchema = new Schema<IEventRegistration>(
     cancelledAt: {
       type: Date,
     },
+    cancelledReason: {
+      type: String,
+      trim: true,
+    },
     checkedInAt: {
       type: Date,
     },

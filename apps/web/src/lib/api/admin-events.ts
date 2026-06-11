@@ -57,11 +57,11 @@ export const adminEventAPI = {
     const { data } = await api.post(`/admin/events/${eventId}/attendance/scan`, payload);
     return data.data as { result: string; registration?: AdminRegistration; studentName?: string };
   },
-  cancelRegistration: async (eventId: string, regId: string) => {
-    const { data } = await api.post(`/admin/events/${eventId}/registrations/${regId}/cancel`);
+  cancelRegistration: async (eventId: string, regId: string, reason?: string) => {
+    const { data } = await api.post(`/admin/events/${eventId}/registrations/${regId}/cancel`, { reason });
     return data.data.registration as AdminRegistration;
   },
-  updateRegistrationStatus: async (eventId: string, regId: string, payload: { status: string }) => {
+  updateRegistrationStatus: async (eventId: string, regId: string, payload: { status: string; reason?: string }) => {
     const { data } = await api.patch(`/admin/events/${eventId}/registrations/${regId}`, payload);
     return data.data.registration as AdminRegistration;
   },
@@ -69,8 +69,8 @@ export const adminEventAPI = {
     const { data } = await api.post(`/admin/events/${eventId}/registrations`, payload);
     return data.data.registration as AdminRegistration;
   },
-  undoCheckIn: async (eventId: string, regId: string) => {
-    const { data } = await api.post(`/admin/events/${eventId}/registrations/${regId}/undo-checkin`);
+  undoCheckIn: async (eventId: string, regId: string, reason?: string) => {
+    const { data } = await api.post(`/admin/events/${eventId}/registrations/${regId}/undo-checkin`, { reason });
     return data.data.registration as AdminRegistration;
   },
   getAttendanceLogs: async (

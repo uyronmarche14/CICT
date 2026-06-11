@@ -2,6 +2,11 @@ import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import * as analyticsService from '../services/org-analytics.service';
 
+export const getDashboard = async (req: AuthRequest, res: Response) => {
+  const data = await analyticsService.getDashboard(req, req.params.orgId);
+  res.json({ success: true, data });
+};
+
 export const getOverview = async (req: AuthRequest, res: Response) => {
   const data = await analyticsService.getOverview(req, req.params.orgId);
   res.json({ success: true, data });

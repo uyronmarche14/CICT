@@ -1,6 +1,18 @@
 'use client';
 
-import { Loader2, Users, CheckCircle2, Calendar, DollarSign, AlertTriangle } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+  HardDrive,
+  Inbox,
+  Loader2,
+  Users,
+  Vote,
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useOrgDashboard } from '@/hooks/use-org-dashboard';
 
@@ -9,13 +21,11 @@ function MetricCard({
   label,
   value,
   subtext,
-  trend,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   value: string | number;
   subtext?: string;
-  trend?: 'up' | 'down' | 'neutral';
 }) {
   return (
     <Card>
@@ -39,14 +49,21 @@ function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`;
 }
 
-function getBudgetStatus(utilization: number): { label: string; color: string } {
-  if (utilization > 0.9) return { label: 'Nearly Exhausted', color: 'text-red-500' };
-  if (utilization > 0.7) return { label: 'Heavily Used', color: 'text-amber-500' };
-  return { label: 'Healthy', color: 'text-green-500' };
+function formatDate(value?: string): string {
+  if (!value) {
+    return 'No date';
+  }
+
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date(value));
 }
 
 export function OrganizationDashboard({ orgId }: { orgId: string }) {
-  const { overview, tasks, events, financial, isLoading, error } = useOrgDashboard(orgId);
+  const { dashboard, isLoading, error } = useOrgDashboard(orgId);
 
   if (isLoading) {
     return (
@@ -67,79 +84,157 @@ export function OrganizationDashboard({ orgId }: { orgId: string }) {
     );
   }
 
-  const budgetStatus = financial ? getBudgetStatus(financial.budgetUtilization) : null;
+  const summary = dashboard?.summary;
 
   return (
     <div className="space-y-6">
-      {/* Summary Metrics */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           icon={Users}
           label="Active Members"
-          value={overview?.members ?? 0}
-          subtext={`Engagement: ${overview ? formatPercent(overview.engagementScore / 100) : '—'}`}
+          value={summary?.activeMembers ?? 0}
+          subtext={`${summary?.pendingApplications ?? 0} pending`}
         />
         <MetricCard
           icon={CheckCircle2}
-          label="Tasks Completed"
-          value={overview ? formatPercent(overview.tasksCompletionRate) : '—'}
-          subtext={tasks ? `${tasks.overdueCount} overdue` : '—'}
-          trend={overview && overview.tasksCompletionRate > 0.5 ? 'up' : 'down'}
+          label="Open Tasks"
+          value={summary?.tasksOpen ?? 0}
+          subtext={`${summary?.tasksOverdue ?? 0} overdue`}
         />
         <MetricCard
           icon={Calendar}
-          label="Events Held"
-          value={events?.totalEvents ?? 0}
-          subtext={events ? `${events.totalAttendance} total attendance` : '—'}
+          label="Upcoming"
+          value={(summary?.upcomingMeetings ?? 0) + (summary?.upcomingEvents ?? 0)}
+          subtext={`${summary?.upcomingMeetings ?? 0} meetings, ${summary?.upcomingEvents ?? 0} events`}
+        />
+        <MetricCard
+          icon={Vote}
+          label="Active Votes"
+          value={summary?.activeVotes ?? 0}
+          subtext={`${summary?.pendingResourceRequests ?? 0} resource requests`}
         />
         <MetricCard
           icon={DollarSign}
           label="Budget Used"
-          value={financial ? formatPercent(financial.budgetUtilization) : '—'}
-          subtext={budgetStatus ? budgetStatus.label : '—'}
+          value={summary ? formatPercent(summary.budgetUtilization) : '—'}
+          subtext="Current fiscal snapshot"
+        />
+        <MetricCard
+          icon={HardDrive}
+          label="Storage Used"
+          value={summary ? formatPercent(summary.storageUtilization) : '—'}
+          subtext="Organization files"
         />
       </div>
 
-      {/* Task Details */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {tasks && tasks.byStatus.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Tasks by Status</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {tasks.byStatus.map((s) => (
-                  <div key={s.name} className="flex items-center justify-between">
-                    <span className="text-sm capitalize text-muted-foreground">{s.name.replace('_', ' ')}</span>
-                    <span className="text-sm font-medium">{s.value}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      {dashboard?.alerts.length ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {dashboard.alerts.map((alert) => (
+            <div
+              key={`${alert.type}-${alert.label}`}
+              className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+            >
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>{alert.label}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
 
-        {financial && financial.byCategory.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Budget by Category</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {financial.byCategory.map((c) => (
-                  <div key={c.category} className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">{c.category}</span>
-                    <span className="text-sm font-medium">
-                      ₱{(c.expense || 0).toLocaleString()}
-                    </span>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Inbox className="h-4 w-4" />
+              Pending Actions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dashboard?.pendingActions.length ? (
+              <div className="space-y-3">
+                {dashboard.pendingActions.map((action) => (
+                  <div key={`${action.type}-${action.id}`} className="flex items-start justify-between gap-4 rounded-lg border p-3">
+                    <div>
+                      <div className="text-sm font-medium">{action.label}</div>
+                      <div className="mt-1 text-xs capitalize text-muted-foreground">
+                        {action.type.replace(/_/g, ' ')}
+                      </div>
+                    </div>
+                    <div className="whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDate(action.dueAt)}
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <p className="text-sm text-muted-foreground">No pending actions right now.</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Clock className="h-4 w-4" />
+              Upcoming Calendar
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dashboard?.calendar.length ? (
+              <div className="space-y-3">
+                {dashboard.calendar.map((item) => (
+                  <div key={`${item.type}-${item.id}`} className="flex items-start justify-between gap-4 rounded-lg border p-3">
+                    <div>
+                      <div className="text-sm font-medium">{item.title}</div>
+                      <div className="mt-1 text-xs capitalize text-muted-foreground">
+                        {item.type}
+                      </div>
+                    </div>
+                    <div className="whitespace-nowrap text-xs text-muted-foreground">
+                      {formatDate(item.date)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No upcoming organization items.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Activity className="h-4 w-4" />
+            Recent Activity
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {dashboard?.recentActivity.length ? (
+            <div className="divide-y">
+              {dashboard.recentActivity.map((activity) => (
+                <div key={activity._id ?? activity.id} className="flex items-center justify-between gap-4 py-3">
+                  <div>
+                    <div className="text-sm font-medium">
+                      <span className="capitalize">{activity.action}</span>{' '}
+                      <span className="text-muted-foreground">{activity.entityType.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {activity.entityLabel || activity.actorName || activity.actorType}
+                    </div>
+                  </div>
+                  <div className="whitespace-nowrap text-xs text-muted-foreground">
+                    {formatDate(activity.createdAt)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No activity has been recorded yet.</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   updateActionItems,
 } from '../controllers/org-meeting.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { authorizeOrganizationScope, requireAdminAccess } from '../middleware/permissions';
 import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
@@ -23,14 +23,16 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_MEETINGS));
+router.use(protect, requireAdminAccess);
 
-router.get('/:orgId/meetings', listMeetings);
-router.post('/:orgId/meetings', validate(createMeetingValidator), logActivity('create', 'org_meeting'), createMeeting);
-router.get('/:orgId/meetings/:meetingId', validate(meetingIdValidator), getMeeting);
-router.put('/:orgId/meetings/:meetingId', validate(updateMeetingValidator), logActivity('update', 'org_meeting'), updateMeeting);
-router.delete('/:orgId/meetings/:meetingId', validate(meetingIdValidator), logActivity('delete', 'org_meeting'), deleteMeeting);
-router.patch('/:orgId/meetings/:meetingId/minutes', validate(updateMinutesValidator), logActivity('update', 'org_meeting_minutes'), updateMinutes);
-router.patch('/:orgId/meetings/:meetingId/action-items', validate(updateActionItemsValidator), logActivity('update', 'org_meeting_action_items'), updateActionItems);
+const canManageMeetings = authorizeOrganizationScope(Permission.MANAGE_ORG_MEETINGS);
+
+router.get('/:orgId/meetings', canManageMeetings, listMeetings);
+router.post('/:orgId/meetings', canManageMeetings, validate(createMeetingValidator), logActivity('create', 'org_meeting'), createMeeting);
+router.get('/:orgId/meetings/:meetingId', canManageMeetings, validate(meetingIdValidator), getMeeting);
+router.put('/:orgId/meetings/:meetingId', canManageMeetings, validate(updateMeetingValidator), logActivity('update', 'org_meeting'), updateMeeting);
+router.delete('/:orgId/meetings/:meetingId', canManageMeetings, validate(meetingIdValidator), logActivity('delete', 'org_meeting'), deleteMeeting);
+router.patch('/:orgId/meetings/:meetingId/minutes', canManageMeetings, validate(updateMinutesValidator), logActivity('update', 'org_meeting_minutes'), updateMinutes);
+router.patch('/:orgId/meetings/:meetingId/action-items', canManageMeetings, validate(updateActionItemsValidator), logActivity('update', 'org_meeting_action_items'), updateActionItems);
 
 export default router;

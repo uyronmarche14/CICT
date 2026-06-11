@@ -18,7 +18,7 @@ import {
   getOrgCalendar,
 } from '../controllers/organization.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { authorize, authorizeOrganizationScope, requireAdminAccess } from '../middleware/permissions';
 import { Permission } from '../types';
 import { upload, handleImageUpload } from '../middleware/upload';
 import { validate } from '../middleware/validate';
@@ -459,24 +459,28 @@ router.delete(
 router.get(
   '/:orgId/activity',
   requireAdminAccess,
+  authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS),
   getOrgActivityFeed
 );
 
 router.get(
   '/:orgId/files',
   requireAdminAccess,
+  authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS),
   getOrgFiles
 );
 
 router.get(
   '/:orgId/files/quota',
   requireAdminAccess,
+  authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS),
   getOrgStorageQuota
 );
 
 router.get(
   '/:orgId/calendar',
   requireAdminAccess,
+  authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS),
   getOrgCalendar
 );
 

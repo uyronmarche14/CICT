@@ -629,6 +629,7 @@ export interface IEventRegistration extends Document {
   qrIssuedAt?: Date;
   registeredAt?: Date;
   cancelledAt?: Date;
+  cancelledReason?: string;
   checkedInAt?: Date;
   eligibilitySnapshot?: {
     programId?: string;

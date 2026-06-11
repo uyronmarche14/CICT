@@ -42,6 +42,59 @@ interface FinancialAnalytics {
   byCategory: Array<{ category: string; income: number; expense: number }>;
 }
 
+interface OrganizationDashboardSummary {
+  activeMembers: number;
+  pendingApplications: number;
+  tasksOpen: number;
+  tasksOverdue: number;
+  upcomingMeetings: number;
+  upcomingEvents: number;
+  activeVotes: number;
+  pendingResourceRequests: number;
+  budgetUtilization: number;
+  storageUtilization: number;
+}
+
+interface OrganizationDashboardAction {
+  type: string;
+  id: string;
+  label: string;
+  priority?: string;
+  dueAt?: string;
+}
+
+interface OrganizationDashboardCalendarItem {
+  type: string;
+  id: string;
+  title: string;
+  date: string;
+}
+
+interface OrganizationDashboardActivity {
+  _id?: string;
+  id?: string;
+  actorType: string;
+  actorName?: string;
+  action: string;
+  entityType: string;
+  entityLabel?: string;
+  createdAt: string;
+}
+
+interface OrganizationDashboardAlert {
+  type: string;
+  label: string;
+  severity: 'warning' | 'critical';
+}
+
+export interface OrganizationDashboardData {
+  summary: OrganizationDashboardSummary;
+  pendingActions: OrganizationDashboardAction[];
+  calendar: OrganizationDashboardCalendarItem[];
+  recentActivity: OrganizationDashboardActivity[];
+  alerts: OrganizationDashboardAlert[];
+}
+
 interface TaskForceAnalytics {
   total: number;
   byStatus: Array<{ status: string; count: number }>;
@@ -81,6 +134,10 @@ interface SharedContentAnalytics {
 }
 
 export const analyticsAPI = {
+  getDashboard: async (orgId: string) => {
+    const res = await api.get<{ success: boolean; data: OrganizationDashboardData }>(`/organizations/${orgId}/analytics/dashboard`);
+    return res.data.data;
+  },
   getOverview: async (orgId: string) => {
     const res = await api.get<{ success: boolean; data: AnalyticsOverview }>(`/organizations/${orgId}/analytics/overview`);
     return res.data.data;

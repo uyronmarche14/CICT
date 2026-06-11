@@ -9,7 +9,7 @@ import {
   getResults,
 } from '../controllers/org-vote.controller';
 import { authenticate as protect } from '../middleware/auth';
-import { authorize, requireAdminAccess } from '../middleware/permissions';
+import { authorizeOrganizationScope, requireAdminAccess } from '../middleware/permissions';
 import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
@@ -22,14 +22,16 @@ import {
 
 const router = express.Router();
 
-router.use(protect, requireAdminAccess, authorize(Permission.MANAGE_ORG_VOTES));
+router.use(protect, requireAdminAccess);
 
-router.get('/:orgId/votes', listVotes);
-router.post('/:orgId/votes', validate(createVoteValidator), logActivity('create', 'org_vote'), createVote);
-router.get('/:orgId/votes/:voteId', validate(voteIdValidator), getVote);
-router.put('/:orgId/votes/:voteId', validate(updateVoteValidator), logActivity('update', 'org_vote'), updateVote);
-router.delete('/:orgId/votes/:voteId', validate(voteIdValidator), logActivity('delete', 'org_vote'), deleteVote);
-router.post('/:orgId/votes/:voteId/cast', validate(castBallotValidator), logActivity('cast', 'org_ballot'), castBallot);
-router.get('/:orgId/votes/:voteId/results', validate(voteIdValidator), getResults);
+const canManageVotes = authorizeOrganizationScope(Permission.MANAGE_ORG_VOTES);
+
+router.get('/:orgId/votes', canManageVotes, listVotes);
+router.post('/:orgId/votes', canManageVotes, validate(createVoteValidator), logActivity('create', 'org_vote'), createVote);
+router.get('/:orgId/votes/:voteId', canManageVotes, validate(voteIdValidator), getVote);
+router.put('/:orgId/votes/:voteId', canManageVotes, validate(updateVoteValidator), logActivity('update', 'org_vote'), updateVote);
+router.delete('/:orgId/votes/:voteId', canManageVotes, validate(voteIdValidator), logActivity('delete', 'org_vote'), deleteVote);
+router.post('/:orgId/votes/:voteId/cast', canManageVotes, validate(castBallotValidator), logActivity('cast', 'org_ballot'), castBallot);
+router.get('/:orgId/votes/:voteId/results', canManageVotes, validate(voteIdValidator), getResults);
 
 export default router;

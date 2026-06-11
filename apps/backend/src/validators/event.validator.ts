@@ -242,4 +242,9 @@ export const eventRegIdValidator = [
   param('regId')
     .isMongoId()
     .withMessage('Invalid registration ID'),
+  body('reason')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Reason must be under 500 characters'),
 ];

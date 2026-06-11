@@ -32,6 +32,19 @@ const dashboardCache = new TypedCache<DashboardSummary>({
 let lastInvalidation = 0
 const MIN_INTERVAL_MS = 10_000
 
+const buildDashboardScopeCacheKey = (currentUser: IAuthenticatedUser): string => {
+  const globalPermissions = [...(currentUser.permissions ?? [])].sort().join(',')
+  const scopedPermissions = [...(currentUser.organizationAssignments ?? [])]
+    .map((assignment) => {
+      const permissions = [...(assignment.permissions ?? [])].sort().join(',')
+      return `${assignment.organizationId}:${assignment.roleId}:${permissions}`
+    })
+    .sort()
+    .join('|')
+
+  return `summary:${currentUser.userId}:${globalPermissions}:${scopedPermissions}`
+}
+
 export const invalidateDashboardCache = async (): Promise<void> => {
   const now = Date.now()
   if (now - lastInvalidation < MIN_INTERVAL_MS) {return}
@@ -42,7 +55,7 @@ export const invalidateDashboardCache = async (): Promise<void> => {
 export const getDashboardSummary = async (
   currentUser: IAuthenticatedUser
 ): Promise<DashboardSummary> => {
-  const cacheKey = `summary:${currentUser.userId}`
+  const cacheKey = buildDashboardScopeCacheKey(currentUser)
   const cached = await dashboardCache.get(cacheKey)
   if (cached) {return cached}
 

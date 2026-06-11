@@ -60,9 +60,10 @@ async function sendToStudent(studentId: string, payload: PushPayload): Promise<v
 
     const messages: ExpoPushPayload[] = [];
 
-    for (const { token, platform } of tokens) {
+    for (const { token, platform, _id } of tokens) {
       if (!expo.isValidToken(token)) {
-        logger.warn(`Invalid Expo push token for student ${studentId}: ${token}`);
+        logger.warn(`Invalid Expo push token for student ${studentId}: ${token}. Removing.`);
+        await PushToken.deleteOne({ _id });
         continue;
       }
 
@@ -115,4 +116,7 @@ async function sendToAll(payload: PushPayload): Promise<void> {
 export const pushNotificationService = {
   sendToStudent,
   sendToAll,
+  sendToOrganizationAdmins: async (orgId: string, payload: PushPayload): Promise<void> => {
+    logger.info(`[PushNotification] Org admin push for ${orgId} not yet implemented (in-app only): ${payload.title}`);
+  },
 };
