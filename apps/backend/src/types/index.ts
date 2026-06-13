@@ -400,6 +400,9 @@ export interface IAuthenticatedUser {
 // Organization Member Interface
 export interface IOrganizationMember {
   id: string;
+  membershipId?: string;
+  studentId?: string;
+  isPublic?: boolean;
   name: string;
   position: string;
   photo: string;

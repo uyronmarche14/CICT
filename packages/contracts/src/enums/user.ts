@@ -76,5 +76,6 @@ export const Permission = {
   MANAGE_ORG_TASK_FORCES: 'manage_org_task_forces',
   MANAGE_ORG_RESOURCE_POOLING: 'manage_org_resource_pooling',
   MANAGE_ORG_MENTORSHIP: 'manage_org_mentorship',
+  MANAGE_ORG_ADMINS: 'manage_org_admins',
 } as const;
 export type Permission = (typeof Permission)[keyof typeof Permission];

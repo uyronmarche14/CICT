@@ -25,15 +25,18 @@ import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-me
 import MembershipForm from './MembershipForm';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { getMembershipStatusBadge, getMemberTypeLabel as getCentralMemberTypeLabel } from '@/utils/badge-helpers';
+import type { OrganizationMember } from '@/types';
+import AdminMemberForm from './AdminMemberForm';
 
 interface OrganizationMembershipsTabProps {
   orgId: string;
 }
 
-type TabFilter = 'active' | 'applications' | 'alumni';
+type TabFilter = 'active' | 'officers' | 'applications' | 'alumni';
 
 const TAB_FILTERS: { value: TabFilter; label: string }[] = [
   { value: 'active', label: 'Active' },
+  { value: 'officers', label: 'Officers' },
   { value: 'applications', label: 'Applications' },
   { value: 'alumni', label: 'Alumni' },
 ];
@@ -82,6 +85,7 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
   const [totalPages, setTotalPages] = useState(1);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMembership, setEditingMembership] = useState<OrganizationMembership | null>(null);
+  const [editingProfile, setEditingProfile] = useState<OrganizationMember | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ onConfirm: () => void } | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -93,6 +97,9 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
 
       if (activeTab === 'applications') {
         params.status = 'applied,invited';
+      } else if (activeTab === 'officers') {
+        params.status = 'active';
+        params.memberType = 'officer,advisor';
       } else if (activeTab === 'alumni') {
         params.status = 'alumni';
       } else {
@@ -125,6 +132,47 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
   const handleEdit = (membership: OrganizationMembership) => {
     setEditingMembership(membership);
     setIsFormOpen(true);
+  };
+
+  const isProfileEligible = (membership: OrganizationMembership) =>
+    membership.status === 'active' && ['officer', 'advisor'].includes(membership.memberType);
+
+  const getStudentId = (membership: OrganizationMembership): string | undefined =>
+    typeof membership.studentId === 'object' ? membership.studentId._id : membership.studentId;
+
+  const buildProfileShell = (membership: OrganizationMembership): OrganizationMember => {
+    const student = typeof membership.studentId === 'object' ? membership.studentId : null;
+
+    return {
+      id: '',
+      membershipId: membership._id,
+      studentId: getStudentId(membership),
+      isPublic: false,
+      name: student ? `${student.firstName} ${student.lastName}` : '',
+      position: membership.position || 'Officer',
+      photo: student?.profilePhoto ?? '',
+      bio: '',
+      memberType: membership.memberType,
+      status: 'active',
+      startDate: membership.startDate,
+      endDate: membership.endDate,
+      termStart: membership.startDate,
+      termEnd: membership.endDate,
+      leadershipStatus: 'current',
+      sortOrder: 0,
+      achievements: [],
+      responsibilities: [],
+      skills: [],
+      timeline: [],
+      gallery: [],
+      social: {},
+      projectItems: [],
+      milestoneItems: [],
+    };
+  };
+
+  const handleEditProfile = (membership: OrganizationMembership) => {
+    setEditingProfile(membership.publicProfile ?? buildProfileShell(membership));
   };
 
   const handleDelete = (membershipId: string) => {
@@ -222,7 +270,8 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Start Date</TableHead>
-                <TableHead className="w-[120px]">Actions</TableHead>
+                <TableHead>Public Profile</TableHead>
+                <TableHead className="w-[160px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -243,6 +292,19 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
                   <TableCell>{getStatusBadge(membership.status)}</TableCell>
                   <TableCell>{formatDate(membership.startDate)}</TableCell>
                   <TableCell>
+                    {isProfileEligible(membership) ? (
+                      <Badge variant={membership.publicProfile?.isPublic ? 'default' : 'secondary'}>
+                        {membership.publicProfile?.isPublic
+                          ? 'Published'
+                          : membership.publicProfile
+                            ? 'Draft'
+                            : 'Not started'}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-1">
                       <Button
                         size="icon"
@@ -252,6 +314,16 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
                       >
                         <Edit2 className="w-4 h-4" />
                       </Button>
+                      {isProfileEligible(membership) ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-2"
+                          onClick={() => handleEditProfile(membership)}
+                        >
+                          Profile
+                        </Button>
+                      ) : null}
                       {isPending(membership.status) && (
                         <>
                           <Button
@@ -289,7 +361,7 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
               ))}
               {memberships.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="py-8 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="py-8 text-center text-muted-foreground">
                     No memberships found.
                   </TableCell>
                 </TableRow>
@@ -331,6 +403,18 @@ export default function OrganizationMembershipsTab({ orgId }: OrganizationMember
           onSuccess={fetchMemberships}
         />
       )}
+
+      {editingProfile ? (
+        <AdminMemberForm
+          orgId={orgId}
+          member={editingProfile}
+          onClose={() => setEditingProfile(null)}
+          onSuccess={() => {
+            setEditingProfile(null);
+            fetchMemberships();
+          }}
+        />
+      ) : null}
 
       <ConfirmDialog
         open={!!deleteConfirm}

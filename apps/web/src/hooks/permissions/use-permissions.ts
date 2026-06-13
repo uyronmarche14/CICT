@@ -28,7 +28,6 @@ const EVENTS_MODULE_PERMISSIONS: Permission[] = [
   Permission.PUBLISH_EVENT,
   Permission.CANCEL_EVENT,
   Permission.COMPLETE_EVENT,
-  Permission.SCAN_EVENT_ATTENDANCE,
 ];
 
 const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
@@ -51,6 +50,7 @@ const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
   Permission.MANAGE_ORG_TASK_FORCES,
   Permission.MANAGE_ORG_RESOURCE_POOLING,
   Permission.MANAGE_ORG_MENTORSHIP,
+  Permission.MANAGE_ORG_ADMINS,
 ];
 
 const MODULE_KEYS: AdminModuleKey[] = [
@@ -294,6 +294,8 @@ export const usePermissions = () => {
       canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_RESOURCE_POOLING),
     canManageOrgMentorship: (organizationId: string) =>
       canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_MENTORSHIP),
+    canManageOrgAdmins: (organizationId: string) =>
+      canManageOrganizationTool(organizationId, Permission.MANAGE_ORG_ADMINS),
     hasAnyOrgTasksAccess: () => hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_TASKS),
     hasAnyOrgMeetingsAccess: () =>
       hasAnyOrganizationToolPermission(Permission.MANAGE_ORG_MEETINGS),

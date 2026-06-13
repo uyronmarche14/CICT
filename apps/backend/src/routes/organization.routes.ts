@@ -23,6 +23,7 @@ import { Permission } from '../types';
 import { upload, handleImageUpload } from '../middleware/upload';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
+import { getOrgAssignments, createOrgAssignment, deleteOrgAssignment } from '../controllers/organization-assignment.controller';
 import {
   createOrganizationValidator,
   organizationIdValidator,
@@ -482,6 +483,27 @@ router.get(
   requireAdminAccess,
   authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS),
   getOrgCalendar
+);
+
+router.get(
+  '/:orgId/admins',
+  requireAdminAccess,
+  authorizeOrganizationScope(Permission.MANAGE_ORG_ADMINS),
+  getOrgAssignments
+);
+
+router.post(
+  '/:orgId/admins',
+  requireAdminAccess,
+  authorizeOrganizationScope(Permission.MANAGE_ORG_ADMINS),
+  createOrgAssignment
+);
+
+router.delete(
+  '/:orgId/admins/:assignmentId',
+  requireAdminAccess,
+  authorizeOrganizationScope(Permission.MANAGE_ORG_ADMINS),
+  deleteOrgAssignment
 );
 
 export default router;

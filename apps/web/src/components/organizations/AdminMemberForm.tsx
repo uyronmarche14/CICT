@@ -44,6 +44,7 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
       endDate: '',
       memberType: 'general',
       status: 'active',
+      isPublic: false,
       sortOrder: 0,
       batch: '',
     }
@@ -298,12 +299,18 @@ export default function AdminMemberForm({ orgId, member, onClose, onSuccess }: A
                   )}
                 />
               </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Input {...register('isAdviser')} type="checkbox" className="h-4 w-4" />
-                  Is Adviser
-                </Label>
-              </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Input {...register('isAdviser')} type="checkbox" className="h-4 w-4" />
+                Is Adviser
+              </Label>
+            </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Input {...register('isPublic')} type="checkbox" className="h-4 w-4" />
+                Show on public organization page
+              </Label>
+            </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">

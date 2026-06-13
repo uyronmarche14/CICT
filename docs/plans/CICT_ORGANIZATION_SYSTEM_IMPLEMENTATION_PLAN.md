@@ -556,6 +556,15 @@ Add:
 GET /api/organizations/:orgId/calendar
 ```
 
+**Status: ✅ COMPLETED (2026-06-12)**
+
+**Implementation:**
+- Backend: `services/org-calendar.service.ts` — aggregates 5 source models (OrgMeeting, Event, OrgTask, OrgVote, ResourceRequest) into unified `CalendarItem[]`
+- Route: `GET /api/organizations/:orgId/calendar` with `requireAdminAccess` + `authorizeOrganizationScope(Permission.VIEW_ORG_ANALYTICS)`
+- Frontend: `app/admin/organizations/[id]/calendar/page.tsx` — Notion-style month grid with CalendarGrid + CalendarSidebar
+- Navigation: `OrgSubNav` shows Calendar tab on every org admin page
+- Architecture doc: `docs/architecture/ORG_CALENDAR_ARCHITECTURE.md`
+
 ---
 
 ## 14. Phase 10: Notifications

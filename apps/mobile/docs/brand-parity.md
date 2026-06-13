@@ -78,12 +78,12 @@ Use the following web files as the brand source:
 - Apply expressive brand styling mostly to home/dashboard/event highlights
 - Keep profile/settings/attendance screens function-first
 
-## Current Gap Summary
+## Current Status
 
-The mobile scaffold currently has:
+The mobile scaffold is now brand-aligned:
 
-- a generic blue-led token file
-- no imported brand font asset wiring
-- only partial visual identity guidance
+- token file uses web brand purple `#6E29F6`, pink `#F629A8`, teal `#29F6D2` ✅
+- `Blockletter.otf` font loaded in `AppProviders` via `useFonts` ✅
+- dark mode support with full brand color palette ✅
 
-The future mobile UI pass should resolve those gaps using the materials and docs added in this phase.
+See `src/theme/tokens.ts` and `src/theme/ThemeContext.tsx` for the current implementation.

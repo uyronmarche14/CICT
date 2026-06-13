@@ -204,6 +204,9 @@ export type UpdateItem = {
 
 export type OrganizationMember = {
   id: string;
+  membershipId?: string;
+  studentId?: string;
+  isPublic?: boolean;
   name: string;
   position: string;
   photo: string;
@@ -212,6 +215,12 @@ export type OrganizationMember = {
   achievements?: string[];
   responsibilities?: string[];
   skills?: string[];
+  memberType?: 'officer' | 'general' | 'alumni' | 'honorary' | 'advisor';
+  status?: 'active' | 'inactive' | 'alumni';
+  termStart?: string;
+  termEnd?: string;
+  leadershipStatus?: 'current' | 'past' | 'emeritus';
+  committee?: string;
   gallery?: string[];
   social?: {
     linkedin?: string;
@@ -235,6 +244,7 @@ export type Organization = {
   values: string[];
   achievements: string[];
   members: OrganizationMember[];
+  membershipSize?: number;
   color: {
     primary: string;
     secondary: string;

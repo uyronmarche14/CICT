@@ -116,15 +116,13 @@ Future mobile tokens should adopt this shape:
 - `warning`
 - `info`
 
-### Current Mismatch To Correct
+### Token Status
 
-The current mobile token file is blue-led and diverges from the web brand:
+The mobile token file (`src/theme/tokens.ts`) is now brand-aligned with the web app:
 
-- mobile `primary`: `#185ADB`
-- mobile `primaryDeep`: `#103E9A`
-- mobile `accent`: `#7C3AED`
-
-This token set should be treated as temporary and replaced in the later UI refactor with the documented brand-aligned palette above.
+- mobile `primary`: `#6E29F6` ✅ (web brand purple)
+- mobile `secondary`: `#F629A8` ✅ (web brand pink)
+- mobile `accent`: `#29F6D2` ✅ (web brand teal)
 
 ## Light-First / Dark-Ready Theme
 

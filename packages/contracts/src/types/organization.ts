@@ -137,6 +137,9 @@ export type Organization = {
 
 export type OrganizationMember = {
   id: string;
+  membershipId?: string;
+  studentId?: string;
+  isPublic?: boolean;
   name: string;
   position: string;
   photo: string;

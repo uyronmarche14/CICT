@@ -9,10 +9,10 @@ import { Loader2, Edit, AlertCircle, Trash2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CldImage } from 'next-cloudinary';
-import AdminMemberManager from '@/components/organizations/AdminMemberManager';
 import AdminOrganizationForm from '@/components/organizations/AdminOrganizationForm';
 import OrganizationMembershipsTab from '@/components/organizations/OrganizationMembershipsTab';
 import OrganizationContentPreview from '@/components/organizations/OrganizationContentPreview';
+import { OrgAdminAssignments } from '@/components/organizations/OrgAdminAssignments';
 import { OrganizationDashboard } from '@/components/admin/OrganizationDashboard';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { organizationService } from '@/services/organizationService';
@@ -25,6 +25,7 @@ export default function AdminOrganizationManagePage() {
   const {
     canAccessOrganization,
     canDeleteOrganization,
+    canManageOrgAdmins,
     canManageOrganizationMembers,
     canUpdateOrganization,
   } = usePermissions();
@@ -43,6 +44,7 @@ export default function AdminOrganizationManagePage() {
     ? canManageOrganizationMembers(organization.id)
     : false;
   const canViewScopedAdmins = organization ? canAccessOrganization(organization.id) : false;
+  const canManageScopedAdmins = organization ? canManageOrgAdmins(organization.id) : false;
  
   useEffect(() => {
     if (!organization || !canViewScopedAdmins) {
@@ -83,13 +85,13 @@ export default function AdminOrganizationManagePage() {
     () =>
       [
         { value: 'overview', label: 'Overview' },
-        canManageMembers ? { value: 'members', label: 'Members' } : null,
-        canViewScopedAdmins ? { value: 'memberships', label: 'Memberships' } : null,
+        canManageMembers ? { value: 'memberships', label: 'Roster' } : null,
         canViewScopedAdmins ? { value: 'admins', label: 'Scoped Admins' } : null,
         { value: 'content', label: 'Public Content' },
         { value: 'mission', label: 'Mission & Vision' },
+        canManageScopedAdmins ? { value: 'org-admins', label: 'Admins' } : null,
       ].filter((tab): tab is { value: string; label: string } => tab !== null),
-    [canManageMembers, canViewScopedAdmins]
+    [canManageMembers, canManageScopedAdmins, canViewScopedAdmins]
   );
   const defaultTab = 'overview';
 
@@ -312,20 +314,7 @@ export default function AdminOrganizationManagePage() {
                     <OrganizationDashboard orgId={organization.id} />
                  </TabsContent>
 
-                 {canManageMembers ? (
-                  <TabsContent value="members" className="mt-6">
-                     <div className="rounded-xl border bg-card p-6">
-                        <AdminMemberManager 
-                           orgId={organization.id}
-                           members={organization.members}
-                           onRefresh={refresh}
-                           color={organization.color}
-                        />
-                     </div>
-                  </TabsContent>
-                ) : null}
-
-                {canViewScopedAdmins ? (
+                {canManageMembers ? (
                   <TabsContent value="memberships" className="mt-6">
                      <div className="rounded-xl border bg-card p-6">
                         <OrganizationMembershipsTab orgId={organization.id} />
@@ -384,20 +373,26 @@ export default function AdminOrganizationManagePage() {
                    </div>
                 </TabsContent>
 
-                <TabsContent value="mission" className="mt-6 space-y-6">
-                   <div className="rounded-xl border bg-card p-6">
-                      <h3 className="font-semibold mb-4 text-lg">Mission</h3>
-                      <p className="text-muted-foreground leading-relaxed">
-                         {organization.mission}
-                      </p>
-                   </div>
-                   <div className="rounded-xl border bg-card p-6">
-                      <h3 className="font-semibold mb-4 text-lg">Vision</h3>
-                      <p className="text-muted-foreground leading-relaxed">
-                         {organization.vision}
-                      </p>
-                   </div>
-                </TabsContent>
+                 <TabsContent value="mission" className="mt-6 space-y-6">
+                    <div className="rounded-xl border bg-card p-6">
+                       <h3 className="font-semibold mb-4 text-lg">Mission</h3>
+                       <p className="text-muted-foreground leading-relaxed">
+                          {organization.mission}
+                       </p>
+                    </div>
+                    <div className="rounded-xl border bg-card p-6">
+                       <h3 className="font-semibold mb-4 text-lg">Vision</h3>
+                       <p className="text-muted-foreground leading-relaxed">
+                          {organization.vision}
+                       </p>
+                    </div>
+                 </TabsContent>
+
+                 {canManageScopedAdmins ? (
+                  <TabsContent value="org-admins" className="mt-6">
+                     <OrgAdminAssignments orgId={organization.id} />
+                  </TabsContent>
+                ) : null}
              </Tabs>
           </div>
        </div>

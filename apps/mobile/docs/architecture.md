@@ -3,7 +3,7 @@
 ## Visual System Boundary
 
 - Architecture and visual identity are separate concerns.
-- The current implementation scaffold is functionally valid, but its token file is not yet brand-aligned with the web app.
+- The current implementation scaffold is functionally valid, with tokens brand-aligned to the web app (see `src/theme/tokens.ts`).
 - Future UI refactors must follow:
   - `docs/design-system.md`
   - `docs/brand-parity.md`

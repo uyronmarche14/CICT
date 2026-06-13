@@ -349,6 +349,84 @@ export const PERMISSION_METADATA: IPermissionMetadata[] = [
     description: 'Manage system settings and FAQ content.',
     group: 'System',
   },
+  {
+    value: Permission.MANAGE_ORG_TASKS,
+    label: 'Manage Org Tasks',
+    description: 'Create, edit, and delete organization tasks.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_MEETINGS,
+    label: 'Manage Org Meetings',
+    description: 'Create, edit, and manage organization meetings.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_VOTES,
+    label: 'Manage Org Voting',
+    description: 'Manage organization voting and elections.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_BUDGET,
+    label: 'Manage Org Budget',
+    description: 'Manage organization budget and finances.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_TEMPLATES,
+    label: 'Manage Org Templates',
+    description: 'Create and apply organization templates.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.VIEW_ORG_ANALYTICS,
+    label: 'View Org Analytics',
+    description: 'View organization analytics and reports.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_PARTNERSHIPS,
+    label: 'Manage Org Partnerships',
+    description: 'Manage organization-to-organization partnerships.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_COLLABORATION,
+    label: 'Manage Org Collaborations',
+    description: 'Manage cross-org collaboration spaces.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.SHARE_CONTENT_CROSS_ORG,
+    label: 'Share Content Cross-Org',
+    description: 'Share news, announcements, and events between organizations.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_TASK_FORCES,
+    label: 'Manage Org Task Forces',
+    description: 'Create and manage cross-org task forces.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_RESOURCE_POOLING,
+    label: 'Manage Org Resource Pooling',
+    description: 'Manage resource requests between organizations.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_MENTORSHIP,
+    label: 'Manage Org Mentorship',
+    description: 'Manage mentor and mentee organization relationships.',
+    group: 'Organization Tools',
+  },
+  {
+    value: Permission.MANAGE_ORG_ADMINS,
+    label: 'Manage Org Admins',
+    description: 'Assign and manage organization administrators.',
+    group: 'Organization Tools',
+  },
 ];
 
 export const getPermissionMetadata = (): IPermissionMetadata[] => PERMISSION_METADATA;

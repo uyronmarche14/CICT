@@ -16,6 +16,7 @@ import {
   UsersRound,
   Package,
   GraduationCap,
+  CalendarDays,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
@@ -51,6 +52,7 @@ const ORG_TOOLS: NavItem[] = [
   { label: 'Resource Pooling', href: '/resources', icon: Package, canAccess: (permissions, orgId) => permissions.canManageOrgResources(orgId) },
   { label: 'Mentorship', href: '/mentorship', icon: GraduationCap, canAccess: (permissions, orgId) => permissions.canManageOrgMentorship(orgId) },
   { label: 'Templates', href: '/templates', icon: LayoutTemplate, canAccess: (permissions) => permissions.hasAnyOrgTemplatesAccess() },
+  { label: 'Calendar', href: '/calendar', icon: CalendarDays },
 ];
 
 const MAX_VISIBLE = 7;

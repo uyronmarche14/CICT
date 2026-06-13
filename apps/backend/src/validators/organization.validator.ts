@@ -203,7 +203,9 @@ export const organizationIdValidator = [
 ];
 
 export const createMemberValidator = [
-  param('id').isMongoId().withMessage('Invalid organization ID'),
+  param('id').notEmpty().withMessage('Organization ID is required'),
+  body('membershipId').optional().isMongoId().withMessage('membershipId must be a valid ID'),
+  body('studentId').optional().isMongoId().withMessage('studentId must be a valid ID'),
   body('name')
     .trim()
     .notEmpty().withMessage('Member name is required')
@@ -226,6 +228,12 @@ export const createMemberValidator = [
   body('photoUrl')
     .optional()
     .isURL().withMessage('Photo URL must be valid'),
+  body('photo')
+    .optional()
+    .isString().withMessage('Photo must be a string'),
+  body('bio')
+    .optional()
+    .isString().withMessage('Bio must be a string'),
   body('isPublic')
     .optional()
     .isBoolean().withMessage('isPublic must be a boolean'),
@@ -244,8 +252,10 @@ export const createMemberValidator = [
 ];
 
 export const updateMemberValidator = [
-  param('orgId').isMongoId().withMessage('Invalid organization ID'),
-  param('memberId').isMongoId().withMessage('Invalid member ID'),
+  param('orgId').notEmpty().withMessage('Organization ID is required'),
+  param('memberId').notEmpty().withMessage('Member ID is required'),
+  body('membershipId').optional().isMongoId().withMessage('membershipId must be a valid ID'),
+  body('studentId').optional().isMongoId().withMessage('studentId must be a valid ID'),
   body('name')
     .optional()
     .trim()
@@ -269,6 +279,12 @@ export const updateMemberValidator = [
   body('photoUrl')
     .optional()
     .isURL().withMessage('Photo URL must be valid'),
+  body('photo')
+    .optional()
+    .isString().withMessage('Photo must be a string'),
+  body('bio')
+    .optional()
+    .isString().withMessage('Bio must be a string'),
   body('isPublic')
     .optional()
     .isBoolean().withMessage('isPublic must be a boolean'),

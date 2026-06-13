@@ -193,6 +193,9 @@ export interface FAQContent {
 
 export interface OrganizationMember {
   id: string;
+  membershipId?: string;
+  studentId?: string;
+  isPublic?: boolean;
   name: string;
   position: string;
   photo: string;

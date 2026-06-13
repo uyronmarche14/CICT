@@ -1,6 +1,7 @@
 import crypto from 'crypto'
 import Organization from '../models/Organization'
 import OrganizationMember from '../models/OrganizationMember'
+import OrganizationMembership from '../models/OrganizationMembership'
 import OrganizationAssignment from '../models/OrganizationAssignment'
 import { type AuthRequest } from '../middleware/auth'
 import { AppError } from '../middleware/errorHandler'
@@ -90,6 +91,83 @@ const attachOrganizationAdminAssignments = async <T extends { id: string }>(
   }))
 }
 
+const isPublicLeadershipProfile = (member: Record<string, any>): boolean => {
+  const isLegacyProfile = !member.membershipId && !member.studentId
+  const memberType = member.memberType as string | undefined
+  const isLeadership =
+    memberType === 'officer' ||
+    memberType === 'advisor' ||
+    member.isAdviser === true ||
+    (!memberType && isLegacyProfile)
+
+  if (!isLeadership || member.isPublic === false || member.status === 'inactive') {
+    return false
+  }
+
+  if (member.membershipId || member.studentId) {
+    return Boolean(member.photo && member.bio)
+  }
+
+  return true
+}
+
+const attachOrganizationRoster = async <T extends { _id?: unknown; id: string; membershipSize?: number }>(
+  organizations: T[]
+): Promise<Array<T & { members: unknown[]; membershipSize: number }>> => {
+  if (organizations.length === 0) {return []}
+
+  const organizationIds = organizations.map((organization) => organization.id)
+  const organizationObjectIds = organizations
+    .map((organization) => String(organization._id ?? ''))
+    .filter(Boolean)
+  const organizationKeyByStoredId = new Map<string, string>()
+
+  for (const organization of organizations) {
+    organizationKeyByStoredId.set(organization.id, organization.id)
+    if (organization._id) {
+      organizationKeyByStoredId.set(String(organization._id), organization.id)
+    }
+  }
+
+  const [profiles, activeMembershipCounts] = await Promise.all([
+    OrganizationMember.find({
+      organizationId: { $in: [...organizationIds, ...organizationObjectIds] },
+    })
+      .sort({ sortOrder: 1, displayOrder: 1, name: 1 })
+      .lean(),
+    OrganizationMembership.aggregate<{ _id: string; count: number }>([
+      { $match: { organizationId: { $in: organizationIds }, status: 'active' } },
+      { $group: { _id: '$organizationId', count: { $sum: 1 } } },
+    ]),
+  ])
+
+  const publicProfilesByOrganization = new Map<string, unknown[]>()
+  for (const profile of profiles) {
+    if (!isPublicLeadershipProfile(profile as Record<string, any>)) {
+      continue
+    }
+
+    const organizationId = organizationKeyByStoredId.get(String(profile.organizationId))
+    if (!organizationId) {
+      continue
+    }
+
+    const currentProfiles = publicProfilesByOrganization.get(organizationId) ?? []
+    currentProfiles.push(profile)
+    publicProfilesByOrganization.set(organizationId, currentProfiles)
+  }
+
+  const membershipCountByOrganization = new Map(
+    activeMembershipCounts.map((item) => [item._id, item.count])
+  )
+
+  return organizations.map((organization) => ({
+    ...organization,
+    members: publicProfilesByOrganization.get(organization.id) ?? [],
+    membershipSize: membershipCountByOrganization.get(organization.id) ?? organization.membershipSize ?? 0,
+  }))
+}
+
 const ensureCanManageOrganization = (
   req: AuthRequest,
   organizationId: string,
@@ -115,19 +193,31 @@ export const getPublicMember = async (memberId: string): Promise<{ member: unkno
   const member = await OrganizationMember.findOne({ id: memberId }).lean()
   if (!member) {throw new AppError('Member not found', 404)}
 
-  const organization = await Organization.findById(member.organizationId)
+  if (!isPublicLeadershipProfile(member as Record<string, any>)) {
+    throw new AppError('Member not found', 404)
+  }
+
+  const organization = await Organization.findOne({
+    $or: [{ id: member.organizationId }, { _id: member.organizationId }],
+  })
     .select('id name fullName color mission vision values description')
     .lean()
 
+  if (!organization) {throw new AppError('Organization not found', 404)}
+
   const teamMembers = await OrganizationMember.find({
-    organizationId: member.organizationId,
+    organizationId: { $in: [organization.id, String(organization._id)] },
     id: { $ne: memberId },
   })
     .sort({ sortOrder: 1 })
     .limit(10)
     .lean()
 
-  return { member, organization, teamMembers }
+  return {
+    member,
+    organization,
+    teamMembers: teamMembers.filter((item) => isPublicLeadershipProfile(item as Record<string, any>)),
+  }
 }
 
 // ——— Reads ———
@@ -137,8 +227,9 @@ export const getOrganizations = async (): Promise<unknown[]> => {
   if (cached) {return cached}
 
   const organizations = await Organization.find().lean()
-  await orgListCache.set('all', organizations)
-  return organizations
+  const organizationsWithRoster = await attachOrganizationRoster(organizations)
+  await orgListCache.set('all', organizationsWithRoster)
+  return organizationsWithRoster
 }
 
 export const getOrganization = async (id: string): Promise<any> => {
@@ -148,8 +239,9 @@ export const getOrganization = async (id: string): Promise<any> => {
   const organization = await Organization.findOne({ id }).lean()
   if (!organization) {throw new AppError('Organization not found', 404)}
 
-  await orgDetailCache.set(id, organization)
-  return organization
+  const [organizationWithRoster] = await attachOrganizationRoster([organization])
+  await orgDetailCache.set(id, organizationWithRoster)
+  return organizationWithRoster
 }
 
 export const getAdminOrganizations = async (req: AuthRequest): Promise<unknown[]> => {
@@ -175,7 +267,8 @@ export const getAdminOrganizations = async (req: AuthRequest): Promise<unknown[]
       : { _id: null }
 
   const organizations = await Organization.find(query).lean()
-  const organizationsWithAssignments = await attachOrganizationAdminAssignments(organizations)
+  const organizationsWithRoster = await attachOrganizationRoster(organizations)
+  const organizationsWithAssignments = await attachOrganizationAdminAssignments(organizationsWithRoster)
 
   await orgAdminCache.set(cacheKey, organizationsWithAssignments)
   return organizationsWithAssignments
@@ -195,7 +288,8 @@ export const getAdminOrganization = async (req: AuthRequest, id: string): Promis
     throw new AppError('You do not have access to this organization scope', 403)
   }
 
-  const [organizationWithAssignments] = await attachOrganizationAdminAssignments([organization])
+  const [organizationWithRoster] = await attachOrganizationRoster([organization])
+  const [organizationWithAssignments] = await attachOrganizationAdminAssignments([organizationWithRoster])
   return organizationWithAssignments
 }
 
@@ -277,8 +371,11 @@ export const addMember = async (req: AuthRequest, orgId: string): Promise<any> =
   ensureCanManageOrganization(req, organization.id, Permission.CREATE_MEMBER)
 
   const member = await OrganizationMember.create({
-    organizationId: String(organization._id),
-    id: body.id ?? crypto.randomUUID(),
+    organizationId: organization.id,
+    id: body.id || crypto.randomUUID(),
+    membershipId: body.membershipId,
+    studentId: body.studentId,
+    isPublic: body.isPublic ?? true,
     name: body.name,
     position: body.position,
     photo: body.photo,
@@ -326,7 +423,7 @@ export const updateMember = async (req: AuthRequest, orgId: string, memberId: st
   ensureCanManageOrganization(req, organization.id, Permission.EDIT_MEMBER)
 
   const member = await OrganizationMember.findOne({
-    organizationId: String(organization._id),
+    organizationId: { $in: [organization.id, String(organization._id)] },
     id: memberId,
   })
 
@@ -346,7 +443,7 @@ export const deleteMember = async (req: AuthRequest, orgId: string, memberId: st
   ensureCanManageOrganization(req, organization.id, Permission.DELETE_MEMBER)
 
   const member = await OrganizationMember.findOneAndDelete({
-    organizationId: String(organization._id),
+    organizationId: { $in: [organization.id, String(organization._id)] },
     id: memberId,
   })
 

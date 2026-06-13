@@ -7,6 +7,7 @@ import OrgTask from '../models/OrgTask';
 import OrgTemplate from '../models/OrgTemplate';
 import Organization from '../models/Organization';
 import OrganizationMember from '../models/OrganizationMember';
+import OrganizationMembership from '../models/OrganizationMembership';
 import ProcessTemplate from '../models/ProcessTemplate';
 import Program from '../models/Program';
 import Role from '../models/Role';
@@ -482,31 +483,92 @@ const lookupSections: LookupResolver = async (context) => {
 const lookupMembers = (officersOnly: boolean): LookupResolver => async (context) => {
   const orgId = getScopedOrgId(context.query);
   const org = await ensureOrgScope(context.req, orgId, Permission.VIEW_MEMBER);
-  const baseFilter: Record<string, unknown> = { organizationId: org._id };
+  const baseFilter: Record<string, unknown> = { organizationId: org.id };
   if (context.query.activeOnly !== 'false') {
     baseFilter.status = 'active';
   }
   if (officersOnly) {
     baseFilter.memberType = { $in: ['officer', 'advisor'] };
   }
-  const filter = context.ids.length > 0
-    ? { ...baseFilter, ...objectIdFilter(context.ids) }
-    : applyStringSearch(baseFilter, context.search, ['name', 'position', 'personalEmail']);
 
-  const [members, total] = await Promise.all([
-    OrganizationMember.find(filter).select('name position status memberType photo personalEmail').sort({ sortOrder: 1, name: 1 }).limit(context.limit).lean(),
-    OrganizationMember.countDocuments(filter),
+  let filter: Record<string, unknown> = context.ids.length > 0
+    ? { ...baseFilter, ...objectIdFilter(context.ids) }
+    : { ...baseFilter };
+
+  if (!context.ids.length && context.search) {
+    const matchingStudents = await Student.find({
+      $or: [
+        { firstName: new RegExp(context.search, 'i') },
+        { lastName: new RegExp(context.search, 'i') },
+        { studentNumber: new RegExp(context.search, 'i') },
+      ],
+    }).select('_id').limit(50).lean();
+    const matchingStudentIds = matchingStudents.map((student) => student._id);
+
+    filter = {
+      ...baseFilter,
+      $or: [
+        { position: new RegExp(context.search, 'i') },
+        { studentId: { $in: matchingStudentIds } },
+      ],
+    };
+  }
+
+  const [memberships, total] = await Promise.all([
+    OrganizationMembership.find(filter)
+      .populate('studentId', 'studentNumber firstName lastName profilePhoto email')
+      .sort({ memberType: 1, position: 1, createdAt: -1 })
+      .limit(context.limit)
+      .lean(),
+    OrganizationMembership.countDocuments(filter),
   ]);
 
-  return makeResponse(officersOnly ? 'org-officers' : 'org-members', members.map((member) => ({
-    id: String(member._id),
-    label: member.name,
-    value: String(member._id),
-    description: member.position,
-    status: member.status,
-    badge: member.memberType,
-    imageUrl: member.photo,
-  })), total);
+  const membershipIds = memberships
+    .map((membership) => String(membership._id))
+    .filter((id) => Types.ObjectId.isValid(id));
+  const studentIds = memberships
+    .map((membership) => String((membership.studentId as any)?._id ?? membership.studentId))
+    .filter((id) => Types.ObjectId.isValid(id));
+  const profileClauses = [
+    ...(membershipIds.length > 0 ? [{ membershipId: { $in: membershipIds } }] : []),
+    ...(studentIds.length > 0 ? [{ studentId: { $in: studentIds } }] : []),
+  ];
+  const profiles = profileClauses.length > 0
+    ? await OrganizationMember.find({
+        organizationId: { $in: [org.id, String(org._id)] },
+        $or: profileClauses,
+      }).select('membershipId studentId photo name').lean()
+    : [];
+
+  const profileByMembershipId = new Map(
+    profiles.filter((profile) => profile.membershipId).map((profile) => [String(profile.membershipId), profile])
+  );
+  const profileByStudentId = new Map(
+    profiles.filter((profile) => profile.studentId).map((profile) => [String(profile.studentId), profile])
+  );
+
+  return makeResponse(officersOnly ? 'org-officers' : 'org-members', memberships.map((membership) => {
+    const student = membership.studentId && typeof membership.studentId === 'object'
+      ? (membership.studentId as { _id?: unknown; firstName?: string; lastName?: string; studentNumber?: string; profilePhoto?: string })
+      : null;
+    const profile = profileByMembershipId.get(String(membership._id)) ??
+      profileByStudentId.get(String(student?._id ?? membership.studentId));
+    const studentName = [student?.firstName, student?.lastName].filter(Boolean).join(' ').trim();
+
+    return {
+      id: String(membership._id),
+      label: studentName || profile?.name || String(membership._id),
+      value: String(membership._id),
+      description: [membership.position, student?.studentNumber].filter(Boolean).join(' · '),
+      status: membership.status,
+      badge: membership.memberType,
+      imageUrl: profile?.photo || student?.profilePhoto,
+      meta: {
+        studentId: String(student?._id ?? membership.studentId),
+        organizationId: membership.organizationId,
+      },
+    };
+  }), total);
 };
 
 const lookupContentByType = (type: string): LookupResolver => async (context) => {

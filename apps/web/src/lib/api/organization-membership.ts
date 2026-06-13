@@ -1,4 +1,5 @@
 import api from './axios';
+import type { OrganizationMember } from '@/types';
 
 export type OrganizationMembership = {
   _id: string;
@@ -33,6 +34,7 @@ export type OrganizationMembership = {
   notes?: string;
   history: { field: string; oldValue?: string; newValue?: string; changedBy?: string; changedAt: string }[];
   contributions?: { type: string; description: string; hours?: number; date: string }[];
+  publicProfile?: OrganizationMember | null;
   createdAt: string;
   updatedAt: string;
 };

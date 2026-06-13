@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import OrganizationMembership from '../models/OrganizationMembership';
+import OrganizationMember from '../models/OrganizationMember';
 import Organization from '../models/Organization';
 import Student from '../models/Student';
 import { AuthRequest } from '../middleware/auth';
@@ -11,6 +12,10 @@ import { IMembershipHistoryEntry, Permission } from '../types';
 import { isFeatureEnabled } from '../utils/features';
 import { canAccessOrganizationScope } from '../utils/organizationScope';
 import { recordActivity } from '../services/activity.service';
+import {
+  hidePublicProfileForMembership,
+  syncPublicProfileForMembership,
+} from '../services/organization-member-profile.service';
 
 const buildHistoryEntry = (
   field: string,
@@ -31,6 +36,46 @@ const checkMembershipPermission = (req: AuthRequest, orgId: string, permission: 
   }
 };
 
+const attachPublicProfilesToMemberships = async (memberships: any[]) => {
+  if (memberships.length === 0) {
+    return memberships;
+  }
+
+  const organizationIds = [...new Set(memberships.map((membership) => membership.organizationId))];
+  const membershipIds = memberships
+    .map((membership) => String(membership._id))
+    .filter((id) => mongoose.Types.ObjectId.isValid(id));
+  const studentIds = memberships
+    .map((membership) => String(membership.studentId?._id ?? membership.studentId))
+    .filter((id) => mongoose.Types.ObjectId.isValid(id));
+
+  const profileClauses = [
+    ...(membershipIds.length > 0 ? [{ membershipId: { $in: membershipIds } }] : []),
+    ...(studentIds.length > 0 ? [{ studentId: { $in: studentIds } }] : []),
+  ];
+  const profiles = profileClauses.length > 0
+    ? await OrganizationMember.find({
+        organizationId: { $in: organizationIds },
+        $or: profileClauses,
+      }).lean()
+    : [];
+
+  const profileByMembershipId = new Map(
+    profiles.filter((profile) => profile.membershipId).map((profile) => [String(profile.membershipId), profile])
+  );
+  const profileByStudentId = new Map(
+    profiles.filter((profile) => profile.studentId).map((profile) => [String(profile.studentId), profile])
+  );
+
+  return memberships.map((membership) => ({
+    ...membership,
+    publicProfile:
+      profileByMembershipId.get(String(membership._id)) ??
+      profileByStudentId.get(String(membership.studentId?._id ?? membership.studentId)) ??
+      null,
+  }));
+};
+
 const getOrganizationMemberships = async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
   checkMembershipPermission(req, orgId, Permission.VIEW_MEMBER);
@@ -39,8 +84,14 @@ const getOrganizationMemberships = async (req: AuthRequest, res: Response) => {
   const memberType = req.query.memberType as string | undefined;
 
   const query: Record<string, unknown> = { organizationId: orgId };
-  if (status) {query.status = status;}
-  if (memberType) {query.memberType = memberType;}
+  if (status) {
+    const statuses = status.split(',').map((value) => value.trim()).filter(Boolean);
+    query.status = statuses.length > 1 ? { $in: statuses } : statuses[0];
+  }
+  if (memberType) {
+    const memberTypes = memberType.split(',').map((value) => value.trim()).filter(Boolean);
+    query.memberType = memberTypes.length > 1 ? { $in: memberTypes } : memberTypes[0];
+  }
 
   const [memberships, total] = await Promise.all([
     OrganizationMembership.find(query)
@@ -51,11 +102,12 @@ const getOrganizationMemberships = async (req: AuthRequest, res: Response) => {
       .lean(),
     OrganizationMembership.countDocuments(query),
   ]);
+  const membershipsWithProfiles = await attachPublicProfilesToMemberships(memberships);
 
   res.json({
     success: true,
     data: {
-      memberships,
+      memberships: membershipsWithProfiles,
       pagination: {
         page: p,
         limit: lim,
@@ -101,6 +153,8 @@ const createMembership = async (req: AuthRequest, res: Response) => {
     .populate('studentId', 'studentNumber firstName lastName profilePhoto')
     .lean();
 
+  await syncPublicProfileForMembership(membership);
+
   res.status(201).json({ success: true, data: { membership: populated } });
 };
 
@@ -140,6 +194,7 @@ const updateMembership = async (req: AuthRequest, res: Response) => {
 
   membership.history.push(...historyEntries);
   await membership.save();
+  await syncPublicProfileForMembership(membership);
 
   const populated = await OrganizationMembership.findById(membership._id)
     .populate('studentId', 'studentNumber firstName lastName profilePhoto')
@@ -154,6 +209,8 @@ const deleteMembership = async (req: AuthRequest, res: Response) => {
 
   const membership = await OrganizationMembership.findOneAndDelete({ _id: id, organizationId: orgId });
   if (!membership) {throw new AppError('Membership not found', 404);}
+
+  await hidePublicProfileForMembership(membership._id);
 
   res.json({ success: true, message: 'Membership removed' });
 };
@@ -175,6 +232,7 @@ const approveMembership = async (req: AuthRequest, res: Response) => {
     buildHistoryEntry('status', 'applied', 'active', req.user?.userId)
   );
   await membership.save();
+  await syncPublicProfileForMembership(membership);
 
   await recordActivity({
     organizationId: orgId,
@@ -211,6 +269,7 @@ const rejectMembership = async (req: AuthRequest, res: Response) => {
     buildHistoryEntry('status', prevStatus, 'rejected', req.user?.userId)
   );
   await membership.save();
+  await syncPublicProfileForMembership(membership);
 
   await recordActivity({
     organizationId: orgId,
@@ -296,6 +355,7 @@ const resignMembership = async (req: StudentAuthRequest, res: Response) => {
   membership.resignedAt = new Date();
   membership.history.push(buildHistoryEntry('status', 'active', 'resigned'));
   await membership.save();
+  await syncPublicProfileForMembership(membership);
 
   await recordActivity({
     organizationId: membership.organizationId,

@@ -195,4 +195,23 @@ export const fallbackPermissionMetadataGroups: PermissionMetadataGroup[] = [
       },
     ],
   },
+  {
+    key: 'organization-tools',
+    label: 'Organization Tools',
+    permissions: [
+      { value: Permission.MANAGE_ORG_TASKS, label: 'Manage Tasks', description: 'Manage organization tasks.' },
+      { value: Permission.MANAGE_ORG_MEETINGS, label: 'Manage Meetings', description: 'Manage organization meetings.' },
+      { value: Permission.MANAGE_ORG_VOTES, label: 'Manage Voting', description: 'Manage organization voting and elections.' },
+      { value: Permission.MANAGE_ORG_BUDGET, label: 'Manage Budget', description: 'Manage organization budget and finances.' },
+      { value: Permission.MANAGE_ORG_TEMPLATES, label: 'Manage Templates', description: 'Manage organization templates.' },
+      { value: Permission.VIEW_ORG_ANALYTICS, label: 'View Analytics', description: 'View organization analytics.' },
+      { value: Permission.MANAGE_ORG_PARTNERSHIPS, label: 'Manage Partnerships', description: 'Manage organization partnerships.' },
+      { value: Permission.MANAGE_ORG_COLLABORATION, label: 'Manage Collaborations', description: 'Manage cross-org collaboration.' },
+      { value: Permission.SHARE_CONTENT_CROSS_ORG, label: 'Share Content', description: 'Share content across organizations.' },
+      { value: Permission.MANAGE_ORG_TASK_FORCES, label: 'Manage Task Forces', description: 'Manage cross-org task forces.' },
+      { value: Permission.MANAGE_ORG_RESOURCE_POOLING, label: 'Manage Resources', description: 'Manage resource pooling.' },
+      { value: Permission.MANAGE_ORG_MENTORSHIP, label: 'Manage Mentorship', description: 'Manage org mentorship relationships.' },
+      { value: Permission.MANAGE_ORG_ADMINS, label: 'Manage Admins', description: 'Assign and manage organization administrators.' },
+    ],
+  },
 ];

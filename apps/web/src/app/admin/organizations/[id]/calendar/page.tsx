@@ -1,5 +1,6 @@
 'use client';
 
+import { useParams } from 'next/navigation';
 import { useState, useEffect, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, AlertTriangle } from 'lucide-react';
@@ -12,7 +13,10 @@ import type { CalendarItem } from '@cict/contracts/types';
 
 const ALL_TYPES = ['event', 'meeting', 'task', 'vote', 'resource'];
 
-export default function AdminCalendarPage() {
+export default function OrgCalendarPage() {
+  const params = useParams();
+  const orgId = params.id as string;
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(ALL_TYPES));
@@ -25,13 +29,14 @@ export default function AdminCalendarPage() {
   const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['calendar-feed', monthStart.toISOString(), monthEnd.toISOString()],
+    queryKey: ['org-calendar', orgId, monthStart.toISOString(), monthEnd.toISOString()],
     queryFn: async () => {
-      const { data: res } = await api.get('/calendar/feed', {
-        params: { startDate: monthStart.toISOString(), endDate: monthEnd.toISOString(), limit: 200 },
+      const { data: res } = await api.get(`/organizations/${orgId}/calendar`, {
+        params: { startDate: monthStart.toISOString(), endDate: monthEnd.toISOString() },
       });
-      return (res.data as { items: CalendarItem[]; total: number }).items;
+      return (res.data.data?.items || []) as CalendarItem[];
     },
+    enabled: !!orgId,
     staleTime: 120_000,
   });
 
@@ -48,15 +53,12 @@ export default function AdminCalendarPage() {
   const upcomingItems = useMemo(() => {
     const now = new Date();
     const next7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return items
-      .filter((item) => new Date(item.startsAt) >= now && new Date(item.startsAt) <= next7)
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
-      .slice(0, 5);
+    return items.filter((item) => new Date(item.startsAt) >= now && new Date(item.startsAt) <= next7).sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()).slice(0, 5);
   }, [items]);
 
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    for (const item of items) { counts[item.sourceType] = (counts[item.sourceType] || 0) + 1; }
+    for (const item of items) counts[item.sourceType] = (counts[item.sourceType] || 0) + 1;
     return counts;
   }, [items]);
 
@@ -70,7 +72,7 @@ export default function AdminCalendarPage() {
   const filteredItems = items.filter((item) => activeTypes.has(item.sourceType));
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col px-3 pt-4">
+    <div className="h-[calc(100vh-10rem)] flex flex-col px-1 pt-2">
       <CalendarHeader
         currentDate={currentDate}
         onPrevMonth={() => setCurrentDate(new Date(year, month - 1))}
@@ -80,33 +82,15 @@ export default function AdminCalendarPage() {
         onToggleType={toggleType}
       />
 
-      <div className="mt-4 flex-1 min-h-0">
+      <div className="mt-3 flex-1 min-h-0">
         {isLoading ? (
-          <div className="flex justify-center py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
+          <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
         ) : isError ? (
-          <Card>
-            <CardContent className="p-6 text-center text-muted-foreground">
-              <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-amber-500" />
-              <p>Failed to load calendar data.</p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="p-6 text-center text-muted-foreground"><AlertTriangle className="h-8 w-8 mx-auto mb-2 text-amber-500" /><p>Failed to load calendar data.</p></CardContent></Card>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-4 h-full">
-            <CalendarGrid
-              items={filteredItems}
-              currentDate={currentDate}
-              selectedDate={selectedDate}
-              onSelectDate={setSelectedDate}
-            />
-            <CalendarSidebar
-              items={selectedItems}
-              selectedDate={selectedDate}
-              upcomingItems={upcomingItems}
-              typeCounts={typeCounts}
-              totalItems={items.length}
-            />
+            <CalendarGrid items={filteredItems} currentDate={currentDate} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+            <CalendarSidebar items={selectedItems} selectedDate={selectedDate} upcomingItems={upcomingItems} typeCounts={typeCounts} totalItems={items.length} />
           </div>
         )}
       </div>

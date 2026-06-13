@@ -94,6 +94,9 @@ export const organizationAchievementSchema: z.ZodType<OrganizationAchievement> =
 
 export const organizationMemberSchema: z.ZodType<OrganizationMember> = z.object({
   id: z.string(),
+  membershipId: z.string().optional(),
+  studentId: z.string().optional(),
+  isPublic: z.boolean().optional(),
   name: z.string(),
   position: z.string(),
   photo: z.string(),

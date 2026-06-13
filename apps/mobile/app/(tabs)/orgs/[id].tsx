@@ -197,7 +197,7 @@ export default function OrgDetailScreen() {
             <View style={styles.metaItem}>
               <Ionicons name="people-outline" size={18} color={accent} />
               <Text style={[styles.metaText, { color: colors.text }]}>
-                {org.members?.length ?? 0} members
+                {org.membershipSize ?? 0} members
               </Text>
             </View>
             <View style={styles.metaItem}>

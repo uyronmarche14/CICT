@@ -1,4 +1,5 @@
-import { Alert, StyleSheet, Switch, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { AttendanceChart } from '@/components/attendance/AttendanceChart';
 import { AttendanceLogCard } from '@/components/attendance/AttendanceLogCard';
@@ -8,7 +9,9 @@ import { LoadingState } from '@/components/feedback/LoadingState';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppScreen } from '@/components/ui/AppScreen';
+import { AppTextInput } from '@/components/ui/AppTextInput';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { StatusPill } from '@/components/ui/StatusPill';
 import { useAttendanceStats } from '@/features/attendance/useAttendanceStats';
 import { useAttendanceHistory } from '@/features/attendance/useAttendanceHistory';
 import { useLogout } from '@/features/settings/useLogout';
@@ -66,6 +69,31 @@ export default function SettingsScreen() {
   const { colors, isDark, toggleDark } = useTheme();
   const logs = useAttendanceHistory();
   const allLogs = logs.data ?? [];
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+
+  const RESULT_FILTERS = [
+    { label: 'All', value: null as string | null },
+    { label: 'Success', value: 'success' },
+    { label: 'Duplicate', value: 'duplicate' },
+    { label: 'Not Registered', value: 'not_registered' },
+    { label: 'Not Eligible', value: 'not_eligible' },
+    { label: 'Invalid QR', value: 'invalid_qr' },
+    { label: 'Event Full', value: 'event_full' },
+    { label: 'Closed', value: 'registration_closed' },
+    { label: 'Denied', value: 'denied' },
+  ] as const;
+
+  const filteredLogs = useMemo(() => {
+    return allLogs.filter((log) => {
+      const eventName = typeof log.eventId === 'object' ? log.eventId.title : '';
+      const matchesSearch = searchQuery
+        ? eventName.toLowerCase().includes(searchQuery.toLowerCase())
+        : true;
+      const matchesFilter = activeFilter ? log.result === activeFilter : true;
+      return matchesSearch && matchesFilter;
+    });
+  }, [allLogs, searchQuery, activeFilter]);
 
   const handleLogout = async () => {
     try {
@@ -99,6 +127,8 @@ export default function SettingsScreen() {
           </View>
         </View>
         {student?.email ? <SettingRow label="Email" value={student.email} /> : null}
+        {student?.phone ? <SettingRow label="Phone" value={student.phone} /> : null}
+        {student?.address ? <SettingRow label="Address" value={student.address} /> : null}
         {student?.programId && typeof student.programId === 'object' ? (
           <SettingRow label="Program" value={student.programId.name ?? student.programId.code ?? ''} />
         ) : null}
@@ -151,17 +181,45 @@ export default function SettingsScreen() {
         </AppCard>
       )}
 
+      <AppTextInput
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        placeholder="Search by event name..."
+      />
+
+      {searchQuery || activeFilter ? (
+        <Text style={[styles.filterCount, { color: colors.textMuted }]}>
+          Showing {filteredLogs.length} of {allLogs.length} entries
+        </Text>
+      ) : null}
+
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterRow}>
+        {RESULT_FILTERS.map((filter) => (
+          <Pressable key={filter.value ?? 'all'} onPress={() => setActiveFilter(filter.value)}>
+            <StatusPill
+              label={filter.label}
+              tone={activeFilter === filter.value ? 'info' : 'neutral'}
+            />
+          </Pressable>
+        ))}
+      </ScrollView>
+
       {allLogs.length === 0 ? (
         <EmptyState
           title="No check-ins yet"
           description="Once you check in to events, your attendance history will appear here."
         />
+      ) : filteredLogs.length === 0 ? (
+        <EmptyState
+          title="No matching entries"
+          description="Try adjusting your search or filter."
+        />
       ) : (
-        allLogs.map((log, index) => (
+        filteredLogs.map((log, index) => (
           <AttendanceLogCard
             key={log._id}
             log={log}
-            isLast={index === allLogs.length - 1}
+            isLast={index === filteredLogs.length - 1}
           />
         ))
       )}
@@ -263,5 +321,12 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: fontSizes.xs,
     fontWeight: '600',
+  },
+  filterCount: {
+    fontSize: fontSizes.xs,
+    fontWeight: '600',
+  },
+  filterRow: {
+    marginVertical: spacing.xs,
   },
 });

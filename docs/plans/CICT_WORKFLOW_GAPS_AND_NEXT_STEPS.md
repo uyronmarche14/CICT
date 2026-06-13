@@ -79,7 +79,8 @@ Immediate focus should be:
 | CICT-MOBILE-GAP-002 | Push notifications | Local notification store and registration exist. | Device delivery verified. | Medium. | Test push registration/delivery with real Expo token. |
 | CICT-MOBILE-GAP-003 | QR offline cache | SecureStore QR cache exists. | Policy-approved expiry and invalidation behavior. | Medium. | Align cache duration with backend `STUDENT_QR_EXPIRE`. |
 | CICT-MOBILE-GAP-004 | Scanner mode | Mobile is student-facing only. | Staff scanner scope explicitly in/out of roadmap. | Low. | Keep staff scanning on web unless stakeholders request mobile scanner. |
-| CICT-MOBILE-GAP-005 | Build pipeline | EAS files/config present in uncommitted worktree. | Clean committed and verified mobile build setup. | Medium. | Review existing mobile/deploy changes, then run EAS validation separately. |
+| CICT-MOBILE-GAP-005 | Build pipeline | EAS files/config present in uncommitted worktree. | Clea
+1n committed and verified mobile build setup. | Medium. | Review existing mobile/deploy changes, then run EAS validation separately. |
 
 ---
 

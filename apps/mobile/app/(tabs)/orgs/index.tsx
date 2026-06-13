@@ -1,24 +1,86 @@
 import { useRouter } from 'expo-router';
-import { Image, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useMemo, useState } from 'react';
 
 import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { LoadingState } from '@/components/feedback/LoadingState';
+import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppScreen } from '@/components/ui/AppScreen';
 import { AppTextInput } from '@/components/ui/AppTextInput';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { StatusPill } from '@/components/ui/StatusPill';
+import { queryKeys } from '@/constants/queryKeys';
 import { useOrganizations } from '@/features/orgs/useOrganizations';
+import { useMyMemberships, useResignFromOrg } from '@/features/memberships/useMemberships';
 import { useTheme } from '@/theme/ThemeContext';
 import { fontSizes, radii, spacing } from '@/theme/tokens';
 import { Ionicons } from '@expo/vector-icons';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Organization } from '@/types/models';
 
 export default function OrgsScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const [search, setSearch] = useState('');
   const orgsQuery = useOrganizations();
+  const membershipsQuery = useMyMemberships();
+
+  const membershipMap = useMemo(() => {
+    const map = new Map<string, { status: string; id: string }>();
+    for (const m of membershipsQuery.data ?? []) {
+      if (m.organizationId) {
+        map.set(m.organizationId as string, { status: m.status, id: m._id });
+      }
+    }
+    return map;
+  }, [membershipsQuery.data]);
+
+  const queryClient = useQueryClient();
+  const resignMutation = useResignFromOrg();
+
+  const orgMap = useMemo(() => {
+    const map = new Map<string, Organization>();
+    for (const org of orgsQuery.data ?? []) {
+      map.set(org.id, org);
+    }
+    return map;
+  }, [orgsQuery.data]);
+
+  const myMemberships = useMemo(() => {
+    const active: typeof membershipsQuery.data = [];
+    const pending: typeof membershipsQuery.data = [];
+    for (const m of membershipsQuery.data ?? []) {
+      if (m.status === 'active') active.push(m);
+      else if (m.status === 'applied' || m.status === 'invited') pending.push(m);
+    }
+    return [...active, ...pending];
+  }, [membershipsQuery.data]);
+
+  const handleResign = (membershipId: string, orgId: string, orgName: string) => {
+    Alert.alert(
+      'Leave Organization',
+      `Are you sure you want to leave ${orgName}?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () =>
+            resignMutation.mutate(
+              { membershipId, orgId },
+              {
+                onSuccess: () => {
+                  queryClient.invalidateQueries({ queryKey: queryKeys.memberships });
+                  queryClient.invalidateQueries({ queryKey: queryKeys.organizations });
+                },
+              }
+            ),
+        },
+      ]
+    );
+  };
 
   const filteredOrgs = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -64,6 +126,56 @@ export default function OrgsScreen() {
         subtitle="Discover student organizations in CICT."
       />
 
+      {myMemberships.length > 0 ? (
+        <View style={styles.myOrgsSection}>
+          <SectionHeader title={`My Organizations (${myMemberships.length})`} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {myMemberships.map((m) => {
+              const org = orgMap.get(m.organizationId as string);
+              if (!org) return null;
+              return (
+                <Pressable
+                  key={m._id}
+                  onPress={() => router.push(`/(tabs)/orgs/${org.id}`)}
+                >
+                  <AppCard variant="elevated" style={styles.myOrgCard}>
+                    {org.logo ? (
+                      <Image source={{ uri: org.logo }} style={styles.myOrgLogo} />
+                    ) : (
+                      <View style={[styles.myOrgLogoPlaceholder, { backgroundColor: org.color?.primary || colors.primary }]}>
+                        <Text style={styles.myOrgLogoInitial}>{org.name[0]}</Text>
+                      </View>
+                    )}
+                    <Text style={[styles.myOrgName, { color: colors.text }]} numberOfLines={1}>
+                      {org.name}
+                    </Text>
+                    {m.position ? (
+                      <Text style={[styles.myOrgPosition, { color: colors.textMuted }]} numberOfLines={1}>
+                        {m.position}
+                      </Text>
+                    ) : null}
+                    <StatusPill
+                      label={m.status === 'active' ? 'Member' : m.status}
+                      tone={m.status === 'active' ? 'success' : 'warning'}
+                    />
+                    {m.status === 'active' ? (
+                      <AppButton
+                        variant="ghost"
+                        loading={resignMutation.isPending}
+                        onPress={() => handleResign(m._id, org.id, org.name)}
+                        style={styles.resignButton}
+                      >
+                        Resign
+                      </AppButton>
+                    ) : null}
+                  </AppCard>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
+
       <AppTextInput
         value={search}
         onChangeText={setSearch}
@@ -102,10 +214,19 @@ export default function OrgsScreen() {
                   </Text>
                   <View style={styles.cardMeta}>
                     <Ionicons name="people-outline" size={14} color={colors.textMuted} />
-                    <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
-                      {org.members?.length ?? 0} members
-                    </Text>
-                  </View>
+                  <Text style={[styles.cardMetaText, { color: colors.textMuted }]}>
+                    {org.membershipSize ?? 0} members
+                  </Text>
+                  {membershipMap.has(org.id) && (
+                    <StatusPill
+                      label={membershipMap.get(org.id)!.status === 'active' ? 'Member' :
+                             membershipMap.get(org.id)!.status === 'applied' ? 'Pending' :
+                             membershipMap.get(org.id)!.status}
+                      tone={membershipMap.get(org.id)!.status === 'active' ? 'success' :
+                            membershipMap.get(org.id)!.status === 'applied' ? 'warning' : 'neutral'}
+                    />
+                  )}
+                </View>
                 </View>
               </View>
             </AppCard>
@@ -175,5 +296,43 @@ const styles = StyleSheet.create({
   },
   cardMetaText: {
     fontSize: fontSizes.xs,
+  },
+  myOrgsSection: {
+    marginBottom: spacing.md,
+  },
+  myOrgCard: {
+    width: 180,
+    marginRight: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  myOrgLogo: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+  },
+  myOrgLogoPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  myOrgLogoInitial: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+  },
+  myOrgName: {
+    fontSize: fontSizes.md,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  myOrgPosition: {
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+  },
+  resignButton: {
+    paddingHorizontal: 0,
   },
 });

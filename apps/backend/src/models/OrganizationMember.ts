@@ -3,6 +3,9 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IOrganizationMemberDocument extends Document {
   organizationId: string;
   userId?: mongoose.Types.ObjectId;
+  membershipId?: mongoose.Types.ObjectId;
+  studentId?: mongoose.Types.ObjectId;
+  isPublic?: boolean;
   id: string;
   name: string;
   position: string;
@@ -71,11 +74,26 @@ const organizationMemberSchema = new Schema<IOrganizationMemberDocument>(
       type: Schema.Types.ObjectId,
       ref: 'User',
     },
+    membershipId: {
+      type: Schema.Types.ObjectId,
+      ref: 'OrganizationMembership',
+      index: true,
+    },
+    studentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Student',
+      index: true,
+    },
+    isPublic: {
+      type: Boolean,
+      default: true,
+      index: true,
+    },
     id: { type: String },
     name: { type: String, required: true },
     position: { type: String, required: true },
-    photo: { type: String, required: true },
-    bio: { type: String, required: true },
+    photo: { type: String, default: '' },
+    bio: { type: String, default: '' },
     joinedDate: String,
     achievements: [String],
     responsibilities: [String],
@@ -143,6 +161,8 @@ const organizationMemberSchema = new Schema<IOrganizationMemberDocument>(
 
 organizationMemberSchema.index({ organizationId: 1, sortOrder: 1 });
 organizationMemberSchema.index({ organizationId: 1, status: 1 });
+organizationMemberSchema.index({ organizationId: 1, membershipId: 1 });
+organizationMemberSchema.index({ organizationId: 1, studentId: 1 });
 
 const OrganizationMember = mongoose.model<IOrganizationMemberDocument>('OrganizationMember', organizationMemberSchema);
 

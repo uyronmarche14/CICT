@@ -3,6 +3,8 @@ import Organization from '../models/Organization';
 import { type AuthRequest } from '../middleware/auth';
 import { AppError } from '../middleware/errorHandler';
 import { pickAllowedFields } from '../utils/allowedFields';
+import { canAccessOrganizationScope } from '../utils/organizationScope';
+import { Permission } from '../types';
 
 const TEMPLATE_ALLOWED = ['name', 'description', 'templateType', 'config', 'color', 'icon'];
 
@@ -42,8 +44,12 @@ export const applyTemplate = async (req: AuthRequest, templateId: string) => {
   if (!template) {throw new AppError('Template not found', 404);}
 
   const { organizationId } = req.body;
-  const org = await Organization.findById(organizationId);
+  const org = await Organization.findById(organizationId).select('id').lean();
   if (!org) {throw new AppError('Organization not found', 404);}
+
+  if (!canAccessOrganizationScope(req.user, org.id, Permission.MANAGE_ORG_TEMPLATES)) {
+    throw new AppError('You do not have permission to apply templates to this organization', 403);
+  }
 
   const updates: Record<string, unknown> = {};
 

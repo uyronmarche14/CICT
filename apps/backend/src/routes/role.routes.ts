@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import * as roleController from '../controllers/role.controller';
 import { authenticate } from '../middleware/auth';
-import { authorize, authorizeAny } from '../middleware/permissions';
+import { authorize, authorizeAnyGlobalOrScoped } from '../middleware/permissions';
 import { logActivity } from '../middleware/activityLogger';
 import { validate } from '../middleware/validate';
 import { Permission } from '../types';
@@ -26,12 +26,12 @@ router.post(
 /**
  * @route   GET /api/roles
  * @desc    Get all roles
- * @access  Private (requires VIEW_ROLE permission)
+ * @access  Private (requires role viewing, role assignment, or organization-admin management permission)
  */
 router.get(
   '/',
   authenticate,
-  authorizeAny(Permission.VIEW_ROLE, Permission.ASSIGN_ROLE),
+  authorizeAnyGlobalOrScoped(Permission.VIEW_ROLE, Permission.ASSIGN_ROLE, Permission.MANAGE_ORG_ADMINS),
   roleController.getAllRoles
 );
 

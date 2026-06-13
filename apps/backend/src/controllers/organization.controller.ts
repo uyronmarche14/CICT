@@ -19,6 +19,8 @@ import {
 import { getOrgActivity } from '../services/activity.service';
 import { getOrgFiles as getStorageFiles, getOrgQuota } from '../services/storage.service';
 import { getOrgCalendar as getCalendarService } from '../services/org-calendar.service';
+import { canAccessOrganizationScope } from '../utils/organizationScope';
+import { Permission } from '../types';
 
 export const getPublicMember = async (req: Request, res: Response) => {
   const memberId = req.params.memberId as string;
@@ -90,6 +92,9 @@ export const uploadImage = async (req: AuthRequest, res: Response) => {
 
 export const getOrgActivityFeed = async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
+  if (!req.user || !canAccessOrganizationScope(req.user, orgId, Permission.VIEW_ORG_ANALYTICS)) {
+    res.status(403).json({ success: false, message: 'Access denied' }); return;
+  }
   const { entityType, action, limit: limitStr } = req.query as Record<string, string | undefined>;
 
   const activities = await getOrgActivity(orgId, {
@@ -103,6 +108,9 @@ export const getOrgActivityFeed = async (req: AuthRequest, res: Response) => {
 
 export const getOrgFiles = async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
+  if (!req.user || !canAccessOrganizationScope(req.user, orgId, Permission.VIEW_ORG_ANALYTICS)) {
+    res.status(403).json({ success: false, message: 'Access denied' }); return;
+  }
   const { mimeType, limit: limitStr, skip: skipStr } = req.query as Record<string, string | undefined>;
 
   const result = await getStorageFiles(orgId, {
@@ -116,13 +124,18 @@ export const getOrgFiles = async (req: AuthRequest, res: Response) => {
 
 export const getOrgStorageQuota = async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
-
+  if (!req.user || !canAccessOrganizationScope(req.user, orgId, Permission.VIEW_ORG_ANALYTICS)) {
+    res.status(403).json({ success: false, message: 'Access denied' }); return;
+  }
   const data = await getOrgQuota(orgId);
   res.json({ success: true, data });
 };
 
 export const getOrgCalendar = async (req: AuthRequest, res: Response) => {
   const { orgId } = req.params;
+  if (!req.user || !canAccessOrganizationScope(req.user, orgId, Permission.VIEW_ORG_ANALYTICS)) {
+    res.status(403).json({ success: false, message: 'Access denied' }); return;
+  }
   const { startDate, endDate } = req.query as Record<string, string | undefined>;
 
   const items = await getCalendarService(orgId, startDate, endDate);

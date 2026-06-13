@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AddToCalendarButton } from '@/components/events/AddToCalendarButton';
 import { EventCountdown } from '@/components/events/EventCountdown';
@@ -117,6 +117,60 @@ export default function EventDetailScreen() {
       </AppCard>
 
       <AddToCalendarButton event={event} />
+
+      {event.feeLabel ? (
+        <>
+          <SectionHeader title="Registration Fee" />
+          <AppCard>
+            <Text style={{ fontSize: 18, fontWeight: '700' }}>
+              {event.feeLabel}
+            </Text>
+          </AppCard>
+        </>
+      ) : null}
+
+      {event.tags && event.tags.length > 0 ? (
+        <>
+          <SectionHeader title="Tags" />
+          <View style={styles.tagsRow}>
+            {event.tags.map((tag: string) => (
+              <StatusPill key={tag} label={tag} tone="neutral" />
+            ))}
+          </View>
+        </>
+      ) : null}
+
+      {event.speakerItems && event.speakerItems.length > 0 ? (
+        <>
+          <SectionHeader title="Speakers" />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            {event.speakerItems.map((speaker, index) => (
+              <AppCard key={index} style={styles.speakerCard}>
+                {speaker.photo?.imageUrl ? (
+                  <Image source={{ uri: speaker.photo.imageUrl }} style={styles.speakerImage} />
+                ) : (
+                  <View style={[styles.speakerImagePlaceholder, { backgroundColor: colors.primary }]}>
+                    <Text style={styles.speakerImageInitial}>{speaker.name[0]}</Text>
+                  </View>
+                )}
+                <Text style={[styles.speakerName, { color: colors.text }]}>{speaker.name}</Text>
+                {speaker.title ? <Text style={[styles.speakerDetail, { color: colors.textMuted }]}>{speaker.title}</Text> : null}
+                {speaker.organization ? <Text style={[styles.speakerDetail, { color: colors.textMuted }]}>{speaker.organization}</Text> : null}
+              </AppCard>
+            ))}
+          </ScrollView>
+        </>
+      ) : null}
+
+      {event.contactName ? (
+        <>
+          <SectionHeader title="Organizer Contact" />
+          <AppCard>
+            <Text style={[styles.bodyText, { color: colors.text }]}>{event.contactName}</Text>
+            {event.contactEmail ? <Text style={[styles.bodyText, { color: colors.textMuted }]}>{event.contactEmail}</Text> : null}
+          </AppCard>
+        </>
+      ) : null}
 
       {event.schedule?.length ? (
         <AppCard>
@@ -277,5 +331,42 @@ const styles = StyleSheet.create({
   cancelButton: {
     alignSelf: 'flex-start',
     paddingHorizontal: 0,
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.xs,
+  },
+  speakerCard: {
+    width: 180,
+    marginRight: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.xs,
+  },
+  speakerImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
+  speakerImagePlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  speakerImageInitial: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  speakerName: {
+    fontSize: fontSizes.md,
+    fontWeight: '800',
+    textAlign: 'center',
+  },
+  speakerDetail: {
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
   },
 });
