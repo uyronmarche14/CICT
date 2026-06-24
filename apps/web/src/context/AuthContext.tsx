@@ -29,8 +29,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const applyAuthProfile = useCallback((authProfile: AuthProfile) => {
     setUser(authProfile.user);
-    setPermissions(authProfile.permissions);
-    setCanAccessAdmin(authProfile.canAccessAdmin);
+    setPermissions(authProfile.adminAccessPolicy?.globalActions ?? authProfile.permissions);
+    setCanAccessAdmin(authProfile.adminAccessPolicy?.canAccessAdmin ?? authProfile.canAccessAdmin);
   }, []);
 
   const clearAuthProfile = useCallback(() => {

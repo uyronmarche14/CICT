@@ -1,11 +1,13 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { renderHook, act } from '@testing-library/react-native';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
+import { useLoginMutation } from '@/features/auth/useLoginMutation';
 
 let mockLogin: jest.Mock;
 jest.mock('@/services/api/auth', () => {
   mockLogin = jest.fn();
   return {
-    authApi: { login: (...args: unknown[]) => mockLogin(...args) },
+    studentAuthApi: { login: (...args: unknown[]) => mockLogin(...args) },
+    adminAuthApi: { login: jest.fn() },
   };
 });
 
@@ -19,8 +21,6 @@ jest.mock('@/store/auth-store', () => {
     },
   };
 });
-
-import { useLoginMutation } from '@/features/auth/useLoginMutation';
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({
@@ -63,13 +63,17 @@ describe('useLoginMutation', () => {
 
     await act(async () => {
       await result.current.mutateAsync({
+        actorType: 'student',
         identifier: 'student@example.com',
         password: 'pass',
       });
     });
 
     expect(mockLogin).toHaveBeenCalledWith('student@example.com', 'pass');
-    expect(mockSetSession).toHaveBeenCalledWith(response);
+    expect(mockSetSession).toHaveBeenCalledWith({
+      actorType: 'student',
+      ...response,
+    });
   });
 
   it('sets error state on failed login', async () => {
@@ -80,6 +84,7 @@ describe('useLoginMutation', () => {
     await act(async () => {
       try {
         await result.current.mutateAsync({
+          actorType: 'student',
           identifier: 'bad',
           password: 'wrong',
         });
@@ -88,7 +93,9 @@ describe('useLoginMutation', () => {
       }
     });
 
-    expect(result.current.isError).toBe(true);
-    expect(result.current.error).toBeDefined();
+    await waitFor(() => {
+      expect(result.current.isError).toBe(true);
+      expect(result.current.error).toBeDefined();
+    });
   });
 });

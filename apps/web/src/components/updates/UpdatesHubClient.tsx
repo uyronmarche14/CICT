@@ -118,7 +118,7 @@ export default function UpdatesHubClient() {
   return (
     <main className="relative min-h-screen bg-background pb-16 pt-24 text-foreground md:pt-28">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute left-[-8%] top-24 h-72 w-72 rounded-full bg-primary/8 blur-3xl" />
+        <div className="absolute left-[-8%] top-24 h-72 w-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-[-4%] h-80 w-80 rounded-full bg-secondary/8 blur-3xl" />
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
       </div>

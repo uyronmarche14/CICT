@@ -29,7 +29,7 @@ export function StatusPill({
   })();
 
   return (
-    <View style={[styles.pill, { backgroundColor: palette.backgroundColor }]}>
+    <View style={[styles.pill, { backgroundColor: palette.backgroundColor, borderColor: colors.hairline }]}>
       <Text style={[styles.label, { color: palette.color }]}>{label}</Text>
     </View>
   );
@@ -41,6 +41,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     paddingVertical: 6,
     borderRadius: radii.pill,
+    borderWidth: 1,
   },
   label: {
     fontSize: fontSizes.xs,

@@ -39,7 +39,7 @@ export default function PublicSectionHeader({
           </span>
           <h2
             className={cn(
-              "text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-bold leading-tight text-transparent md:text-5xl lg:text-6xl",
+              "text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-display font-black leading-tight text-transparent md:text-5xl lg:text-6xl",
               titleClassName
             )}
           >
@@ -75,7 +75,7 @@ export default function PublicSectionHeader({
       </span>
       <h2
         className={cn(
-          "text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-bold leading-tight text-transparent md:text-5xl lg:text-6xl",
+          "text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-display font-black leading-tight text-transparent md:text-5xl lg:text-6xl",
           titleClassName
         )}
       >

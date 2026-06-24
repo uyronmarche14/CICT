@@ -19,13 +19,33 @@ export const announcementAPI = {
     search?: string;
     ownerType?: string;
     organizationId?: string;
+    type?: string;
+    subtype?: string;
+    ctaFilter?: string;
   }) => {
     const response = await api.get<AnnouncementListResponse>('/announcements', { params });
     return response.data;
   },
 
+  getPublic: async (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    type?: string;
+    ownerType?: string;
+    organizationId?: string;
+  }) => {
+    const response = await api.get<AnnouncementListResponse>('/public/announcements', { params });
+    return response.data;
+  },
+
   getById: async (id: string) => {
     const response = await api.get<SingleAnnouncementResponse>(`/announcements/${id}`);
+    return response.data;
+  },
+
+  getPublicById: async (id: string) => {
+    const response = await api.get<SingleAnnouncementResponse>(`/public/announcements/${id}`);
     return response.data;
   },
 

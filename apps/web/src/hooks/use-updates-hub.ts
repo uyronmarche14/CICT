@@ -1,11 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import api from "@/lib/api/axios";
 import {
-  filterOrganizationsWithActivity,
-  parseUpdatesHubFilters,
-  getActiveUpdatesSources,
   type UpdatesHubFilters,
   rankActiveOrganizations,
   selectLatestOfficialUpdate,
@@ -13,7 +9,7 @@ import {
   selectUpcomingEvent,
   UPDATES_HUB_PAGE_SIZE,
 } from "@/lib/updates-hub";
-import type { UpdateFeedItem } from '@cict/contracts/types';
+import { updatesFeatureAPI } from '@/features/updates/api';
 
 export function useUpdatesHub(filters: UpdatesHubFilters) {
   const queryParams = useMemo(() => {
@@ -31,20 +27,11 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
 
   const { data, isLoading, isFetching, error } = useQuery({
     queryKey,
-    queryFn: async () => {
-      const { data: res } = await api.get(`/api/updates?${queryParams}`);
-      return res.data as {
-        items: UpdateFeedItem[];
-        page: number;
-        limit: number;
-        total: number;
-        pages: number;
-      };
-    },
+    queryFn: () => updatesFeatureAPI.getFeed(queryParams),
     staleTime: 30_000,
   });
 
-  const feedItems = data?.items ?? [];
+  const feedItems = useMemo(() => data?.items ?? [], [data?.items]);
   const total = data?.total ?? 0;
   const pages = data?.pages ?? 1;
 

@@ -72,6 +72,52 @@ describe('StudentAuthContext', () => {
     expect(result.current.student?.firstName).toBe('Test');
   });
 
+  it('login accepts additive student response fields without changing web state shape', async () => {
+    server.use(
+      http.post(`${API_URL}/student/auth/login`, () => {
+        return HttpResponse.json({
+          success: true,
+          data: {
+            accessToken: 'student-access-token',
+            refreshToken: 'student-refresh-token',
+            student: {
+              _id: 'student-1',
+              studentNumber: '2020-00001',
+              firstName: 'Test',
+              lastName: 'Student',
+              email: 'test@example.com',
+              phone: '09170000000',
+              address: 'Campus',
+              programId: { _id: 'program-1', code: 'BSIT', name: 'Information Technology' },
+              yearLevelId: { _id: 'year-1', code: '1', label: 'First Year', numericLevel: 1 },
+              sectionId: 'section-1',
+              status: 'active',
+              isActive: true,
+              qrVersion: 1,
+              mobileSessionVersion: 1,
+            },
+          },
+        });
+      })
+    );
+
+    const { result } = renderHook(() => useStudentAuth(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    await act(async () => {
+      await result.current.login('2020-00001', 'password123');
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.student?.studentNumber).toBe('2020-00001');
+    expect(result.current.student?.programId).toEqual({
+      _id: 'program-1',
+      code: 'BSIT',
+      name: 'Information Technology',
+    });
+  });
+
   it('logout clears student state', async () => {
     const { result } = renderHook(() => useStudentAuth(), { wrapper: createWrapper() });
 

@@ -1,5 +1,6 @@
-import ComingSoon from '@/components/ComingSoon';
 import { Metadata } from 'next';
+
+import ContactSection from '@/components/contact/contact-section';
 
 export const metadata: Metadata = {
   title: 'Contact Us | CICT',
@@ -8,9 +9,8 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <ComingSoon 
-      title="Contact Us"
-      description="We are setting up our contact channels. For inquiries, please reach out to us through our official social media pages or visit the CICT office."
-    />
+    <main className="min-h-screen bg-background pt-16">
+      <ContactSection />
+    </main>
   );
 }

@@ -1,3 +1,5 @@
+import * as Notifications from 'expo-notifications';
+
 import { useNotificationStore } from '@/store/notification-store';
 import type { AppNotification } from '@/store/notification-store';
 
@@ -16,8 +18,6 @@ function inferNotificationType(
 }
 
 export function setupNotificationHandler() {
-  const Notifications = require('expo-notifications');
-
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowAlert: true,

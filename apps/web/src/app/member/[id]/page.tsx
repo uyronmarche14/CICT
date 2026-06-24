@@ -89,7 +89,7 @@ export default function MemberProfilePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <article className="max-w-6xl mx-auto px-4 sm:px-6 py-12 sm:py-16 mt-20">
+      <article className="max-w-7xl mx-auto px-4 sm:px-6 py-12 sm:py-16 mt-20">
 
         {/* Back to Organization */}
         <div className="mb-8">
@@ -125,7 +125,7 @@ export default function MemberProfilePage() {
           {/* Profile Info */}
           <div className="space-y-8">
             <div className="space-y-3">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-foreground tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-black text-foreground tracking-tight">
                 {member.name}
               </h1>
               <p

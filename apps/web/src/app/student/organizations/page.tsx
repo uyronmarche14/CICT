@@ -5,20 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Mail, MapPin } from 'lucide-react';
-import api from '@/lib/api/axios';
 import { studentMembershipAPI } from '@/lib/api/student';
 import { appToast } from '@/lib/app-toast';
-import { Organization } from '@/types';
+import { studentOrganizationsFeatureAPI } from '@/features/student-organizations/api';
 
 export default function StudentOrganizationsPage() {
   const queryClient = useQueryClient();
 
   const { data: organizations, isLoading } = useQuery({
     queryKey: ['organizations'],
-    queryFn: async () => {
-      const res = await api.get('/organizations');
-      return res.data.data as Organization[];
-    },
+    queryFn: studentOrganizationsFeatureAPI.list,
   });
 
   const { data: memberships } = useQuery({

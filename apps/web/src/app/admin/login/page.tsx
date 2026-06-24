@@ -1,151 +1,19 @@
 'use client';
 
-import axios from 'axios';
-import { useState, useEffect } from 'react';
-import React from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import api from '@/lib/api/axios';
-import { getApiErrorMessage } from '@/lib/api/errors';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Loader2 } from 'lucide-react';
-import type { AuthProfile } from '@/types';
 
-type InputFieldProps = React.ComponentProps<typeof Input>;
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-type LoginFormValues = z.infer<typeof loginSchema>;
-
-export default function AdminLoginPage() {
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+export default function AdminLoginRedirectPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      router.push('/admin/dashboard');
-    }
-  }, [isAuthenticated, authLoading, router]);
-
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-  });
-
-  const onSubmit = async (data: LoginFormValues) => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await api.post<{ success: boolean; data: AuthProfile }>('/auth/login', data);
-      
-      if (response.data.success) {
-        const authProfile = response.data.data;
-        const { user, canAccessAdmin } = authProfile;
-        
-        if (!user) {
-          console.error('Login response missing user data:', response.data);
-          setError('Invalid server response. Please contact support.');
-          setLoading(false);
-          return;
-        }
-        
-        if (!canAccessAdmin) {
-          setError('Access denied. Admin privileges required.');
-          setLoading(false);
-          return;
-        }
-        
-        login(authProfile);
-      }
-    } catch (err: unknown) {
-      let errorMessage = getApiErrorMessage(err, 'Unable to log in right now. Please try again.');
-
-      if (axios.isAxiosError(err) && err.response?.status === 401) {
-        errorMessage = 'Invalid email or password';
-      }
-
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+    router.replace('/login?tab=admin');
+  }, [router]);
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-gray-50 dark:bg-gray-900">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Admin Login</CardTitle>
-          <CardDescription className="text-center">
-            Enter your credentials to access the dashboard
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              {error && (
-                <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-md dark:bg-red-900/20 dark:border-red-800">
-                  {error}
-                </div>
-              )}
-              
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }: { field: InputFieldProps }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="admin@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }: { field: InputFieldProps }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging in...
-                  </>
-                ) : (
-                  'Login'
-                )}
-              </Button>
-            </form>
-          </Form>
-        </CardContent>
-        <CardFooter className="justify-center">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Protected area. Authorized personnel only.
-          </p>
-        </CardFooter>
-      </Card>
-    </div>
+    <main className="flex min-h-svh items-center justify-center bg-canvas">
+      <Loader2 className="size-8 animate-spin text-primary" />
+    </main>
   );
 }

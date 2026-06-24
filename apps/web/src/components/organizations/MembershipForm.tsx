@@ -22,22 +22,17 @@ import {
 import { Loader2, Search } from 'lucide-react';
 import { DatePicker } from '@/components/ui/DatePicker';
 import { appToast } from '@/lib/app-toast';
-import api from '@/lib/api/axios';
 import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-membership';
+import {
+  organizationsAdminAPI,
+  type StudentSearchResult,
+} from '@/features/organizations-admin/api';
 
 interface MembershipFormProps {
   orgId: string;
   membership?: OrganizationMembership | null;
   onClose: () => void;
   onSuccess: () => void;
-}
-
-interface StudentSearchResult {
-  _id: string;
-  studentNumber: string;
-  firstName: string;
-  lastName: string;
-  profilePhoto?: string;
 }
 
 interface MembershipFormValues {
@@ -59,14 +54,6 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
   const [showDropdown, setShowDropdown] = useState(false);
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  const existingStudent = membership?.studentId && typeof membership.studentId === 'object'
-    ? membership.studentId
-    : null;
-
-  const [selectedStudent, setSelectedStudent] = useState<StudentSearchResult | null>(
-    existingStudent ?? null
-  );
 
   const {
     register,
@@ -110,8 +97,7 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
     searchTimeout.current = setTimeout(async () => {
       try {
         setSearching(true);
-        const response = await api.get('/admin/students', { params: { search: value, limit: 10 } });
-        const students = response.data.data?.students ?? [];
+        const students = await organizationsAdminAPI.searchStudents(value);
         setSearchResults(students);
         setShowDropdown(students.length > 0);
       } catch {
@@ -123,7 +109,6 @@ export default function MembershipForm({ orgId, membership, onClose, onSuccess }
   };
 
   const selectStudent = (student: StudentSearchResult) => {
-    setSelectedStudent(student);
     setValue('studentId', student._id);
     setStudentSearch(`${student.studentNumber} - ${student.firstName} ${student.lastName}`);
     setShowDropdown(false);

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { fontSizes, radii, spacing } from '@/theme/tokens';
+import { radii, spacing } from '@/theme/tokens';
 
 type MonthlyData = {
   month: string;
@@ -14,7 +14,6 @@ type AttendanceChartProps = {
 
 export function AttendanceChart({ data, maxCount }: AttendanceChartProps) {
   const { colors } = useTheme();
-  const barWidth = Math.max(20, Math.min(36, (300 - data.length * 8) / data.length));
 
   return (
     <View style={styles.container}>

@@ -26,16 +26,17 @@ export default function OrgsScreen() {
   const [search, setSearch] = useState('');
   const orgsQuery = useOrganizations();
   const membershipsQuery = useMyMemberships();
+  const memberships = useMemo(() => membershipsQuery.data ?? [], [membershipsQuery.data]);
 
   const membershipMap = useMemo(() => {
     const map = new Map<string, { status: string; id: string }>();
-    for (const m of membershipsQuery.data ?? []) {
+    for (const m of memberships) {
       if (m.organizationId) {
         map.set(m.organizationId as string, { status: m.status, id: m._id });
       }
     }
     return map;
-  }, [membershipsQuery.data]);
+  }, [memberships]);
 
   const queryClient = useQueryClient();
   const resignMutation = useResignFromOrg();
@@ -49,14 +50,14 @@ export default function OrgsScreen() {
   }, [orgsQuery.data]);
 
   const myMemberships = useMemo(() => {
-    const active: typeof membershipsQuery.data = [];
-    const pending: typeof membershipsQuery.data = [];
-    for (const m of membershipsQuery.data ?? []) {
+    const active: typeof memberships = [];
+    const pending: typeof memberships = [];
+    for (const m of memberships) {
       if (m.status === 'active') active.push(m);
       else if (m.status === 'applied' || m.status === 'invited') pending.push(m);
     }
     return [...active, ...pending];
-  }, [membershipsQuery.data]);
+  }, [memberships]);
 
   const handleResign = (membershipId: string, orgId: string, orgName: string) => {
     Alert.alert(
@@ -124,6 +125,7 @@ export default function OrgsScreen() {
       <SectionHeader
         title="Organizations"
         subtitle="Discover student organizations in CICT."
+        branded
       />
 
       {myMemberships.length > 0 ? (

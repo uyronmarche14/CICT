@@ -199,6 +199,42 @@ export const handlers = [
     });
   }),
 
+  http.get(`${API_URL}/updates`, ({ request }) => {
+    const url = new URL(request.url);
+    const org = url.searchParams.get('org');
+    const items =
+      org === 'nonexistent'
+        ? []
+        : [
+            {
+              id: 'news-1',
+              kind: 'news',
+              title: 'Test News',
+              summary: 'Test excerpt',
+              href: '/updates/news/news-1',
+              sortDate: '2025-01-01T00:00:00.000Z',
+              displayDate: 'Jan 1, 2025',
+              ownerType: 'system',
+              organizationId: null,
+              organizationName: null,
+              image: null,
+              priorityOrType: null,
+              meta: [],
+            },
+          ];
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        items,
+        page: 1,
+        limit: 9,
+        total: items.length,
+        pages: 1,
+      },
+    });
+  }),
+
   http.post(`${API_URL}/events`, async ({ request }) => {
     const body = await request.json();
     return HttpResponse.json({

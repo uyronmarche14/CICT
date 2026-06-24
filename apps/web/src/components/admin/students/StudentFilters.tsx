@@ -21,6 +21,7 @@ interface StudentFiltersProps {
   onYearFilterChange: (value: string) => void;
   onSectionFilterChange: (value: string) => void;
   onStatusFilterChange: (value: string) => void;
+  hideStatusFilter?: boolean;
 }
 
 export function StudentFilters({
@@ -37,6 +38,7 @@ export function StudentFilters({
   onYearFilterChange,
   onSectionFilterChange,
   onStatusFilterChange,
+  hideStatusFilter,
 }: StudentFiltersProps) {
   return (
     <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -79,17 +81,19 @@ export function StudentFilters({
           ))}
         </SelectContent>
       </Select>
-      <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-        <SelectTrigger className="w-[160px]">
-          <SelectValue placeholder="All Status" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
-          {Object.values(StudentStatus).map((s) => (
-            <SelectItem key={s} value={s}>{s}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {!hideStatusFilter && (
+        <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Status</SelectItem>
+            {Object.values(StudentStatus).map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 }

@@ -46,13 +46,16 @@ export const csrfProtection = (req: Request, res: Response, next: NextFunction):
   const path = req.path.toLowerCase()
   const csrfExemptAuthRoutes = new Set([
     'POST /api/auth/login',
+    'POST /api/auth/logout',
     'POST /api/auth/forgot-password',
     'POST /api/auth/reset-password',
+    'POST /api/auth/refresh',
     'POST /api/student/auth/register',
     'POST /api/student/auth/login',
     'POST /api/student/auth/forgot-password',
     'POST /api/student/auth/reset-password',
     'POST /api/student/auth/refresh',
+    'POST /api/inquiries',
   ]);
 
   if (csrfExemptAuthRoutes.has(`${req.method} ${path}`)) {

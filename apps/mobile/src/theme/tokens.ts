@@ -1,7 +1,12 @@
 export const colors = {
+  canvas: '#F8F7FF',
   background: '#FFFFFF',
   surface: '#FFFFFF',
+  surfaceSoft: '#F4F1FF',
+  surfaceElevated: '#FFFFFF',
   surfaceMuted: '#F3F3F3',
+  hairline: '#E7E3F6',
+  hairlineStrong: '#D8D0EF',
   border: '#E5E5E5',
   input: '#E5E5E5',
   ring: '#D1D1D1',
@@ -18,12 +23,21 @@ export const colors = {
   warning: '#F59E0B',
   danger: '#EF4444',
   info: '#6366F1',
+  atmosphereViolet: '#C8B8FF',
+  atmosphereRose: '#F5BFDC',
+  atmosphereTeal: '#B8F4E7',
+  shadow: '#2F165F',
 };
 
 export const darkColors = {
+  canvas: '#121017',
   background: '#0F0F0F',
   surface: '#1A1A1A',
+  surfaceSoft: '#1B1724',
+  surfaceElevated: '#1F1A2A',
   surfaceMuted: '#262626',
+  hairline: '#342B47',
+  hairlineStrong: '#44355F',
   border: '#2D2D2D',
   input: '#2D2D2D',
   ring: '#3A3A3A',
@@ -40,6 +54,10 @@ export const darkColors = {
   warning: '#FBBF24',
   danger: '#EF4444',
   info: '#818CF8',
+  atmosphereViolet: '#6E29F6',
+  atmosphereRose: '#F629A8',
+  atmosphereTeal: '#29F6D2',
+  shadow: '#000000',
 };
 
 export const spacing = {
@@ -52,9 +70,10 @@ export const spacing = {
 };
 
 export const radii = {
-  sm: 10,
-  md: 14,
-  lg: 20,
+  xs: 6,
+  sm: 8,
+  md: 12,
+  lg: 16,
   xl: 24,
   pill: 999,
 };

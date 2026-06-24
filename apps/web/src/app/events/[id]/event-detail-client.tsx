@@ -127,7 +127,7 @@ export function EventDetailsPageClient({ id }: { id: string }) {
           <CardContent className="p-6 md:p-8 space-y-6">
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">{event.title}</h1>
+                <h1 className="text-3xl md:text-4xl font-display font-black mb-2">{event.title}</h1>
                 <p className="text-lg text-muted-foreground">{event.excerpt}</p>
               </div>
               <div className="flex flex-col items-end gap-2">

@@ -3,6 +3,7 @@ import type { Permission } from '../enums/user';
 
 export type AdminModuleKey =
   | 'dashboard'
+  | 'scanner'
   | 'organizations'
   | 'users'
   | 'students'
@@ -19,6 +20,15 @@ export type AdminModuleKey =
 export type AdminScopes = {
   global: boolean;
   organizations: string[];
+};
+
+export type AdminAccessPolicy = {
+  canAccessAdmin: boolean;
+  visibleAdminModules: AdminModuleKey[];
+  scopedAdminModulesByOrganization: Record<string, AdminModuleKey[]>;
+  globalActions: Permission[];
+  scopedActionsByOrganization: Record<string, Permission[]>;
+  defaultAdminModule: AdminModuleKey;
 };
 
 export type OrganizationAssignment = {
@@ -47,6 +57,7 @@ export type User = {
   email: string;
   firstName: string;
   lastName: string;
+  studentId?: string | null;
   role: UserRole;
   baseRoleLabel: string;
   customRoleId?: string | null;
@@ -60,6 +71,7 @@ export type User = {
   effectiveRoleKind: 'system' | 'custom';
   effectivePermissions: Permission[];
   canAccessAdmin: boolean;
+  adminAccessPolicy?: AdminAccessPolicy;
   adminScopes?: AdminScopes;
   visibleAdminModules?: AdminModuleKey[];
   scopedAdminModulesByOrganization?: Record<string, AdminModuleKey[]>;
@@ -74,6 +86,7 @@ export type AuthProfile = {
   user: User;
   permissions: Permission[];
   canAccessAdmin: boolean;
+  adminAccessPolicy?: AdminAccessPolicy;
   adminScopes?: AdminScopes;
   visibleAdminModules?: AdminModuleKey[];
   scopedAdminModulesByOrganization?: Record<string, AdminModuleKey[]>;
@@ -98,3 +111,5 @@ export type AuthTokens = {
   accessToken: string;
   refreshToken: string;
 };
+
+export type AdminLoginResponse = AuthTokens & AuthProfile;

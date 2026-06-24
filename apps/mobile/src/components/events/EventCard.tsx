@@ -30,8 +30,8 @@ export function EventCard({
 
   return (
     <Pressable onPress={onPress}>
-      <AppCard style={styles.card}>
-        {imageUrl ? <Image source={{ uri: imageUrl }} style={[styles.image, { backgroundColor: colors.surfaceMuted }]} /> : null}
+      <AppCard variant="elevated" style={styles.card}>
+        {imageUrl ? <Image source={{ uri: imageUrl }} style={[styles.image, { backgroundColor: colors.surfaceSoft }]} /> : null}
 
         <View style={styles.content}>
           <View style={styles.headerRow}>
@@ -47,6 +47,16 @@ export function EventCard({
           <Text style={[styles.meta, { color: colors.textMuted }]}>
             {formatDate(event.startDate)} • {event.location}
           </Text>
+
+          {event.maxAttendees ? (
+            <Text style={[styles.meta, { color: colors.textMuted }]}>
+              {event.registeredCount ?? 0} / {event.maxAttendees} registered
+            </Text>
+          ) : null}
+
+          {event.allowWalkIns ? (
+            <StatusPill label="Walk-ins allowed" tone="warning" />
+          ) : null}
 
           <Text numberOfLines={3} style={[styles.summary, { color: colors.textMuted }]}>
             {event.excerpt}

@@ -7,8 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
-import api from '@/lib/api/axios';
-import type { CalendarItem } from '@cict/contracts/types';
+import { calendarFeatureAPI } from '@/features/calendar/api';
 
 const ALL_TYPES = ['event', 'meeting', 'task', 'vote', 'resource'];
 
@@ -26,16 +25,16 @@ export default function AdminCalendarPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['calendar-feed', monthStart.toISOString(), monthEnd.toISOString()],
-    queryFn: async () => {
-      const { data: res } = await api.get('/calendar/feed', {
-        params: { startDate: monthStart.toISOString(), endDate: monthEnd.toISOString(), limit: 200 },
-      });
-      return (res.data as { items: CalendarItem[]; total: number }).items;
-    },
+    queryFn: () =>
+      calendarFeatureAPI.getAdminFeed({
+        startDate: monthStart.toISOString(),
+        endDate: monthEnd.toISOString(),
+        limit: 200,
+      }),
     staleTime: 120_000,
   });
 
-  const items = data ?? [];
+  const items = useMemo(() => data ?? [], [data]);
 
   const selectedItems = useMemo(() => {
     if (!selectedDate) return [];

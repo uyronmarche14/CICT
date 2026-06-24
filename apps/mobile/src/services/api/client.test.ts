@@ -1,3 +1,5 @@
+import { client } from '@/services/api/client';
+
 let mockRequestInterceptor: Function;
 let mockResponseErrorInterceptor: Function;
 
@@ -7,6 +9,26 @@ jest.mock('axios', () => {
 
   return {
     __esModule: true,
+    create: jest.fn(() =>
+      Object.assign(main, {
+        get: jest.fn(),
+        post,
+        interceptors: {
+          request: {
+            use: jest.fn((fn: Function) => {
+              mockRequestInterceptor = fn;
+              return 0;
+            }),
+          },
+          response: {
+            use: jest.fn((_: Function, err: Function) => {
+              mockResponseErrorInterceptor = err;
+              return 0;
+            }),
+          },
+        },
+      }),
+    ),
     default: {
       create: jest.fn(() =>
         Object.assign(main, {
@@ -47,8 +69,10 @@ const mockStorageClear = jest.fn().mockResolvedValue(undefined);
 jest.mock('@/services/storage/secure-store', () => ({
   sessionStorage: {
     clear: () => mockStorageClear(),
+    saveSession: jest.fn(),
     saveTokens: jest.fn(),
     getTokens: jest.fn(),
+    getSession: jest.fn(),
   },
 }));
 
@@ -56,13 +80,13 @@ jest.mock('@/config/env', () => ({
   env: { apiUrl: 'http://test-api/api' },
 }));
 
-import { client } from '@/services/api/client';
-
 function defaultState() {
   return {
     accessToken: null,
     refreshToken: null,
+    actorType: 'student',
     student: null,
+    adminProfile: null,
     clearSession: mockClearSession,
     setSession: mockSetSession,
   };
@@ -167,11 +191,65 @@ describe('api client', () => {
       expect(mockPost).toHaveBeenCalledWith('/student/auth/refresh', {
         refreshToken: 'old-rt',
       });
+      expect(mockSetSession).toHaveBeenCalledWith({
+        actorType: 'student',
+        accessToken: 'new-at',
+        refreshToken: 'new-rt',
+        student: null,
+      });
       expect(configHeaders.set).toHaveBeenCalledWith(
         'Authorization',
         'Bearer new-at',
       );
       expect(mockAxiosFn).toHaveBeenCalled();
+    });
+
+    it('uses admin refresh path for admin sessions', async () => {
+      const state = defaultState();
+      (state as any).accessToken = 'old-at';
+      (state as any).refreshToken = 'old-rt';
+      (state as any).actorType = 'admin';
+      (state as any).adminProfile = {
+        user: { id: 'u1', email: 'admin@example.com', effectivePermissions: [] },
+        permissions: [],
+        canAccessAdmin: true,
+      };
+      mockGetState.mockReturnValue(state);
+
+      const mockPost = client.post as jest.Mock;
+      const mockAxiosFn = client as unknown as jest.Mock;
+
+      mockPost.mockResolvedValue({
+        data: {
+          data: {
+            accessToken: 'new-at',
+            refreshToken: 'new-rt',
+            user: { id: 'u1', email: 'admin@example.com', effectivePermissions: [] },
+            permissions: [],
+            canAccessAdmin: true,
+          },
+        },
+      });
+
+      mockAxiosFn.mockResolvedValue({ data: 'retry-success' });
+
+      const error = {
+        response: { status: 401 },
+        config: { headers: { set: jest.fn() } },
+      };
+
+      await mockResponseErrorInterceptor!(error);
+
+      expect(mockPost).toHaveBeenCalledWith('/auth/refresh', {
+        refreshToken: 'old-rt',
+      });
+      expect(mockSetSession).toHaveBeenCalledWith(
+        expect.objectContaining({
+          actorType: 'admin',
+          accessToken: 'new-at',
+          refreshToken: 'new-rt',
+        }),
+      );
     });
 
     it('clears session when refresh fails', async () => {

@@ -11,38 +11,40 @@ export function AppCard({
   style,
   variant = 'default',
 }: PropsWithChildren<{ style?: ViewStyle; variant?: CardVariant }>) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   const variantStyle = useMemo(() => {
     switch (variant) {
       case 'elevated':
         return {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-          shadowColor: '#6E29F6',
+          backgroundColor: colors.surfaceElevated,
+          borderColor: colors.hairline,
+          shadowColor: colors.shadow,
           shadowOpacity: 0.08,
-          shadowRadius: 24,
-          shadowOffset: { width: 0, height: 12 },
-          elevation: 4,
+          shadowRadius: 22,
+          shadowOffset: { width: 0, height: 10 },
+          elevation: 3,
         };
       case 'glass':
         return {
-          backgroundColor: isDark ? 'rgba(30,30,40,0.7)' : 'rgba(255,255,255,0.7)',
-          borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.3)',
-          shadowOpacity: 0.05,
-          shadowRadius: 18,
-          elevation: 2,
+          backgroundColor: colors.surfaceSoft,
+          borderColor: colors.hairline,
+          shadowColor: colors.shadow,
+          shadowOpacity: 0.04,
+          shadowRadius: 16,
+          elevation: 1,
         };
       default:
         return {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
+          backgroundColor: colors.surfaceElevated,
+          borderColor: colors.hairline,
+          shadowColor: colors.shadow,
           shadowOpacity: 0.05,
-          shadowRadius: 18,
+          shadowRadius: 16,
           elevation: 2,
         };
     }
-  }, [variant, colors, isDark]);
+  }, [variant, colors]);
 
   return <View style={[styles.base, variantStyle, style]}>{children}</View>;
 }

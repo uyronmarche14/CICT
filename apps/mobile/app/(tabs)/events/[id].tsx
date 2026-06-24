@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { AddToCalendarButton } from '@/components/events/AddToCalendarButton';
 import { EventCountdown } from '@/components/events/EventCountdown';
@@ -20,7 +20,7 @@ import {
 import { useStudentEvent, useStudentRegistration } from '@/features/events/useStudentEvent';
 import { useTheme } from '@/theme/ThemeContext';
 import { fontSizes, radii, spacing } from '@/theme/tokens';
-import { formatDate, stripHtml } from '@/utils/format';
+import { formatDate, formatDateTime, stripHtml } from '@/utils/format';
 import { getErrorMessage } from '@/utils/error';
 import { hapticSuccess } from '@/utils/haptics';
 import { scheduleEventReminder, cancelEventReminder } from '@/services/notifications/local-reminders';
@@ -96,6 +96,18 @@ export default function EventDetailScreen() {
         <Image source={{ uri: event.coverImage?.imageUrl || event.imageUrl }} style={[styles.heroImage, { backgroundColor: colors.surfaceMuted }]} />
       ) : null}
 
+      {event.gallery && event.gallery.length > 0 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.galleryRow}>
+          {event.gallery.map((img, i) => (
+            <Image
+              key={i}
+              source={{ uri: img.imageUrl }}
+              style={[styles.galleryImage, { backgroundColor: colors.surfaceMuted }]}
+            />
+          ))}
+        </ScrollView>
+      ) : null}
+
       <SectionHeader title={event.title} subtitle={`${formatDate(event.startDate)} • ${event.location}`} />
 
       <View style={styles.statusRow}>
@@ -105,6 +117,9 @@ export default function EventDetailScreen() {
         ) : (
           <StatusPill label={event.isRegistrationOpen ? 'Open for registration' : 'Registration closed'} tone={event.isRegistrationOpen ? 'warning' : 'danger'} />
         )}
+        {event.allowWalkIns ? (
+          <StatusPill label="Walk-ins allowed" tone="warning" />
+        ) : null}
       </View>
 
       {!isEventPast ? <EventCountdown targetDate={event.startDate} /> : null}
@@ -117,6 +132,20 @@ export default function EventDetailScreen() {
       </AppCard>
 
       <AddToCalendarButton event={event} />
+
+      {event.maxAttendees ? (
+        <AppCard>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Capacity</Text>
+          <Text style={[styles.bodyText, { color: colors.text }]}>
+            {event.registeredCount ?? 0} / {event.maxAttendees} filled
+          </Text>
+          {event.checkedInCount != null ? (
+            <Text style={[styles.bodyText, { color: colors.textMuted }]}>
+              {event.checkedInCount} checked in
+            </Text>
+          ) : null}
+        </AppCard>
+      ) : null}
 
       {event.feeLabel ? (
         <>
@@ -168,6 +197,34 @@ export default function EventDetailScreen() {
           <AppCard>
             <Text style={[styles.bodyText, { color: colors.text }]}>{event.contactName}</Text>
             {event.contactEmail ? <Text style={[styles.bodyText, { color: colors.textMuted }]}>{event.contactEmail}</Text> : null}
+          </AppCard>
+        </>
+      ) : null}
+
+      {event.venueDetails ? (
+        <>
+          <SectionHeader title="Venue" />
+          <AppCard>
+            {event.venueDetails.name ? (
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{event.venueDetails.name}</Text>
+            ) : null}
+            {event.location ? (
+              <Text style={[styles.bodyText, { color: colors.textMuted }]}>{event.location}</Text>
+            ) : null}
+            {event.venueDetails.room ? (
+              <Text style={[styles.bodyText, { color: colors.textMuted }]}>Room {event.venueDetails.room}</Text>
+            ) : null}
+            {event.venueDetails.capacity ? (
+              <Text style={[styles.bodyText, { color: colors.textMuted }]}>Capacity: {event.venueDetails.capacity}</Text>
+            ) : null}
+            {event.venueDetails.accessibility ? (
+              <Text style={[styles.bodyText, { color: colors.textMuted }]}>{event.venueDetails.accessibility}</Text>
+            ) : null}
+            {event.mapUrl ? (
+              <AppButton variant="secondary" onPress={() => Linking.openURL(event.mapUrl!)}>
+                Open in Maps
+              </AppButton>
+            ) : null}
           </AppCard>
         </>
       ) : null}
@@ -232,9 +289,11 @@ export default function EventDetailScreen() {
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Registration</Text>
           {event.isRegistrationOpen ? (
             <View style={styles.actionsColumn}>
-              <Text style={[styles.bodyText, { color: colors.textMuted }]}>
-                Registration is currently open for eligible students.
-              </Text>
+              {event.registrationCloseAt ? (
+                <Text style={[styles.bodyText, { color: colors.textMuted }]}>
+                  Registration closes {formatDateTime(event.registrationCloseAt)}
+                </Text>
+              ) : null}
               <AppButton loading={registerMutation.isPending} onPress={handleRegister}>
                 Register now
               </AppButton>
@@ -368,5 +427,14 @@ const styles = StyleSheet.create({
   speakerDetail: {
     fontSize: fontSizes.xs,
     textAlign: 'center',
+  },
+  galleryRow: {
+    marginTop: spacing.sm,
+  },
+  galleryImage: {
+    width: 120,
+    height: 90,
+    borderRadius: radii.md,
+    marginRight: spacing.sm,
   },
 });

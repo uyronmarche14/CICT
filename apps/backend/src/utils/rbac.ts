@@ -3,6 +3,7 @@ import User from '../models/User';
 import { getResolvedOrganizationAssignmentsForUser } from './organizationScope';
 import {
   AdminModule,
+  IAdminAccessPolicy,
   IAdminScopes,
   IAuthenticatedUser,
   IResolvedOrganizationAssignment,
@@ -25,6 +26,7 @@ export interface SerializedAuthUser {
   email: string;
   firstName: string;
   lastName: string;
+  studentId?: string | null;
   role: UserRole;
   baseRoleLabel: string;
   customRoleId: string | null;
@@ -38,6 +40,7 @@ export interface SerializedAuthUser {
   effectiveRoleKind: 'system' | 'custom';
   effectivePermissions: Permission[];
   canAccessAdmin: boolean;
+  adminAccessPolicy: IAdminAccessPolicy;
   adminScopes: IAdminScopes;
   visibleAdminModules: AdminModule[];
   scopedAdminModulesByOrganization: IScopedAdminModulesByOrganization;
@@ -123,21 +126,74 @@ export const getSystemRoleCatalog = (): SystemRoleDefinition[] => SYSTEM_ROLE_DE
 
 export const ADMIN_ENTRY_PERMISSIONS: Permission[] = [
   Permission.VIEW_USERS,
+  Permission.CREATE_USER,
+  Permission.EDIT_USER,
+  Permission.DELETE_USER,
+  Permission.SET_USER_STATUS,
   Permission.VIEW_STUDENT,
+  Permission.CREATE_STUDENT,
+  Permission.EDIT_STUDENT,
+  Permission.SET_STUDENT_STATUS,
   Permission.VIEW_ACADEMIC_GROUPS,
+  Permission.MANAGE_ACADEMIC_GROUPS,
   Permission.VIEW_ROLE,
+  Permission.CREATE_ROLE,
+  Permission.EDIT_ROLE,
+  Permission.DELETE_ROLE,
+  Permission.ASSIGN_ROLE,
   Permission.VIEW_ORGANIZATION,
+  Permission.CREATE_ORGANIZATION,
+  Permission.EDIT_ORGANIZATION,
+  Permission.DELETE_ORGANIZATION,
   Permission.VIEW_MEMBER,
+  Permission.CREATE_MEMBER,
+  Permission.EDIT_MEMBER,
+  Permission.DELETE_MEMBER,
+  Permission.MANAGE_MEMBER_ROLES,
   Permission.VIEW_NEWS,
+  Permission.CREATE_NEWS,
+  Permission.EDIT_NEWS,
+  Permission.DELETE_NEWS,
+  Permission.PUBLISH_NEWS,
+  Permission.ARCHIVE_NEWS,
   Permission.VIEW_ANNOUNCEMENT,
+  Permission.CREATE_ANNOUNCEMENT,
+  Permission.EDIT_ANNOUNCEMENT,
+  Permission.DELETE_ANNOUNCEMENT,
+  Permission.PUBLISH_ANNOUNCEMENT,
+  Permission.ARCHIVE_ANNOUNCEMENT,
   Permission.VIEW_EVENT,
+  Permission.CREATE_EVENT,
+  Permission.EDIT_EVENT,
+  Permission.DELETE_EVENT,
+  Permission.PUBLISH_EVENT,
+  Permission.CANCEL_EVENT,
+  Permission.COMPLETE_EVENT,
+  Permission.VIEW_EVENT_REGISTRATIONS,
+  Permission.MANAGE_EVENT_REGISTRATIONS,
+  Permission.SCAN_EVENT_ATTENDANCE,
+  Permission.APPROVE_CONTENT,
+  Permission.REJECT_CONTENT,
   Permission.VIEW_PROCESS,
+  Permission.CREATE_PROCESS,
+  Permission.EDIT_PROCESS,
+  Permission.COMMENT_PROCESS,
+  Permission.APPROVE_PROCESS_STEP,
+  Permission.VIEW_LOGS,
   Permission.MANAGE_SETTINGS,
   Permission.MANAGE_ORG_TASKS,
   Permission.MANAGE_ORG_MEETINGS,
   Permission.MANAGE_ORG_VOTES,
   Permission.MANAGE_ORG_BUDGET,
   Permission.MANAGE_ORG_TEMPLATES,
+  Permission.VIEW_ORG_ANALYTICS,
+  Permission.MANAGE_ORG_PARTNERSHIPS,
+  Permission.MANAGE_ORG_COLLABORATION,
+  Permission.SHARE_CONTENT_CROSS_ORG,
+  Permission.MANAGE_ORG_TASK_FORCES,
+  Permission.MANAGE_ORG_RESOURCE_POOLING,
+  Permission.MANAGE_ORG_MENTORSHIP,
+  Permission.MANAGE_ORG_ADMINS,
 ];
 
 export const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
@@ -168,7 +224,8 @@ const ORGANIZATION_MODULE_PERMISSIONS: Permission[] = [
   ...ORGANIZATION_MANAGEMENT_PERMISSIONS,
 ];
 
-const ADMIN_MODULE_PERMISSION_MAP: Record<Exclude<AdminModule, 'dashboard'>, Permission[]> = {
+const ADMIN_MODULE_POLICY: Record<Exclude<AdminModule, 'dashboard'>, Permission[]> = {
+  scanner: [Permission.SCAN_EVENT_ATTENDANCE],
   organizations: ORGANIZATION_MODULE_PERMISSIONS,
   users: [
     Permission.VIEW_USERS,
@@ -193,6 +250,8 @@ const ADMIN_MODULE_PERMISSION_MAP: Record<Exclude<AdminModule, 'dashboard'>, Per
     Permission.PUBLISH_EVENT,
     Permission.CANCEL_EVENT,
     Permission.COMPLETE_EVENT,
+    Permission.VIEW_EVENT_REGISTRATIONS,
+    Permission.MANAGE_EVENT_REGISTRATIONS,
   ],
   news: [
     Permission.VIEW_NEWS,
@@ -237,22 +296,44 @@ const ADMIN_MODULE_PERMISSION_MAP: Record<Exclude<AdminModule, 'dashboard'>, Per
 
 type ScopedAdminModule = Extract<
   AdminModule,
-  'organizations' | 'events' | 'news' | 'announcements'
+  'scanner' | 'organizations' | 'students' | 'events' | 'news' | 'announcements' | 'approvals'
 >;
 
 const SCOPED_MODULES: ScopedAdminModule[] = [
+  'scanner',
   'organizations',
+  'students',
   'events',
   'news',
   'announcements',
+  'approvals',
 ];
 
 const SCOPED_ADMIN_MODULE_PERMISSION_MAP: Record<ScopedAdminModule, Permission[]> = {
+  scanner: ADMIN_MODULE_POLICY.scanner,
   organizations: ORGANIZATION_MANAGEMENT_PERMISSIONS,
-  events: ADMIN_MODULE_PERMISSION_MAP.events,
-  news: ADMIN_MODULE_PERMISSION_MAP.news,
-  announcements: ADMIN_MODULE_PERMISSION_MAP.announcements,
+  students: ADMIN_MODULE_POLICY.students,
+  events: ADMIN_MODULE_POLICY.events,
+  news: ADMIN_MODULE_POLICY.news,
+  announcements: ADMIN_MODULE_POLICY.announcements,
+  approvals: ADMIN_MODULE_POLICY.approvals,
 };
+
+const ADMIN_DEFAULT_MODULE_PRIORITY: AdminModule[] = [
+  'scanner',
+  'events',
+  'approvals',
+  'students',
+  'organizations',
+  'users',
+  'news',
+  'announcements',
+  'roles',
+  'processes',
+  'logs',
+  'settings',
+  'dashboard',
+];
 
 const assignmentHasAnyPermission = (
   assignment: Pick<IResolvedOrganizationAssignment, 'permissions'>,
@@ -292,13 +373,23 @@ export const canAccessAdminPanel = (
 const deriveModulesFromPermissions = (
   permissions: Permission[]
 ): Array<Exclude<AdminModule, 'dashboard'>> =>
-  (Object.entries(ADMIN_MODULE_PERMISSION_MAP) as Array<
+  (Object.entries(ADMIN_MODULE_POLICY) as Array<
     [Exclude<AdminModule, 'dashboard'>, Permission[]]
   >)
     .filter(([, modulePermissions]) =>
       modulePermissions.some((permission) => permissions.includes(permission))
     )
     .map(([module]) => module);
+
+const uniquePermissions = (permissions: Permission[]): Permission[] => Array.from(new Set(permissions));
+
+const deriveScopedActionsByOrganization = (
+  organizationAssignments: IResolvedOrganizationAssignment[] = []
+): Record<string, Permission[]> =>
+  organizationAssignments.reduce<Record<string, Permission[]>>((accumulator, assignment) => {
+    accumulator[assignment.organizationId] = uniquePermissions(assignment.permissions);
+    return accumulator;
+  }, {});
 
 export const deriveScopedAdminModulesByOrganization = (
   organizationAssignments: IResolvedOrganizationAssignment[] = []
@@ -349,6 +440,28 @@ export const deriveVisibleAdminModules = (
   }
 
   return Array.from(modules);
+};
+
+export const deriveAdminAccessPolicy = (
+  permissions: Permission[],
+  organizationAssignments: IResolvedOrganizationAssignment[] = []
+): IAdminAccessPolicy => {
+  const visibleAdminModules = deriveVisibleAdminModules(permissions, organizationAssignments);
+  const scopedAdminModulesByOrganization =
+    deriveScopedAdminModulesByOrganization(organizationAssignments);
+  const canAccessAdmin = canAccessAdminPanel(permissions, organizationAssignments);
+  const defaultAdminModule =
+    ADMIN_DEFAULT_MODULE_PRIORITY.find((module) => visibleAdminModules.includes(module)) ??
+    'settings';
+
+  return {
+    canAccessAdmin,
+    visibleAdminModules,
+    scopedAdminModulesByOrganization,
+    globalActions: uniquePermissions(permissions),
+    scopedActionsByOrganization: deriveScopedActionsByOrganization(organizationAssignments),
+    defaultAdminModule,
+  };
 };
 
 export const resolvePermissionsForRoleContext = async (
@@ -451,15 +564,15 @@ export const buildAuthenticatedUser = async (
     String(user._id)
   );
   const adminScopes = deriveAdminScopes(permissions, organizationAssignments);
-  const visibleAdminModules = deriveVisibleAdminModules(permissions, organizationAssignments);
-  const scopedAdminModulesByOrganization =
-    deriveScopedAdminModulesByOrganization(organizationAssignments);
+  const adminAccessPolicy = deriveAdminAccessPolicy(permissions, organizationAssignments);
 
   const result: IAuthenticatedUser = {
     userId: String(user._id),
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
+    studentId:
+      (user.studentId as { toString?: () => string } | undefined)?.toString?.() ?? undefined,
     role: user.role,
     customRole: customRoleId ?? undefined,
     customRoleDetails: serializedCustomRole,
@@ -467,10 +580,11 @@ export const buildAuthenticatedUser = async (
     baseRoleLabel: getSystemRoleLabel(user.role),
     effectiveRoleLabel,
     effectiveRoleKind: serializedCustomRole ? 'custom' : 'system',
-    canAccessAdmin: canAccessAdminPanel(permissions, organizationAssignments),
+    canAccessAdmin: adminAccessPolicy.canAccessAdmin,
+    adminAccessPolicy,
     adminScopes,
-    visibleAdminModules,
-    scopedAdminModulesByOrganization,
+    visibleAdminModules: adminAccessPolicy.visibleAdminModules,
+    scopedAdminModulesByOrganization: adminAccessPolicy.scopedAdminModulesByOrganization,
     organizationAssignments,
     isActive: user.isActive,
   };
@@ -494,18 +608,20 @@ export const serializeAuthUser = async (
       getDefaultPermissions(user.role);
     const organizationAssignments = user.organizationAssignments ?? [];
     const adminScopes = user.adminScopes ?? deriveAdminScopes(effectivePermissions, organizationAssignments);
+    const adminAccessPolicy =
+      user.adminAccessPolicy ?? deriveAdminAccessPolicy(effectivePermissions, organizationAssignments);
     const visibleAdminModules =
-      user.visibleAdminModules ??
-      deriveVisibleAdminModules(effectivePermissions, organizationAssignments);
+      user.visibleAdminModules ?? adminAccessPolicy.visibleAdminModules;
     const scopedAdminModulesByOrganization =
       user.scopedAdminModulesByOrganization ??
-      deriveScopedAdminModulesByOrganization(organizationAssignments);
+      adminAccessPolicy.scopedAdminModulesByOrganization;
 
     return {
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      studentId: user.studentId ?? null,
       role: user.role,
       baseRoleLabel: user.baseRoleLabel ?? getSystemRoleLabel(user.role),
       customRoleId: user.customRoleId,
@@ -513,8 +629,8 @@ export const serializeAuthUser = async (
       effectiveRoleLabel: user.effectiveRoleLabel ?? customRole?.name ?? getSystemRoleLabel(user.role),
       effectiveRoleKind: user.effectiveRoleKind ?? (customRole ? 'custom' : 'system'),
       effectivePermissions,
-      canAccessAdmin:
-        user.canAccessAdmin ?? canAccessAdminPanel(effectivePermissions, organizationAssignments),
+      canAccessAdmin: user.canAccessAdmin ?? adminAccessPolicy.canAccessAdmin,
+      adminAccessPolicy,
       adminScopes,
       visibleAdminModules,
       scopedAdminModulesByOrganization,
@@ -526,17 +642,19 @@ export const serializeAuthUser = async (
   if ('userId' in user) {
     const organizationAssignments = user.organizationAssignments ?? [];
     const adminScopes = user.adminScopes ?? deriveAdminScopes(user.permissions, organizationAssignments);
+    const adminAccessPolicy =
+      user.adminAccessPolicy ?? deriveAdminAccessPolicy(user.permissions, organizationAssignments);
     const visibleAdminModules =
-      user.visibleAdminModules ??
-      deriveVisibleAdminModules(user.permissions, organizationAssignments);
+      user.visibleAdminModules ?? adminAccessPolicy.visibleAdminModules;
     const scopedAdminModulesByOrganization =
       user.scopedAdminModulesByOrganization ??
-      deriveScopedAdminModulesByOrganization(organizationAssignments);
+      adminAccessPolicy.scopedAdminModulesByOrganization;
     return {
       id: user.userId,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
+      studentId: user.studentId ?? null,
       role: user.role,
       baseRoleLabel: user.baseRoleLabel ?? getSystemRoleLabel(user.role),
       customRoleId: user.customRole ?? null,
@@ -544,7 +662,8 @@ export const serializeAuthUser = async (
       effectiveRoleLabel: user.effectiveRoleLabel ?? customRole?.name ?? getSystemRoleLabel(user.role),
       effectiveRoleKind: user.effectiveRoleKind ?? (customRole ? 'custom' : 'system'),
       effectivePermissions: user.permissions,
-      canAccessAdmin: user.canAccessAdmin,
+      canAccessAdmin: user.canAccessAdmin ?? adminAccessPolicy.canAccessAdmin,
+      adminAccessPolicy,
       adminScopes,
       visibleAdminModules,
       scopedAdminModulesByOrganization,
@@ -557,14 +676,17 @@ export const serializeAuthUser = async (
     ((user.customRole as { toString?: () => string } | undefined)?.toString?.() ?? null);
   const effectivePermissions = customRole?.permissions ?? getDefaultPermissions(user.role);
   const adminScopes = deriveAdminScopes(effectivePermissions, []);
-  const visibleAdminModules = deriveVisibleAdminModules(effectivePermissions, []);
-  const scopedAdminModulesByOrganization = deriveScopedAdminModulesByOrganization([]);
+  const adminAccessPolicy = deriveAdminAccessPolicy(effectivePermissions, []);
+  const visibleAdminModules = adminAccessPolicy.visibleAdminModules;
+  const scopedAdminModulesByOrganization = adminAccessPolicy.scopedAdminModulesByOrganization;
 
   return {
     id: String(user._id),
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
+    studentId:
+      (user.studentId as { toString?: () => string } | undefined)?.toString?.() ?? null,
     role: user.role,
     baseRoleLabel: getSystemRoleLabel(user.role),
     customRoleId,
@@ -572,7 +694,8 @@ export const serializeAuthUser = async (
     effectiveRoleLabel: customRole?.name ?? getSystemRoleLabel(user.role),
     effectiveRoleKind: customRole ? 'custom' : 'system',
     effectivePermissions,
-    canAccessAdmin: canAccessAdminPanel(effectivePermissions),
+    canAccessAdmin: adminAccessPolicy.canAccessAdmin,
+    adminAccessPolicy,
     adminScopes,
     visibleAdminModules,
     scopedAdminModulesByOrganization,

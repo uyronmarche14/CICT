@@ -1,5 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor, act } from '@testing-library/react-native';
+import {
+  useStudentEvents,
+  useRegisterForEvent,
+  useCancelEventRegistration,
+} from '@/features/events/useStudentEvents';
 
 const mockGetEligibleEvents = jest.fn();
 const mockRegister = jest.fn();
@@ -16,12 +21,6 @@ jest.mock('@/services/api/events', () => ({
 jest.mock('@/services/storage/cache', () => ({
   fetchWithCache: jest.fn((_key: string, fetcher: () => unknown) => fetcher()),
 }));
-
-import {
-  useStudentEvents,
-  useRegisterForEvent,
-  useCancelEventRegistration,
-} from '@/features/events/useStudentEvents';
 
 const mockEvents = [
   {

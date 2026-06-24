@@ -55,47 +55,48 @@ export default function EventsScreen() {
 
   return (
     <AppScreen
-      refreshControl={
-        <RefreshControl
-          refreshing={eventsQuery.isRefetching}
-          onRefresh={() => {
-            void eventsQuery.refetch();
-          }}
-        />
-      }
-    >
-      {!netInfo.isConnected ? <ConnectivityNotice /> : null}
-
-      <SectionHeader
-        title="Eligible Events"
-        subtitle="Find events you can register for with your student account."
-      />
-
-      <AppTextInput
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Search by title or location"
-      />
-
-      <Text style={[styles.helper, { color: colors.textMuted }]}>
-        {filteredEvents.length} event{filteredEvents.length === 1 ? '' : 's'} available
-      </Text>
-
-      {filteredEvents.length === 0 ? (
-        <EmptyState
-          title="No matching events"
-          description="Try another search or check again later for new published events."
-        />
-      ) : (
-        filteredEvents.map((event) => (
-          <EventCard
-            key={event._id}
-            event={event}
-            onPress={() => router.push(`/(tabs)/events/${event._id}`)}
+        refreshControl={
+          <RefreshControl
+            refreshing={eventsQuery.isRefetching}
+            onRefresh={() => {
+              void eventsQuery.refetch();
+            }}
           />
-        ))
-      )}
-    </AppScreen>
+        }
+      >
+        {!netInfo.isConnected ? <ConnectivityNotice /> : null}
+
+        <SectionHeader
+          title="Eligible Events"
+          subtitle="Find events you can register for with your student account."
+          branded
+        />
+
+        <AppTextInput
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search by title or location"
+        />
+
+        <Text style={[styles.helper, { color: colors.textMuted }]}>
+          {filteredEvents.length} event{filteredEvents.length === 1 ? '' : 's'} available
+        </Text>
+
+        {filteredEvents.length === 0 ? (
+          <EmptyState
+            title="No matching events"
+            description="Try another search or check again later for new published events."
+          />
+        ) : (
+          filteredEvents.map((event) => (
+            <EventCard
+              key={event._id}
+              event={event}
+              onPress={() => router.push(`/(tabs)/events/${event._id}`)}
+            />
+          ))
+        )}
+      </AppScreen>
   );
 }
 

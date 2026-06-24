@@ -19,7 +19,7 @@ export default function ScrollingGallery({ images, accentColor }: ScrollingGalle
     return (
         <div className="relative w-screen left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] overflow-hidden py-16 bg-gradient-to-b from-background via-muted/20 to-background">
             {/* Section Header */}
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 mb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 mb-12">
                 <h2 className="text-balance text-3xl font-bold lg:text-4xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-3">
                     Gallery
                 </h2>

@@ -26,13 +26,13 @@ export function AppButton({
   const palette = useMemo(() => {
     switch (variant) {
       case 'primary':
-        return { backgroundColor: colors.primary, borderColor: colors.primary, color: '#FFFFFF' };
+        return { backgroundColor: colors.primary, borderColor: colors.primary, color: colors.primaryForeground };
       case 'secondary':
-        return { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text };
+        return { backgroundColor: colors.surfaceElevated, borderColor: colors.hairline, color: colors.text };
       case 'ghost':
         return { backgroundColor: 'transparent', borderColor: 'transparent', color: colors.primary };
       case 'danger':
-        return { backgroundColor: colors.danger, borderColor: colors.danger, color: '#FFFFFF' };
+        return { backgroundColor: colors.danger, borderColor: colors.danger, color: colors.primaryForeground };
     }
   }, [variant, colors]);
 
@@ -61,7 +61,7 @@ export function AppButton({
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 52,
+    minHeight: 50,
     borderRadius: radii.md,
     borderWidth: 1,
     alignItems: 'center',

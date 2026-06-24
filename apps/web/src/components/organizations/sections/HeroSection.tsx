@@ -61,7 +61,7 @@ export default function HeroSection({ org }: HeroSectionProps) {
           
           <motion.h1 
             variants={fadeIn}
-            className="font-black text-white leading-[0.85] mb-6 tracking-tighter font-heading text-5xl sm:text-7xl md:text-8xl lg:text-9xl select-none"
+            className="font-display font-black text-white leading-[0.85] mb-6 tracking-normal text-5xl sm:text-7xl md:text-8xl lg:text-9xl select-none"
             style={{ 
               textShadow: '3px 3px 0 rgba(0,0,0,0.3)',
               WebkitTextStroke: '1px rgba(255,255,255,0.1)'

@@ -23,8 +23,8 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
           style={[
             styles.input,
             {
-              backgroundColor: colors.surfaceMuted,
-              borderColor: focused ? colors.primary : colors.border,
+              backgroundColor: colors.surfaceElevated,
+              borderColor: focused ? colors.primary : colors.hairline,
               color: colors.text,
             },
             style,
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   input: {
-    minHeight: 52,
+    minHeight: 50,
     borderWidth: 1,
     borderRadius: radii.md,
     paddingHorizontal: spacing.md,

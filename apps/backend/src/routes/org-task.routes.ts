@@ -25,7 +25,11 @@ const router = express.Router();
 
 router.use(protect, requireAdminAccess);
 
-const canManageTasks = authorizeOrganizationScope(Permission.MANAGE_ORG_TASKS);
+const canManageTasks = authorizeOrganizationScope(
+  Permission.MANAGE_ORG_TASKS,
+  'orgId',
+  'You do not have access to manage tasks for this organization'
+);
 
 router.get('/:orgId/tasks', canManageTasks, listTasks);
 router.post('/:orgId/tasks', canManageTasks, validate(createTaskValidator), logActivity('create', 'org_task'), createTask);

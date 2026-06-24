@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import api from '@/lib/api/axios';
+import { useQueryClient } from '@tanstack/react-query';
 import { Announcement, AnnouncementPriority, ContentOwnerType } from '@/types';
 import { AnnouncementForm } from '@/components/admin/AnnouncementForm';
 import {
@@ -36,6 +35,14 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
 import { useRouter } from 'next/navigation';
+import {
+  adminContentAPI,
+  canActOnContent,
+  getVisibleWorkflowActions,
+  getWorkflowActionLabel,
+  useAdminAnnouncementsList,
+  type ContentWorkflowAction,
+} from '@/features/admin-content';
 
 export default function AnnouncementsPage() {
   const router = useRouter();
@@ -78,24 +85,15 @@ export default function AnnouncementsPage() {
 
   const queryClient = useQueryClient();
 
-  const { data: announcementsData, isLoading } = useQuery<{ announcements: Announcement[]; pagination: { pages: number } }>({
-    queryKey: ['admin', 'announcements', page, search, statusFilter, subtypeFilter, ctaFilter, ownerTypeFilter, organizationFilter],
-    queryFn: async () => {
-      const response = await api.get('/announcements', {
-        params: {
-          page,
-          limit: 10,
-          search: search || undefined,
-          status: statusFilter === 'all' ? undefined : statusFilter,
-          subtype: subtypeFilter === 'all' ? undefined : subtypeFilter,
-          ctaFilter: ctaFilter === 'all' ? undefined : ctaFilter,
-          ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
-          organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
-        },
-      });
-      return response.data.data;
-    },
-    placeholderData: keepPreviousData,
+  const { data: announcementsData, isLoading } = useAdminAnnouncementsList({
+    page,
+    limit: 10,
+    search,
+    status: statusFilter,
+    subtype: subtypeFilter,
+    ctaFilter,
+    ownerType: ownerTypeFilter,
+    organizationId: organizationFilter,
   });
 
   const announcements = announcementsData?.announcements ?? [];
@@ -106,10 +104,7 @@ export default function AnnouncementsPage() {
   useEffect(() => { setPage(1); }, [subtypeFilter, ctaFilter, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnAnnouncement = (item: Announcement, permission: Permission) =>
-    hasPermission(permission) ||
-    (item.ownerType === ContentOwnerType.ORGANIZATION &&
-      !!item.organizationId &&
-      hasScopedPermission(item.organizationId, permission));
+    canActOnContent(item, permission, { hasPermission, hasScopedPermission });
 
   useEffect(() => {
     if (canViewAllAnnouncements) {
@@ -152,7 +147,7 @@ export default function AnnouncementsPage() {
     setDeleteConfirm({
       onConfirm: async () => {
         try {
-          await api.delete(`/announcements/${id}`);
+          await adminContentAPI.announcements.delete(id);
           invalidateAnnouncements();
           appToast.success('Announcement Deleted', 'The announcement has been removed.');
         } catch {
@@ -175,7 +170,7 @@ export default function AnnouncementsPage() {
     }
 
     try {
-      await api.patch(`/announcements/${id}/${action}`);
+      await adminContentAPI.announcements.workflow(id, action);
       invalidateAnnouncements();
     } catch (error) {
       console.error(`Failed to ${action} announcement:`, error);
@@ -185,7 +180,7 @@ export default function AnnouncementsPage() {
   const handleRejectConfirm = async (reason: string) => {
     if (!rejectTarget) return;
     try {
-      await api.patch(`/announcements/${rejectTarget.id}/reject`, { reason });
+      await adminContentAPI.announcements.workflow(rejectTarget.id, 'reject', reason);
       invalidateAnnouncements();
       setRejectTarget(null);
     } catch (error) {
@@ -332,7 +327,12 @@ export default function AnnouncementsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredAnnouncements.map((item) => (
+                  filteredAnnouncements.map((item) => {
+                    const workflowActions = getVisibleWorkflowActions('announcement', item, {
+                      hasPermission,
+                      hasScopedPermission,
+                    });
+                    return (
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getPriorityBadge(item.priority)}</TableCell>
@@ -383,36 +383,15 @@ export default function AnnouncementsPage() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            {item.status === NewsStatus.DRAFT &&
-                              canActOnAnnouncement(item, Permission.SUBMIT_CONTENT_FOR_APPROVAL) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'submit')}>
-                                Submit for approval
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PENDING_APPROVAL &&
-                              hasPermission(Permission.APPROVE_CONTENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'approve')}>
-                                Approve
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PENDING_APPROVAL &&
-                              hasPermission(Permission.REJECT_CONTENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'reject')}>
-                                Reject
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.APPROVED && canActOnAnnouncement(item, Permission.PUBLISH_ANNOUNCEMENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
-                                Publish
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PUBLISHED && canActOnAnnouncement(item, Permission.ARCHIVE_ANNOUNCEMENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'archive')}>
-                                Archive
-                              </DropdownMenuItem>
-                            )}
+                            {workflowActions
+                              .filter((action): action is Exclude<ContentWorkflowAction, 'delete'> => action !== 'delete')
+                              .map((action) => (
+                                <DropdownMenuItem key={action} onClick={() => handleWorkflowAction(item._id, action)}>
+                                  {getWorkflowActionLabel(action)}
+                                </DropdownMenuItem>
+                              ))}
                             <DropdownMenuItem
-                              disabled={!canActOnAnnouncement(item, Permission.DELETE_ANNOUNCEMENT)}
+                              disabled={!workflowActions.includes('delete')}
                               className="text-red-600"
                               onClick={() => handleDelete(item._id)}
                             >
@@ -422,7 +401,8 @@ export default function AnnouncementsPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

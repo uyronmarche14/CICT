@@ -126,6 +126,7 @@ const buildTopRoutes = (
   { href: '/admin/approvals', label: 'Approvals', icon: ClipboardCheck, active: pathname.startsWith('/admin/approvals'), visible: permissions.canAccessApprovalsModule() },
   { href: '/admin/news', label: 'News', icon: Newspaper, active: pathname.startsWith('/admin/news'), visible: permissions.canAccessNewsModule() },
   { href: '/admin/announcements', label: 'Announcements', icon: Megaphone, active: pathname.startsWith('/admin/announcements'), visible: permissions.canAccessAnnouncementsModule() },
+  { href: '/admin/inquiries', label: 'Messages', icon: MessageSquare, active: pathname.startsWith('/admin/inquiries'), visible: permissions.canAccessAdmin },
   { href: '/admin/roles', label: 'Roles & Permissions', icon: UserCog, active: pathname.startsWith('/admin/roles'), visible: permissions.canAccessRolesModule() },
   { href: '/admin/logs', label: 'Activity Logs', icon: ScrollText, active: pathname.startsWith('/admin/logs'), visible: permissions.canAccessLogsModule() },
   { href: '/admin/processes', label: 'Process', icon: Workflow, active: pathname.startsWith('/admin/processes'), visible: permissions.canAccessProcessesModule() },

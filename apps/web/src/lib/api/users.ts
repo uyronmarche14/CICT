@@ -47,6 +47,19 @@ const buildUsersQueryParams = (params: UsersQueryParams): Record<string, string 
 };
 
 export const usersAPI = {
+  create: async (payload: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role: UserRole;
+    customRoleId: string | null;
+    organizationAssignments?: Array<{ organizationId: string; roleId: string }>;
+  }) => {
+    const response = await api.post<{ success: boolean; data: { user: User } }>('/users', payload);
+    return response.data;
+  },
+
   getAll: async (params: UsersQueryParams) => {
     const response = await api.get<{
       success: boolean;

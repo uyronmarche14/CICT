@@ -2,59 +2,9 @@ import { useCallback, useMemo } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { AdminModuleKey, ContentOwnerType, Permission } from '@/types';
 
-const NEWS_MODULE_PERMISSIONS: Permission[] = [
-  Permission.VIEW_NEWS,
-  Permission.CREATE_NEWS,
-  Permission.EDIT_NEWS,
-  Permission.DELETE_NEWS,
-  Permission.PUBLISH_NEWS,
-  Permission.ARCHIVE_NEWS,
-];
-
-const ANNOUNCEMENTS_MODULE_PERMISSIONS: Permission[] = [
-  Permission.VIEW_ANNOUNCEMENT,
-  Permission.CREATE_ANNOUNCEMENT,
-  Permission.EDIT_ANNOUNCEMENT,
-  Permission.DELETE_ANNOUNCEMENT,
-  Permission.PUBLISH_ANNOUNCEMENT,
-  Permission.ARCHIVE_ANNOUNCEMENT,
-];
-
-const EVENTS_MODULE_PERMISSIONS: Permission[] = [
-  Permission.VIEW_EVENT,
-  Permission.CREATE_EVENT,
-  Permission.EDIT_EVENT,
-  Permission.DELETE_EVENT,
-  Permission.PUBLISH_EVENT,
-  Permission.CANCEL_EVENT,
-  Permission.COMPLETE_EVENT,
-];
-
-const ORGANIZATION_MANAGEMENT_PERMISSIONS: Permission[] = [
-  Permission.VIEW_ORGANIZATION,
-  Permission.CREATE_ORGANIZATION,
-  Permission.EDIT_ORGANIZATION,
-  Permission.DELETE_ORGANIZATION,
-  Permission.VIEW_MEMBER,
-  Permission.CREATE_MEMBER,
-  Permission.EDIT_MEMBER,
-  Permission.DELETE_MEMBER,
-  Permission.MANAGE_MEMBER_ROLES,
-  Permission.MANAGE_ORG_TASKS,
-  Permission.MANAGE_ORG_MEETINGS,
-  Permission.MANAGE_ORG_VOTES,
-  Permission.MANAGE_ORG_BUDGET,
-  Permission.MANAGE_ORG_PARTNERSHIPS,
-  Permission.MANAGE_ORG_COLLABORATION,
-  Permission.SHARE_CONTENT_CROSS_ORG,
-  Permission.MANAGE_ORG_TASK_FORCES,
-  Permission.MANAGE_ORG_RESOURCE_POOLING,
-  Permission.MANAGE_ORG_MENTORSHIP,
-  Permission.MANAGE_ORG_ADMINS,
-];
-
 const MODULE_KEYS: AdminModuleKey[] = [
   'dashboard',
+  'scanner',
   'organizations',
   'users',
   'students',
@@ -77,28 +27,38 @@ const normalizeVisibleModules = (modules: string[] | undefined): AdminModuleKey[
   );
 
 export const usePermissions = () => {
-  const { permissions, isAuthenticated, user, canAccessAdmin } = useAuth();
+  const { permissions, isAuthenticated, user, canAccessAdmin: contextCanAccessAdmin } = useAuth();
   const organizationAssignments = useMemo(
     () => user?.organizationAssignments ?? [],
     [user?.organizationAssignments]
   );
+  const adminAccessPolicy = user?.adminAccessPolicy;
+  const actionPermissions = useMemo(
+    () => adminAccessPolicy?.globalActions ?? permissions,
+    [adminAccessPolicy?.globalActions, permissions]
+  );
   const adminScopes = user?.adminScopes;
 
   const hasPermission = useCallback(
-    (permission: Permission) => permissions.includes(permission),
-    [permissions]
+    (permission: Permission) => actionPermissions.includes(permission),
+    [actionPermissions]
   );
-  const hasScopedPermission = useCallback((organizationId: string, permission: Permission) =>
-    organizationAssignments.some(
-      (assignment) =>
-        assignment.organizationId === organizationId && assignment.permissions.includes(permission)
-    ),
-    [organizationAssignments]
+  const hasScopedPermission = useCallback(
+    (organizationId: string, permission: Permission) =>
+      (adminAccessPolicy?.scopedActionsByOrganization?.[organizationId]?.includes(permission) ??
+        false) ||
+      organizationAssignments.some(
+        (assignment) =>
+          assignment.organizationId === organizationId && assignment.permissions.includes(permission)
+      ),
+    [adminAccessPolicy?.scopedActionsByOrganization, organizationAssignments]
   );
   const hasAnyScopedPermission = useCallback(
     (permission: Permission) =>
-      organizationAssignments.some((assignment) => assignment.permissions.includes(permission)),
-    [organizationAssignments]
+      Object.values(adminAccessPolicy?.scopedActionsByOrganization ?? {}).some((actions) =>
+        actions.includes(permission)
+      ) || organizationAssignments.some((assignment) => assignment.permissions.includes(permission)),
+    [adminAccessPolicy?.scopedActionsByOrganization, organizationAssignments]
   );
   const hasAnyScopedAssignment = organizationAssignments.length > 0;
   const hasAnyPermission = useCallback(
@@ -132,50 +92,27 @@ export const usePermissions = () => {
     );
 
   const scopedAdminModulesByOrganization = useMemo(() => {
-    if (user?.scopedAdminModulesByOrganization) {
-      return Object.fromEntries(
-        Object.entries(user.scopedAdminModulesByOrganization).map(([organizationId, modules]) => [
-          organizationId,
-          normalizeVisibleModules(modules),
-        ])
-      );
-    }
+    const modulesByOrganization =
+      adminAccessPolicy?.scopedAdminModulesByOrganization ??
+      user?.scopedAdminModulesByOrganization ??
+      {};
 
-    const derivedEntries = organizationAssignments.map((assignment) => {
-      const modules = new Set<AdminModuleKey>();
-
-      if (assignment.permissions.some((permission) => NEWS_MODULE_PERMISSIONS.includes(permission))) {
-        modules.add('news');
-      }
-
-      if (
-        assignment.permissions.some((permission) =>
-          ANNOUNCEMENTS_MODULE_PERMISSIONS.includes(permission)
-        )
-      ) {
-        modules.add('announcements');
-      }
-
-      if (assignment.permissions.some((permission) => EVENTS_MODULE_PERMISSIONS.includes(permission))) {
-        modules.add('events');
-      }
-
-      if (
-        assignment.permissions.some((permission) => ORGANIZATION_MANAGEMENT_PERMISSIONS.includes(permission))
-      ) {
-        modules.add('organizations');
-      }
-
-      return [assignment.organizationId, Array.from(modules)] as const;
-    });
-
-    return Object.fromEntries(derivedEntries);
-  }, [organizationAssignments, user?.scopedAdminModulesByOrganization]);
+    return Object.fromEntries(
+      Object.entries(modulesByOrganization).map(([organizationId, modules]) => [
+        organizationId,
+        normalizeVisibleModules(modules),
+      ])
+    );
+  }, [adminAccessPolicy?.scopedAdminModulesByOrganization, user?.scopedAdminModulesByOrganization]);
 
   const visibleAdminModules = useMemo(
-    () => normalizeVisibleModules(user?.visibleAdminModules),
-    [user?.visibleAdminModules]
+    () =>
+      normalizeVisibleModules(
+        adminAccessPolicy?.visibleAdminModules ?? user?.visibleAdminModules
+      ),
+    [adminAccessPolicy?.visibleAdminModules, user?.visibleAdminModules]
   );
+  const canAccessAdmin = adminAccessPolicy?.canAccessAdmin ?? contextCanAccessAdmin;
 
   const hasVisibleAdminModule = (module: AdminModuleKey) => visibleAdminModules.includes(module);
   const hasScopedAdminModule = (organizationId: string, module: AdminModuleKey) =>
@@ -218,7 +155,7 @@ export const usePermissions = () => {
     hasPermission(permission) || hasAnyScopedPermission(permission);
 
   return {
-    permissions,
+    permissions: actionPermissions,
     organizationAssignments,
     adminScopes,
     visibleAdminModules,
@@ -237,7 +174,7 @@ export const usePermissions = () => {
     getScopedOrganizationIds,
     getScopedOrganizationIdsForPermission,
     getScopedOrganizationIdsForPermissions,
-    getUserPermissions: () => permissions,
+    getUserPermissions: () => actionPermissions,
     getAssignableOrganizations: () => organizationAssignments,
     isAuthenticated,
     canAccessAdmin,

@@ -69,10 +69,10 @@ export default function AdminLayout({
         } as React.CSSProperties
       }
     >
-      <div className="flex min-h-svh w-full bg-gray-100/40 dark:bg-gray-900/40">
+      <div className="flex min-h-svh w-full bg-canvas">
         <Sidebar />
         <div className="flex min-w-0 flex-1 flex-col">
-          <main className="flex-1 p-6">
+          <main className="flex-1 p-4 sm:p-6">
             {children}
           </main>
           {/* Mobile sidebar trigger — floating button */}

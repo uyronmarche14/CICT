@@ -8,7 +8,6 @@ import { EmptyState } from '@/components/feedback/EmptyState';
 import { ErrorState } from '@/components/feedback/ErrorState';
 import { EventCountdown } from '@/components/events/EventCountdown';
 import { LoadingState } from '@/components/feedback/LoadingState';
-import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppScreen } from '@/components/ui/AppScreen';
@@ -20,7 +19,6 @@ import { useStudentEvents } from '@/features/events/useStudentEvents';
 import { useStudentProfile } from '@/features/profile/useStudentProfile';
 import { useTheme } from '@/theme/ThemeContext';
 import { fontSizes, radii, spacing } from '@/theme/tokens';
-import { useNotificationStore } from '@/store/notification-store';
 import { formatDate, formatName } from '@/utils/format';
 
 export default function HomeScreen() {
@@ -37,8 +35,6 @@ export default function HomeScreen() {
     updatesQuery.isRefetching ||
     eventsQuery.isRefetching ||
     attendanceQuery.isRefetching;
-
-  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   const upcomingEvent = eventsQuery.data?.find((event) => new Date(event.endDate) >= new Date()) ?? null;
   const checkedInCount =
@@ -80,42 +76,39 @@ export default function HomeScreen() {
   return (
     <AppScreen
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={() => void refetchAll()} />}
-    >
-      {!netInfo.isConnected ? <ConnectivityNotice /> : null}
-
-      <LinearGradient
-        colors={['#6E29F6', '#4A1BB5', '#2E0F8A']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.hero}
       >
-        <View style={styles.heroHeaderRow}>
+        {!netInfo.isConnected ? <ConnectivityNotice /> : null}
+
+        <LinearGradient
+          colors={['#6E29F6', '#4A1BB5', '#2E0F8A']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
+        >
           <View style={styles.heroTextCol}>
             <Text style={styles.eyebrow}>Welcome back</Text>
             <Text style={styles.heroTitle} numberOfLines={1}>
               {formatName(profileQuery.data?.firstName, profileQuery.data?.lastName)}
             </Text>
           </View>
-          <NotificationBell unreadCount={unreadCount} />
-        </View>
-        <Text style={styles.heroSubtitle}>
-          Track registrations, view your attendance pass, and stay in sync with campus updates.
-        </Text>
+          <Text style={styles.heroSubtitle}>
+            Track registrations, view your attendance pass, and stay in sync with campus updates.
+          </Text>
 
-        <View style={styles.metricsRow}>
-          <Pressable
-            style={styles.metricCard}
-            onPress={() => router.push('/(tabs)/events/registrations')}
-          >
-            <Text style={styles.metricValue}>{registeredCount}</Text>
-            <Text style={styles.metricLabel}>Active registrations</Text>
-          </Pressable>
-          <View style={styles.metricCard}>
-            <Text style={styles.metricValue}>{checkedInCount}</Text>
-            <Text style={styles.metricLabel}>Check-ins</Text>
+          <View style={styles.metricsRow}>
+            <Pressable
+              style={styles.metricCard}
+              onPress={() => router.push('/(tabs)/events/registrations')}
+            >
+              <Text style={styles.metricValue}>{registeredCount}</Text>
+              <Text style={styles.metricLabel}>Active registrations</Text>
+            </Pressable>
+            <View style={styles.metricCard}>
+              <Text style={styles.metricValue}>{checkedInCount}</Text>
+              <Text style={styles.metricLabel}>Check-ins</Text>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
+        </LinearGradient>
 
       <SectionHeader title="Upcoming event" subtitle="Your next attendance action" />
       {upcomingEvent ? (
@@ -196,20 +189,13 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.xs,
   },
-  heroHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
   heroTextCol: {
-    flex: 1,
     gap: 2,
   },
   eyebrow: {
     color: '#D4C5FF',
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
     fontSize: fontSizes.xs,
   },
   heroTitle: {
@@ -257,7 +243,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   eventLocation: {
     fontSize: fontSizes.xs,

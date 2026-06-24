@@ -59,7 +59,7 @@ export default function NewsDetailClient({ id }: { id: string }) {
   return (
     <div className="min-h-screen bg-background">
       <article className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-16">
-        <h1 className="text-balance text-4xl font-bold lg:text-5xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-6">
+        <h1 className="text-balance text-4xl font-display font-black lg:text-5xl bg-gradient-to-r from-foreground to-primary bg-clip-text text-transparent mb-6">
           {article.title}
         </h1>
 

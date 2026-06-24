@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import api from '@/lib/api/axios';
 import type { Announcement, ContentOwnerType } from '@/types';
+import { contentFeatureAPI } from '@/features/content/api';
 
 interface AnnouncementListResponse {
   success: boolean;
@@ -36,25 +36,20 @@ export function useGetAnnouncements(
       organizationId,
     ],
     queryFn: async () => {
-      const response = await api.get<AnnouncementListResponse>(
-        publicOnly ? '/public/announcements' : '/announcements',
-        {
-          params: {
-            page,
-            limit,
-            search,
-            type,
-            ownerType,
-            organizationId,
-            isActive: publicOnly ? undefined : true,
-          },
-        },
-      );
+      const response = await contentFeatureAPI.announcements.list({
+        page,
+        limit,
+        search,
+        type,
+        ownerType,
+        organizationId,
+        publicOnly,
+      }) as AnnouncementListResponse;
 
       return {
-        success: response.data.success,
-        data: response.data.data.announcements,
-        pagination: response.data.data.pagination,
+        success: response.success,
+        data: response.data.announcements,
+        pagination: response.data.pagination,
       };
     },
     staleTime: publicOnly ? 0 : undefined,

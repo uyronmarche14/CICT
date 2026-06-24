@@ -1,41 +1,14 @@
 "use client";
 
 import React from "react";
-import { lazy } from "react";
-
-const HeroSection = lazy(
-  () => import("@/components/sections/landingpage/heroSection")
-);
-
-const CICTSection = lazy(
-  () => import("@/components/sections/landingpage/CICT-Section")
-);
-
-const NewsSection = lazy(
-  () => import("@/components/sections/landingpage/newsSection")
-);
-
-const FAQsSection = lazy(
-  () => import("@/components/sections/landingpage/faqsSection")
-);
-
-const StorySection = lazy(
-  () => import("@/components/sections/landingpage/storySection")
-);
-
-const TestimonialSeciton = lazy(
-  () => import("@/components/sections/landingpage/Testimonial")
-);
-
-const SpotlightOrganizations = lazy(
-  () => import("@/components/sections/landingpage/spotlightOrganizationsSection")
-);
-
-const SpotlightAchievements = lazy(
-  () => import("@/components/sections/landingpage/spotlightAchievementsSection")
-);
-
-
+import HeroSection from "@/components/sections/landingpage/heroSection";
+import IntroSection from "@/components/sections/landingpage/introSection";
+import StorySection from "@/components/sections/landingpage/storySection";
+import NewsSection from "@/components/sections/landingpage/newsSection";
+import EventsSection from "@/components/sections/landingpage/eventsSection";
+import FAQsSection from "@/components/sections/landingpage/faqsSection";
+import BrandSection from "@/components/sections/landingpage/BrandSection";
+import ContactSection from "@/components/contact/contact-section";
 
 interface OptimizedLayoutProps {
   children?: React.ReactNode;
@@ -45,20 +18,18 @@ const OptimizedLayout = ({ children }: OptimizedLayoutProps) => {
   return (
     <div className="bg-background dark:bg-background">
       <div className="relative">
-        {/* Hero Section - Background handled internally by HeroSection */}
         <div className="relative">
           <HeroSection />
         </div>
 
-        {/* Other Sections */}
-        <CICTSection />
+        <BrandSection />
+        <IntroSection />
         <StorySection />
-        <SpotlightOrganizations />
-        <SpotlightAchievements />
         <NewsSection />
+        <EventsSection />
         <FAQsSection />
-        <TestimonialSeciton />
-        
+        <ContactSection />
+
         <div className="relative z-10">{children}</div>
       </div>
     </div>

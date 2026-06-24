@@ -12,20 +12,13 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select';
 import { LookupCombobox } from '@/components/ui/lookup-combobox';
 import { rolesAPI } from '@/lib/api/roles';
-import api from '@/lib/api/axios';
 import { appToast } from '@/lib/app-toast';
 import { useAuth } from '@/context/AuthContext';
 import { usePermissions } from '@/hooks/permissions/use-permissions';
-
-interface AdminAssignment {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  roleId: string;
-  roleName: string;
-  permissions: string[];
-}
+import {
+  organizationsAdminAPI,
+  type AdminAssignment,
+} from '@/features/organizations-admin/api';
 
 const PERM_LABELS: Record<string, string> = {
   MANAGE_ORG_TASKS: 'Tasks', MANAGE_ORG_MEETINGS: 'Meetings',
@@ -67,10 +60,7 @@ export function OrgAdminAssignments({ orgId }: { orgId: string }) {
 
   const { data: assignments, isLoading } = useQuery({
     queryKey: ['org-admins', orgId],
-    queryFn: async () => {
-      const { data: res } = await api.get(`/organizations/${orgId}/admins`);
-      return (res.data?.assignments ?? []) as AdminAssignment[];
-    },
+    queryFn: () => organizationsAdminAPI.getAdmins(orgId),
     enabled: canManageAdmins,
     staleTime: 30_000,
   });
@@ -113,7 +103,7 @@ export function OrgAdminAssignments({ orgId }: { orgId: string }) {
 
   const addMutation = useMutation({
     mutationFn: async () => {
-      await api.post(`/organizations/${orgId}/admins`, { userId: selectedUser, roleId: selectedRole });
+      await organizationsAdminAPI.addAdmin(orgId, { userId: selectedUser, roleId: selectedRole });
     },
     onSuccess: async () => {
       refreshSidebar();
@@ -128,7 +118,7 @@ export function OrgAdminAssignments({ orgId }: { orgId: string }) {
 
   const deleteMutation = useMutation({
     mutationFn: async (assignmentId: string) => {
-      await api.delete(`/organizations/${orgId}/admins/${assignmentId}`);
+      await organizationsAdminAPI.removeAdmin(orgId, assignmentId);
     },
     onSuccess: async () => {
       refreshSidebar();

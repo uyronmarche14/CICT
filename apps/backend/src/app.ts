@@ -45,6 +45,7 @@ import orgSharedContentRoutes from "./routes/org-shared-content.routes";
 import orgTaskForceRoutes from "./routes/org-task-force.routes";
 import orgResourceRoutes from "./routes/org-resource.routes";
 import orgMentorshipRoutes from "./routes/org-mentorship.routes";
+import inquiryRoutes from "./routes/inquiry.routes";
 
 // Import middleware
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -190,6 +191,7 @@ app.use("/api/admin/settings", settingsRoutes);
 app.use("/api/admin/lookups", lookupRoutes);
 app.use("/api/updates", updatesRoutes);
 app.use("/api/calendar", calendarRoutes);
+app.use("/api/inquiries", inquiryRoutes);
 
 // Swagger API documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));

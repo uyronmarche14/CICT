@@ -4,7 +4,7 @@ import OrganizationAssignment from '../models/OrganizationAssignment'
 import { type AuthRequest } from '../middleware/auth'
 import { AppError } from '../middleware/errorHandler'
 import logger from '../utils/logger'
-import { getSystemRoleCatalog } from '../utils/rbac'
+import { getSystemRoleCatalog, invalidateUserCache } from '../utils/rbac'
 import { Permission, UserRole } from '../types'
 import { TypedCache } from '../utils/cache'
 import { invalidateDashboardCache } from './dashboard.service'
@@ -16,6 +16,19 @@ const invalidateRoles = async (): Promise<void> => {
   await roleListCache.clear()
   await roleDetailCache.clear()
   await invalidateDashboardCache()
+}
+
+const invalidateUsersAssignedToRole = async (roleId: string): Promise<void> => {
+  const [users, assignments] = await Promise.all([
+    User.find({ customRole: roleId }).select('_id').lean(),
+    OrganizationAssignment.find({ role: roleId }).select('user').lean(),
+  ])
+  const userIds = new Set<string>()
+
+  users.forEach((user) => userIds.add(String(user._id)))
+  assignments.forEach((assignment) => userIds.add(String(assignment.user)))
+
+  await Promise.all(Array.from(userIds).map((userId) => invalidateUserCache(userId)))
 }
 
 const ensureRolePermissionsWithinActorScope = (
@@ -172,6 +185,7 @@ export const updateRole = async (id: string, req: AuthRequest): Promise<any> => 
 
   logger.info(`Role updated: ${id} by user ${req.user?.userId}`)
   await invalidateRoles()
+  await invalidateUsersAssignedToRole(id)
   return updatedRole ? serializeCustomRole(updatedRole) : null
 }
 

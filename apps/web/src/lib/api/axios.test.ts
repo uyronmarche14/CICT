@@ -106,4 +106,29 @@ describe('response interceptor (admin redirect)', () => {
     await triggerError(403, { message: 'Forbidden access' });
     expect(mockedSafePush).not.toHaveBeenCalled();
   });
+
+  it('refreshes with cookie-based /auth/refresh and retries the original request', async () => {
+    setPathname('/admin/dashboard');
+    let requestCount = 0;
+
+    server.use(
+      http.get(`${API_URL}/test-endpoint`, () => {
+        requestCount += 1;
+        if (requestCount === 1) {
+          return HttpResponse.json({ message: 'expired' }, { status: 401 });
+        }
+        return HttpResponse.json({ success: true, data: { ok: true } });
+      }),
+      http.post(`${API_URL}/auth/refresh`, async ({ request }) => {
+        expect(await request.json()).toEqual({});
+        return HttpResponse.json({ success: true });
+      }),
+    );
+
+    const response = await api.get('/test-endpoint');
+
+    expect(response.data).toEqual({ success: true, data: { ok: true } });
+    expect(requestCount).toBe(2);
+    expect(mockedSafePush).not.toHaveBeenCalled();
+  });
 });

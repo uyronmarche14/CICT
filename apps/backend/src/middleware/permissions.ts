@@ -146,9 +146,21 @@ export const authorizeAnyGlobalOrScoped = (...allowedPermissions: Permission[]) 
   };
 };
 
+export const requireAdminAction = (permission: Permission) => authorize(permission);
+
+export const requireAnyAdminAction = (...allowedPermissions: Permission[]) =>
+  authorizeAnyGlobalOrScoped(...allowedPermissions);
+
+export const requireScopedAdminAction = (
+  permission: Permission,
+  paramName = 'orgId',
+  deniedMessage = 'You do not have permission for this organization'
+) => authorizeOrganizationScope(permission, paramName, deniedMessage);
+
 export const authorizeOrganizationScope = (
   permission: Permission,
-  paramName = 'orgId'
+  paramName = 'orgId',
+  deniedMessage = 'You do not have permission for this organization'
 ) => {
   return async (
     req: AuthRequest,
@@ -174,7 +186,7 @@ export const authorizeOrganizationScope = (
 
         res.status(403).json({
           success: false,
-          message: 'You do not have permission for this organization',
+          message: deniedMessage,
         });
         return;
       }
@@ -211,7 +223,7 @@ export const isAdmin = async (
     return;
   }
   
-  if (req.user.canAccessAdmin) {
+  if (req.user.adminAccessPolicy?.canAccessAdmin ?? req.user.canAccessAdmin) {
     return next();
   }
   
@@ -234,7 +246,12 @@ export const requireAdminAccess = async (
     return;
   }
 
-  if (req.user.canAccessAdmin || canAccessAdminPanel(req.user.permissions, req.user.organizationAssignments)) {
+  const canAccessAdmin =
+    req.user.adminAccessPolicy?.canAccessAdmin ??
+    (req.user.canAccessAdmin ||
+      canAccessAdminPanel(req.user.permissions, req.user.organizationAssignments));
+
+  if (canAccessAdmin) {
     next();
     return;
   }

@@ -16,7 +16,7 @@ export function SectionHeader({
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.title, { color: colors.text }, branded && { fontFamily: 'Blockletter', fontSize: fontSizes.xl, letterSpacing: 0.05, textTransform: 'uppercase', color: colors.primary }]}>
+      <Text style={[styles.title, { color: colors.text }, branded && { fontFamily: 'Blockletter', fontSize: fontSizes.xl, textTransform: 'uppercase', color: colors.primary }]}>
         {title}
       </Text>
       {subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text> : null}

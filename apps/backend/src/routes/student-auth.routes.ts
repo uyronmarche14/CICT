@@ -7,7 +7,11 @@ import {
   createStudentLoginRateLimiter,
 } from '../middleware/rateLimiters';
 import { validate } from '../middleware/validate';
-import { studentLoginValidator, studentRefreshValidator } from '../validators/student-auth.validator';
+import {
+  studentLoginValidator,
+  studentRefreshValidator,
+  studentRegisterValidator,
+} from '../validators/student-auth.validator';
 
 const router = Router();
 
@@ -56,8 +60,11 @@ const router = Router();
 router.post(
   '/register',
   createAuthLoginRateLimiter(),
+  validate(studentRegisterValidator),
   studentAuthController.registerStudent
 );
+
+router.get('/academic-options', studentAuthController.getAcademicOptions);
 
 /**
  * @openapi

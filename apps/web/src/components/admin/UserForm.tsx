@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import api from '@/lib/api/axios';
 import { appToast } from '@/lib/app-toast';
 import { Plus, Loader2, Trash2 } from 'lucide-react';
 import type { AxiosError } from 'axios';
@@ -39,6 +38,7 @@ import { rolesAPI } from '@/lib/api/roles';
 import { usePermissionMetadata } from '@/hooks/use-permission-metadata';
 import { permissionsMetadataAPI } from '@/lib/api/permissions';
 import { organizationService } from '@/services/organizationService';
+import { usersAPI } from '@/lib/api/users';
 
 const formSchema = z.object({
   firstName: z.string().min(2, 'First name must be at least 2 characters'),
@@ -147,7 +147,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
           organizationId: assignment.organizationId,
           roleId: assignment.roleId,
         }));
-      const payload: Record<string, string | null> = {
+      const payload = {
         firstName: values.firstName,
         lastName: values.lastName,
         email: values.email,
@@ -156,11 +156,11 @@ export function UserForm({ onSuccess }: UserFormProps) {
         customRoleId: canAssignRole ? values.customRoleId : null,
       };
 
-      const response = await api.post('/users', {
+      const response = await usersAPI.create({
         ...payload,
         organizationAssignments: canAssignRole ? normalizedAssignments : [],
       });
-      if (response.data.success) {
+      if (response.success) {
         appToast.success('User Created', 'A new admin user has been added.');
         setOpen(false);
         form.reset({

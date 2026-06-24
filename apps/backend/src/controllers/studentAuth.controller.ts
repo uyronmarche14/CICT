@@ -98,14 +98,6 @@ const serializeStudent = (student: {
 export const registerStudent = async (req: Request, res: Response): Promise<void> => {
   const { studentNumber, email, password, firstName, lastName, middleName, programId, yearLevelId, sectionId } = req.body;
 
-  if (!studentNumber || !password || !firstName || !lastName || !programId || !yearLevelId || !sectionId) {
-    throw new AppError('Student number, password, first name, last name, program, year level, and section are required', 400);
-  }
-
-  if (password.length < 8) {
-    throw new AppError('Password must be at least 8 characters', 400);
-  }
-
   const [studentNumberConflict, emailConflict] = await Promise.all([
     Student.findOne({ studentNumber: String(studentNumber).trim().toUpperCase() }),
     email ? Student.findOne({ email: String(email).trim().toLowerCase() }) : Promise.resolve(null),
@@ -115,14 +107,17 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
   if (emailConflict) {throw new AppError('Email already exists', 409);}
 
   const [program, yearLevel, section] = await Promise.all([
-    Program.findById(programId),
-    YearLevel.findById(yearLevelId),
-    Section.findById(sectionId),
+    Program.findOne({ _id: programId, isActive: true }),
+    YearLevel.findOne({ _id: yearLevelId, isActive: true }),
+    Section.findOne({ _id: sectionId, isActive: true }),
   ]);
 
   if (!program) {throw new AppError('Program not found', 404);}
   if (!yearLevel) {throw new AppError('Year level not found', 404);}
   if (!section) {throw new AppError('Section not found', 404);}
+  if (String(section.programId) !== String(programId) || String(section.yearLevelId) !== String(yearLevelId)) {
+    throw new AppError('Section does not belong to the selected program and year level', 400);
+  }
 
   const student = await Student.create({
     studentNumber: String(studentNumber).trim().toUpperCase(),
@@ -150,6 +145,21 @@ export const registerStudent = async (req: Request, res: Response): Promise<void
     success: true,
     message: 'Registration successful. Your account must be activated by an administrator.',
     data: { student: populatedStudent },
+  });
+};
+
+export const getAcademicOptions = async (_req: Request, res: Response): Promise<void> => {
+  const [programs, yearLevels, sections] = await Promise.all([
+    Program.find({ isActive: true }).select('code name sortOrder isActive').sort({ sortOrder: 1, code: 1 }),
+    YearLevel.find({ isActive: true }).select('code label numericLevel sortOrder isActive').sort({ sortOrder: 1, numericLevel: 1 }),
+    Section.find({ isActive: true })
+      .select('programId yearLevelId name displayName isActive')
+      .sort({ displayName: 1, name: 1 }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    data: { programs, yearLevels, sections },
   });
 };
 

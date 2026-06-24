@@ -1,273 +1,179 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { ArrowRight, Bell, Calendar, Loader2, Newspaper, Sparkles } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowRight, Bell, Loader2, Newspaper } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Announcement, ContentOwnerType, News, NewsStatus } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ContentOwnerType, NewsStatus } from '@/types';
+import type { News, Announcement } from '@/types';
 import { useNews } from '@/hooks/use-news';
-import { eventAPI } from '@/lib/api/event';
-import AnnouncementsCarousel from '@/components/announcements-carousel';
 import { useGetAnnouncements } from '@/hooks/ui/announcement/get-announcements.hook';
-import { Event } from '@/lib/api/event';
 import { getOwnershipLabel } from '@/lib/content-ownership';
-import PublicSectionHeader from '@/components/sections/landingpage/PublicSectionHeader';
-import { useOrganizations } from '@/hooks/useOrganizations';
 
-type CommunityHighlight = {
-  id: string;
-  title: string;
-  summary: string;
-  href: string;
-  date: string;
-  kind: 'News' | 'Announcement' | 'Event';
-  ownershipLabel: string;
-};
+const TABS = [
+  { id: 'news', label: 'News', icon: Newspaper },
+  { id: 'announcements', label: 'Announcements', icon: Bell },
+];
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+} as const;
+
+const cardVariant = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+} as const;
+
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+} as const;
 
 export default function NewsSection() {
-  const { organizations } = useOrganizations();
-  const { data: officialNewsData, isLoading: officialNewsLoading } = useNews(
-    1, 3, NewsStatus.PUBLISHED, { ownerType: ContentOwnerType.SYSTEM }
-  );
-  const { data: orgNewsData, isLoading: orgNewsLoading } = useNews(
-    1, 4, NewsStatus.PUBLISHED, { ownerType: ContentOwnerType.ORGANIZATION }
-  );
-  const { data: officialEventsData, isLoading: officialEventsLoading } = useQuery({
-    queryKey: ['events', 'landing', 'system'],
-    queryFn: () => eventAPI.getAll({ limit: 3, status: 'published', upcoming: true, ownerType: ContentOwnerType.SYSTEM }),
-    staleTime: 0,
-  });
-  const { data: orgEventsData, isLoading: orgEventsLoading } = useQuery({
-    queryKey: ['events', 'landing', 'organization'],
-    queryFn: () => eventAPI.getAll({ limit: 4, status: 'published', ownerType: ContentOwnerType.ORGANIZATION }),
-    staleTime: 0,
-  });
-  const { data: orgAnnouncementsData, isLoading: orgAnnouncementsLoading } = useGetAnnouncements(
-    1, 4, undefined, undefined, true, ContentOwnerType.ORGANIZATION
-  );
+  const [activeTab, setActiveTab] = useState('news');
 
-  const latestOfficialNews = officialNewsData?.news ?? [];
-  const latestOfficialEvents = officialEventsData?.data.events ?? [];
-  const communityHighlights = [
-    ...(orgNewsData?.news ?? []).map<CommunityHighlight>((article: News) => ({
-      id: article._id, title: article.title, summary: article.excerpt,
-      href: `/news/${article._id}`, date: article.publishedAt ?? article.createdAt,
-      kind: 'News', ownershipLabel: getOwnershipLabel(article),
-    })),
-    ...(orgAnnouncementsData?.data ?? []).map<CommunityHighlight>((a: Announcement) => ({
-      id: a._id, title: a.title,
-      summary: (a.content ?? a.bodyHtml ?? '').replace(/<[^>]+>/g, ' '),
-      href: `/announcements/${a._id}`, date: a.publishedAt ?? a.createdAt,
-      kind: 'Announcement', ownershipLabel: getOwnershipLabel(a),
-    })),
-    ...(orgEventsData?.data.events ?? []).map<CommunityHighlight>((event: Event) => ({
-      id: event._id, title: event.title, summary: event.excerpt || event.location,
-      href: `/events/${event._id}`, date: event.startDate,
-      kind: 'Event', ownershipLabel: getOwnershipLabel(event),
-    })),
-  ]
-    .sort((l, r) => new Date(r.date).getTime() - new Date(l.date).getTime())
-    .slice(0, 4);
+  const { data: officialNewsData, isLoading: officialNewsLoading } = useNews(1, 6, NewsStatus.PUBLISHED, { ownerType: ContentOwnerType.SYSTEM });
+  const { data: orgNewsData, isLoading: orgNewsLoading } = useNews(1, 6, NewsStatus.PUBLISHED, { ownerType: ContentOwnerType.ORGANIZATION });
+  const { data: announcementsData, isLoading: announcementsLoading } = useGetAnnouncements(1, 6, undefined, undefined, true, ContentOwnerType.ORGANIZATION);
 
-  const isLoading =
-    officialNewsLoading || officialEventsLoading ||
-    orgNewsLoading || orgEventsLoading || orgAnnouncementsLoading;
+  const allNews = [...(officialNewsData?.news ?? []), ...(orgNewsData?.news ?? [])];
+  const announcements = announcementsData?.data ?? [];
 
-  const organizationsHref = organizations[0] ? `/organization/${organizations[0].id}` : '/updates';
+  const isLoading = officialNewsLoading || orgNewsLoading || announcementsLoading;
 
   return (
     <section className="bg-background py-16 md:py-24">
-      <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeUp}
+        >
+          <SectionHeader title="Latest Updates" subtitle="Fresh updates from CICT and the campus community" centered />
+        </motion.div>
 
-        {/* ── Header ── */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <PublicSectionHeader
-            eyebrow="Latest Updates"
-            title="Fresh updates from CICT and the campus community"
-            description="Official updates and organization highlights, sourced directly from the CMS."
-            align="start"
-            className="max-w-xl"
-          />
-          <div className="flex shrink-0 flex-wrap gap-2">
-            <Button asChild size="sm" className="gap-1.5">
-              <Link href="/updates">
-                Updates hub
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/events">Events</Link>
-            </Button>
-            <Button asChild variant="outline" size="sm">
-              <Link href="/announcements">Announcements</Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* ── Loading ── */}
         {isLoading ? (
           <div className="flex min-h-[200px] items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
         ) : (
-          <>
-            {/* ── Main 3-col grid ── */}
-            <div className="grid gap-px rounded-2xl border border-border/40 bg-border/40 overflow-hidden md:grid-cols-3">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col items-center">
+            <motion.div
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              variants={fadeUp}
+            >
+              <TabsList className="mb-10">
+                {TABS.map((tab) => {
+                  const Icon = tab.icon;
+                  return (
+                    <TabsTrigger key={tab.id} value={tab.id} className="gap-2">
+                      <Icon className="h-4 w-4" />
+                      {tab.label}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+            </motion.div>
 
-              {/* Official News */}
-              <div className="flex flex-col bg-card px-5 py-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <Newspaper className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Official News</span>
-                </div>
-
-                {latestOfficialNews.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No published official news yet.</p>
-                ) : (
-                  <div className="flex flex-col divide-y divide-border/40">
-                    {latestOfficialNews.map((article) => (
-                      <Link
-                        key={article._id}
-                        href={`/news/${article._id}`}
-                        className="group flex flex-col gap-1.5 py-4 first:pt-0 last:pb-0 transition-colors hover:text-primary"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                            {getOwnershipLabel(article, 'CICT Official')}
-                          </Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {format(new Date(article.publishedAt ?? article.createdAt), 'MMM d')}
-                          </span>
-                        </div>
-                        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
-                          {article.title}
-                        </h3>
-                        <p className="line-clamp-2 text-xs leading-5 text-muted-foreground">
-                          {article.excerpt}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-auto pt-5">
-                  <Button asChild variant="ghost" size="sm" className="w-full justify-between px-0 text-xs">
-                    <Link href="/news">
-                      All news
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Official Announcements */}
-              <div className="flex flex-col bg-card px-5 py-6">
-                <AnnouncementsCarousel
-                  limit={5}
-                  ownerType={ContentOwnerType.SYSTEM}
-                  title="Official Announcements"
-                />
-              </div>
-
-              {/* Community Highlights */}
-              <div className="flex flex-col bg-card px-5 py-6">
-                <div className="mb-5 flex items-center gap-2">
-                  <Sparkles className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Community</span>
-                </div>
-
-                {communityHighlights.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No organization highlights yet.</p>
-                ) : (
-                  <div className="flex flex-col divide-y divide-border/40">
-                    {communityHighlights.map((item) => (
-                      <Link
-                        key={`${item.kind}-${item.id}`}
-                        href={item.href}
-                        className="group flex flex-col gap-1.5 py-4 first:pt-0 last:pb-0"
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                            {item.kind}
-                          </Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {format(new Date(item.date), 'MMM d')}
-                          </span>
-                        </div>
-                        <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
-                          {item.title}
-                        </h3>
-                        <p className="text-[11px] font-medium text-muted-foreground">
-                          {item.ownershipLabel}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
-                <div className="mt-auto pt-5">
-                  <Button asChild variant="ghost" size="sm" className="w-full justify-between px-0 text-xs">
-                    <Link href={organizationsHref}>
-                      Explore organizations
-                      <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Upcoming Events strip ── */}
-            <div>
-              <div className="mb-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-semibold text-foreground">Upcoming Events</span>
-                </div>
-                <Button asChild variant="ghost" size="sm" className="gap-1 text-xs">
-                  <Link href="/events">
-                    All events
-                    <ArrowRight className="h-3.5 w-3.5" />
-                  </Link>
-                </Button>
-              </div>
-
-              {latestOfficialEvents.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border/50 px-5 py-6 text-sm text-muted-foreground">
-                  No upcoming official events right now.
-                </p>
+            <TabsContent value="news" className="w-full">
+              {allNews.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-10">No news available at this time.</p>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-                  {latestOfficialEvents.map((event) => (
-                    <Link
-                      key={event._id}
-                      href={`/events/${event._id}`}
-                      className="group flex flex-col gap-2 rounded-xl border border-border/40 bg-card p-4 transition-colors hover:border-primary/30 hover:bg-card/80"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
-                          {getOwnershipLabel(event, 'CICT Official')}
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground">
-                          {format(new Date(event.startDate), 'MMM d')}
-                        </span>
-                      </div>
-                      <h3 className="line-clamp-2 text-sm font-semibold leading-snug text-foreground group-hover:text-primary transition-colors">
-                        {event.title}
-                      </h3>
-                      {event.location ? (
-                        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                          <Bell className="h-3 w-3" />
-                          <span className="truncate">{event.location}</span>
-                        </div>
-                      ) : null}
-                    </Link>
-                  ))}
-                </div>
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={staggerContainer}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {allNews.slice(0, 6).map((item: News) => (
+                      <motion.div key={item._id} variants={cardVariant}>
+                        <Link
+                          href={`/news/${item._id}`}
+                          className="group block h-full"
+                        >
+                          <Card className="h-full gap-0 overflow-hidden py-0 transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/20 group-hover:shadow-md">
+                            <div className="flex h-36 items-center justify-center bg-gradient-to-br from-primary/20 via-primary/10 to-secondary/10">
+                              <Newspaper className="h-10 w-10 text-primary/30" />
+                            </div>
+                            <CardHeader className="gap-3 p-5 pb-2">
+                              <div className="flex items-center justify-between gap-2">
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                                  {getOwnershipLabel(item, 'CICT Official')}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {format(new Date(item.publishedAt ?? item.createdAt), 'MMM d, yyyy')}
+                                </span>
+                              </div>
+                              <CardTitle className="line-clamp-2 text-base transition-colors group-hover:text-primary">{item.title}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="px-5 pb-5">
+                              <p className="line-clamp-2 text-sm text-muted-foreground">{item.excerpt}</p>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <motion.div variants={fadeUp} className="flex justify-center mt-8">
+                    <Button asChild variant="outline" size="sm" className="gap-1.5">
+                      <Link href="/news">View all news <ArrowRight className="w-3.5 h-3.5" /></Link>
+                    </Button>
+                  </motion.div>
+                </motion.div>
               )}
-            </div>
-          </>
+            </TabsContent>
+
+            <TabsContent value="announcements" className="w-full">
+              {announcements.length === 0 ? (
+                <p className="text-center text-sm text-muted-foreground py-10">No announcements available.</p>
+              ) : (
+                <motion.div
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  variants={staggerContainer}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {announcements.slice(0, 6).map((a: Announcement) => (
+                      <motion.div key={a._id} variants={cardVariant}>
+                        <Card className="group gap-0 overflow-hidden py-0 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-md">
+                          <div className="flex">
+                            <div className="w-1.5 bg-primary shrink-0" />
+                            <CardContent className="flex-1 p-5">
+                              <div className="flex items-center gap-2">
+                                <Bell className="w-4 h-4 text-primary" />
+                                <Badge variant="outline" className="text-[10px] uppercase tracking-wide">
+                                  {getOwnershipLabel(a, 'Official')}
+                                </Badge>
+                              </div>
+                              <h3 className="mt-2 line-clamp-2 text-base font-bold text-foreground transition-colors group-hover:text-primary">{a.title}</h3>
+                              <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{a.content}</p>
+                            </CardContent>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    ))}
+                  </div>
+                  <motion.div variants={fadeUp} className="flex justify-center mt-8">
+                    <Button asChild variant="outline" size="sm" className="gap-1.5">
+                      <Link href="/announcements">View all announcements <ArrowRight className="w-3.5 h-3.5" /></Link>
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </section>

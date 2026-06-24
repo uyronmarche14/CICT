@@ -37,7 +37,7 @@ export default function DetailPageCTA({
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
         <div className="text-center mb-12">
           <p className="text-sm font-semibold text-primary uppercase tracking-wider mb-4">
             {subtitle}

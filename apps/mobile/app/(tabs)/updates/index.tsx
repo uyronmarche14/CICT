@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNetInfo } from '@react-native-community/netinfo';
 import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text } from 'react-native';
 
 import { ConnectivityNotice } from '@/components/feedback/ConnectivityNotice';
 import { EmptyState } from '@/components/feedback/EmptyState';
@@ -26,14 +26,21 @@ const CATEGORY_TABS: { key: FilterTab; label: string }[] = [
   { key: 'event', label: 'Events' },
 ];
 
+const SCOPE_TABS: { key: 'all' | 'official' | 'community'; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'official', label: 'Official' },
+  { key: 'community', label: 'Community' },
+];
+
 export default function UpdatesScreen() {
   const { colors } = useTheme();
   const router = useRouter();
   const netInfo = useNetInfo();
   const [category, setCategory] = useState<FilterTab>('all');
+  const [scope, setScope] = useState<'all' | 'official' | 'community'>('all');
   const [search, setSearch] = useState('');
 
-  const filters = useMemo(() => ({ category, search }), [category, search]);
+  const filters = useMemo(() => ({ category, search, scope }), [category, search, scope]);
   const { items, featured, isLoading, isError, refetch, isRefetching } = useUpdatesHub(filters);
 
   const handleItemPress = (item: UpdateItem) => {
@@ -78,9 +85,10 @@ export default function UpdatesScreen() {
       {!netInfo.isConnected ? <ConnectivityNotice /> : null}
 
       <SectionHeader
-        title="Updates"
+        title="Announcements"
         subtitle="News, announcements, and events from across CICT."
-      />
+          branded
+        />
 
       <ScrollView
         horizontal
@@ -97,7 +105,38 @@ export default function UpdatesScreen() {
                 styles.filterChip,
                 isActive
                   ? { backgroundColor: colors.primary, borderColor: colors.primary }
-                  : { backgroundColor: colors.surfaceMuted, borderColor: colors.border },
+                  : { backgroundColor: colors.surfaceElevated, borderColor: colors.hairline },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.filterChipLabel,
+                  { color: isActive ? '#FFFFFF' : colors.textMuted },
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.filterRow}
+      >
+        {SCOPE_TABS.map((tab) => {
+          const isActive = scope === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => setScope(tab.key)}
+              style={[
+                styles.filterChip,
+                isActive
+                  ? { backgroundColor: colors.primary, borderColor: colors.primary }
+                  : { backgroundColor: colors.surfaceElevated, borderColor: colors.hairline },
               ]}
             >
               <Text
@@ -145,6 +184,9 @@ export default function UpdatesScreen() {
 }
 
 const styles = StyleSheet.create({
+  flex: {
+    flex: 1,
+  },
   filterRow: {
     gap: spacing.sm,
   },

@@ -68,6 +68,44 @@ describe('AuthContext', () => {
     expect(result.current.canAccessAdmin).toBe(true);
   });
 
+  it('login accepts additive mobile token and student bridge fields', async () => {
+    const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
+
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    act(() => {
+      result.current.login({
+        accessToken: 'mobile-access-token',
+        refreshToken: 'mobile-refresh-token',
+        user: {
+          id: 'user-1',
+          email: 'admin@example.com',
+          firstName: 'Admin',
+          lastName: 'User',
+          role: 'semi_admin',
+          baseRoleLabel: 'Semi Admin',
+          effectiveRoleLabel: 'Semi Admin',
+          effectiveRoleKind: 'system',
+          effectivePermissions: ['scan_event_attendance'],
+          canAccessAdmin: true,
+          organizationAssignments: [],
+          visibleAdminModules: ['events'],
+          scopedAdminModulesByOrganization: {},
+          isActive: true,
+          studentId: 'student-1',
+        },
+        permissions: ['scan_event_attendance'],
+        canAccessAdmin: true,
+        visibleAdminModules: ['events'],
+      });
+    });
+
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.user?.email).toBe('admin@example.com');
+    expect(result.current.user?.studentId).toBe('student-1');
+    expect(result.current.permissions).toEqual(['scan_event_attendance']);
+  });
+
   it('logout clears auth state', async () => {
     const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 

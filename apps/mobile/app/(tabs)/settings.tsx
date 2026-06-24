@@ -4,7 +4,6 @@ import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { AttendanceChart } from '@/components/attendance/AttendanceChart';
 import { AttendanceLogCard } from '@/components/attendance/AttendanceLogCard';
 import { EmptyState } from '@/components/feedback/EmptyState';
-import { ErrorState } from '@/components/feedback/ErrorState';
 import { LoadingState } from '@/components/feedback/LoadingState';
 import { AppButton } from '@/components/ui/AppButton';
 import { AppCard } from '@/components/ui/AppCard';
@@ -68,7 +67,7 @@ export default function SettingsScreen() {
   const { stats, isPending: statsPending, isError: statsError } = useAttendanceStats();
   const { colors, isDark, toggleDark } = useTheme();
   const logs = useAttendanceHistory();
-  const allLogs = logs.data ?? [];
+  const allLogs = useMemo(() => logs.data ?? [], [logs.data]);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
 

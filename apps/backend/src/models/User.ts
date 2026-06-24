@@ -28,6 +28,11 @@ const userSchema = new Schema<IUser>(
       required: [true, 'Last name is required'],
       trim: true,
     },
+    studentId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Student',
+      index: true,
+    },
     role: {
       type: String,
       enum: Object.values(UserRole),

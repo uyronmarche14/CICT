@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppButton } from '@/components/ui/AppButton';
 import { useTheme } from '@/theme/ThemeContext';
-import { fontSizes, radii, spacing } from '@/theme/tokens';
+import { fontSizes, spacing } from '@/theme/tokens';
 import { useNotificationStore } from '@/store/notification-store';
 
 const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
@@ -15,7 +15,7 @@ const typeIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
 };
 
 export function NotificationCenter({ onClose }: { onClose: () => void }) {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const notifications = useNotificationStore((s) => s.notifications);
   const markAsRead = useNotificationStore((s) => s.markAsRead);
   const markAllAsRead = useNotificationStore((s) => s.markAllAsRead);

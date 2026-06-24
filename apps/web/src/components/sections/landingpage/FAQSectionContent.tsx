@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import PublicSectionHeader from '@/components/sections/landingpage/PublicSectionHeader';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FAQContent } from '@/types';
 
 interface FAQSectionContentProps {
@@ -20,7 +20,7 @@ interface FAQSectionContentProps {
   previewLabel?: string;
 }
 
-const FAQSectionContent = ({ data, previewLabel }: FAQSectionContentProps) => {
+const FAQSectionContent = ({ data }: FAQSectionContentProps) => {
   const { title, subtitle, topics, questions } = data;
   const [activeTopic, setActiveTopic] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,13 +72,9 @@ const FAQSectionContent = ({ data, previewLabel }: FAQSectionContentProps) => {
 
   return (
     <section className="bg-background py-20">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-12">
-          <PublicSectionHeader
-            eyebrow={previewLabel ?? 'FAQ'}
-            title={title}
-            description={subtitle}
-          />
+          <SectionHeader title={title} subtitle={subtitle} centered />
         </div>
 
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">

@@ -8,7 +8,33 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        heading: ["Blockletter", "sans-serif"],
+        sans: [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "Noto Sans",
+          "sans-serif",
+        ],
+        heading: [
+          "Inter",
+          "ui-sans-serif",
+          "system-ui",
+          "-apple-system",
+          "BlinkMacSystemFont",
+          "Segoe UI",
+          "Roboto",
+          "Helvetica Neue",
+          "Arial",
+          "Noto Sans",
+          "sans-serif",
+        ],
+        display: ["Blockletter", "Inter", "system-ui", "sans-serif"],
       },
       colors: {
         border: "var(--border)",

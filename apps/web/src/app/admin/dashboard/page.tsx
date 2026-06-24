@@ -8,19 +8,6 @@ import { Users, Newspaper, Megaphone, UserCog, Building2, CalendarDays, Graduati
 import { useQuery } from '@tanstack/react-query';
 import type { AdminModuleKey } from '@/types';
 
-function getModuleIcon(moduleName: string) {
-  switch (moduleName) {
-    case 'users': return <Users className="h-4 w-4 text-muted-foreground" />;
-    case 'students': return <GraduationCap className="h-4 w-4 text-muted-foreground" />;
-    case 'news': return <Newspaper className="h-4 w-4 text-muted-foreground" />;
-    case 'announcements': return <Megaphone className="h-4 w-4 text-muted-foreground" />;
-    case 'roles': return <UserCog className="h-4 w-4 text-muted-foreground" />;
-    case 'organizations': return <Building2 className="h-4 w-4 text-muted-foreground" />;
-    case 'events': return <CalendarDays className="h-4 w-4 text-muted-foreground" />;
-    default: return <Users className="h-4 w-4 text-muted-foreground" />;
-  }
-}
-
 export default function AdminDashboard() {
   const { loading: authLoading, isAuthenticated, canAccessAdmin } = useAuth();
   const { getVisibleAdminModules } = usePermissions();
@@ -60,49 +47,49 @@ export default function AdminDashboard() {
       title: 'Total Users',
       description: 'Registered users',
       value: summary?.cards?.users ?? 0,
-      icon: <Users className="h-4 w-4 text-muted-foreground" />,
+      icon: <Users className="h-4 w-4 text-primary" />,
     },
     {
       key: 'students',
       title: 'Total Students',
       description: 'Registered students',
       value: summary?.cards?.students ?? 0,
-      icon: <GraduationCap className="h-4 w-4 text-muted-foreground" />,
+      icon: <GraduationCap className="h-4 w-4 text-primary" />,
     },
     {
       key: 'news',
       title: 'News Articles',
       description: 'Total news',
       value: summary?.cards?.news ?? 0,
-      icon: <Newspaper className="h-4 w-4 text-muted-foreground" />,
+      icon: <Newspaper className="h-4 w-4 text-primary" />,
     },
     {
       key: 'announcements',
       title: 'Announcements',
       description: 'Total announcements',
       value: summary?.cards?.announcements ?? 0,
-      icon: <Megaphone className="h-4 w-4 text-muted-foreground" />,
+      icon: <Megaphone className="h-4 w-4 text-primary" />,
     },
     {
       key: 'roles',
       title: 'Roles',
       description: 'Total roles',
       value: summary?.cards?.roles ?? 0,
-      icon: <UserCog className="h-4 w-4 text-muted-foreground" />,
+      icon: <UserCog className="h-4 w-4 text-primary" />,
     },
     {
       key: 'organizations',
       title: 'Organizations',
       description: 'Total organizations',
       value: summary?.cards?.organizations ?? 0,
-      icon: <Building2 className="h-4 w-4 text-muted-foreground" />,
+      icon: <Building2 className="h-4 w-4 text-primary" />,
     },
     {
       key: 'events',
       title: 'Events',
       description: 'Total events',
       value: summary?.cards?.events ?? 0,
-      icon: <CalendarDays className="h-4 w-4 text-muted-foreground" />,
+      icon: <CalendarDays className="h-4 w-4 text-primary" />,
     },
   ];
 
@@ -112,21 +99,24 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome to the CICT Portal admin dashboard.
+      <div className="rounded-2xl border border-hairline bg-surface-elevated p-5 shadow-[var(--shadow-soft)] sm:p-6">
+        <p className="text-xs font-semibold uppercase text-primary">CICT Admin</p>
+        <h1 className="mt-2 text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Monitor content, students, events, organizations, and access across the portal.
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {visibleCards.map((card) => (
-          <Card key={card.key}>
+          <Card key={card.key} className="overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 {card.title}
               </CardTitle>
-              {card.icon}
+              <div className="rounded-lg border border-primary/10 bg-primary/10 p-2">
+                {card.icon}
+              </div>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{card.value}</div>
@@ -139,7 +129,7 @@ export default function AdminDashboard() {
       </div>
 
       {visibleCards.length === 0 && (
-        <div className="text-center py-12">
+        <div className="rounded-2xl border border-dashed border-hairline bg-surface-elevated text-center py-12">
           <p className="text-muted-foreground">No modules available.</p>
         </div>
       )}

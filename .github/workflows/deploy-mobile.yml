@@ -49,10 +49,13 @@ jobs:
       - name: Build contracts
         run: pnpm --filter @cict/contracts build
 
+      - name: Mobile release gate
+        run: pnpm --filter @cict/mobile release:check
+
       - name: EAS Android Build
         uses: expo/expo-github-action@v8
         with:
-          eas-version: latest
+          eas-version: 20.1.0
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Run EAS Build

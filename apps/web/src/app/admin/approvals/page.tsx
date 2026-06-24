@@ -6,7 +6,6 @@ import { usePermissions } from '@/hooks/permissions/use-permissions';
 import { useAdminPageAccess } from '@/hooks/permissions/use-admin-page-access';
 import { useApprovalQueue, useApprovalStats } from '@/hooks/use-approval-queue';
 import type { ApprovalQueueParams } from '@/lib/api/approval';
-import { approvalAPI } from '@/lib/api/approval';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,10 +49,9 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import Link from 'next/link';
 import { appToast } from '@/lib/app-toast';
-import { eventAPI } from '@/lib/api/event';
 import { membershipAPI, OrganizationMembership } from '@/lib/api/organization-membership';
-import api from '@/lib/api/axios';
 import { Permission } from '@/types';
+import { adminContentAPI, type AdminContentKind } from '@/features/admin-content';
 
 const TYPE_OPTIONS = [
   { value: 'all', label: 'All Types' },
@@ -67,6 +65,13 @@ const CONTENT_TYPE_CONFIG: Record<string, { icon: typeof Newspaper; label: strin
   news: { icon: Newspaper, label: 'News', href: '/admin/news' },
   announcement: { icon: Megaphone, label: 'Announcement', href: '/admin/announcements' },
 };
+
+const toAdminContentKind = (contentType: string): AdminContentKind =>
+  contentType === 'announcement' || contentType === 'announcements'
+    ? 'announcement'
+    : contentType === 'event' || contentType === 'events'
+      ? 'event'
+      : 'news';
 
 function getPageNumbers(current: number, total: number): (number | 'ellipsis')[] {
   if (total <= 7) {
@@ -172,10 +177,7 @@ export default function AdminApprovalsPage() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ id, contentType }: { id: string; contentType: string }) => {
-      if (contentType === 'event') {
-        return eventAPI.approve(id);
-      }
-      return api.patch(`/${contentType}s/${id}/approve`);
+      return adminContentAPI.workflow(toAdminContentKind(contentType), id, 'approve');
     },
     onSuccess: () => {
       appToast.success('Approved', 'Content has been approved.');
@@ -188,10 +190,7 @@ export default function AdminApprovalsPage() {
 
   const rejectMutation = useMutation({
     mutationFn: async ({ id, contentType, reason }: { id: string; contentType: string; reason: string }) => {
-      if (contentType === 'event') {
-        return eventAPI.reject(id, { reason });
-      }
-      return api.patch(`/${contentType}s/${id}/reject`, { reason });
+      return adminContentAPI.workflow(toAdminContentKind(contentType), id, 'reject', reason);
     },
     onSuccess: () => {
       appToast.success('Rejected', 'Content has been rejected.');

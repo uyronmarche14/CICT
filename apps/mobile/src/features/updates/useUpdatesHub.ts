@@ -12,6 +12,7 @@ import { stripHtml } from '@/utils/format';
 type UpdatesHubFilters = {
   category: UpdateItemKind | 'all';
   search: string;
+  scope: 'all' | 'official' | 'community';
 };
 
 function normalizeNews(item: { _id: string; title: string; excerpt: string; bodyHtml: string; publishedAt?: string; createdAt: string; imageUrl?: string }): UpdateItem {
@@ -95,6 +96,10 @@ export function useUpdatesHub(filters: UpdatesHubFilters) {
 
     if (filters.category !== 'all') {
       items = items.filter((item) => item.kind === filters.category);
+    }
+
+    if (filters.scope !== 'all') {
+      items = items.filter((item) => item.ownerType === filters.scope);
     }
 
     const query = filters.search.trim().toLowerCase();

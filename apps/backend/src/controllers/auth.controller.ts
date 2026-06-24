@@ -1,91 +1,40 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import User from '../models/User';
-import { IJWTPayload } from '../types';
 import { AppError } from '../middleware/errorHandler';
-import logger from '../utils/logger';
 import { AuthRequest } from '../middleware/auth';
-import { buildAuthenticatedUser, serializeAuthUser } from '../utils/rbac';
+import { serializeAuthUser } from '../utils/rbac';
 import { getAuthCookieOptions } from '../utils/authCookies';
 import { getPermissionMetadata as getPermissionMetadataCatalog } from '../utils/permissionMetadata';
 import { setCsrfCookie } from '../middleware/csrf';
 import { forgotPassword as forgotPasswordService, resetPassword as resetPasswordService } from '../services/password-reset.service';
-
-/**
- * Generate JWT token
- */
-const generateToken = (payload: IJWTPayload): string => {
-  const jwtSecret = process.env.JWT_SECRET;
-  const jwtExpire = process.env.JWT_EXPIRE ?? '7d';
-  
-  if (!jwtSecret) {
-    throw new Error('JWT_SECRET is not defined');
-  }
-  
-  // Convert payload to plain object for jwt.sign
-  const plainPayload = {
-    userId: payload.userId.toString(),
-    email: payload.email,
-    role: payload.role,
-    customRole: payload.customRole ? payload.customRole.toString() : undefined,
-  };
-  
-  return jwt.sign(plainPayload, jwtSecret as jwt.Secret, { expiresIn: jwtExpire } as jwt.SignOptions);
-};
+import {
+  authenticateAdminUser,
+  changeAdminPassword,
+  refreshAdminSession,
+} from '../services/auth.service';
 
 /**
  * Login user
  */
 export const login = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
-  
-  // Find user and include password field
-  const user = await User.findOne({ email }).select('+password');
-  
-  if (!user) {
-    throw new AppError('Invalid email or password', 401);
-  }
-  
-  // Check if user is active
-  if (!user.isActive) {
-    throw new AppError('Your account has been deactivated', 403);
-  }
-  
-  // Verify password
-  const isPasswordValid = await user.comparePassword(password);
-  
-  if (!isPasswordValid) {
-    throw new AppError('Invalid email or password', 401);
-  }
-  
-  // Update last login
-  user.lastLogin = new Date();
-  await user.save();
-  
-  // Generate token
-  const tokenPayload: IJWTPayload = {
-    userId: user._id.toString(),
-    email: user.email,
-    role: user.role,
-    customRole: user.customRole?.toString(),
-  };
-  
-  const token = generateToken(tokenPayload);
-  const authenticatedUser = await buildAuthenticatedUser(user, true);
-  const serializedUser = await serializeAuthUser(authenticatedUser);
+  const { accessToken, refreshToken, authenticatedUser, serializedUser } =
+    await authenticateAdminUser(email, password);
 
-  res.cookie('token', token, getAuthCookieOptions());
+  const cookieOptions = getAuthCookieOptions();
+  res.cookie('token', accessToken, cookieOptions);
+  res.cookie('refresh_token', refreshToken, { ...cookieOptions, path: '/api/auth/refresh' });
   setCsrfCookie(res);
-
-  logger.info(`User logged in: ${user.email}`);
   
   res.status(200).json({
     success: true,
     message: 'Login successful',
     data: {
+      accessToken,
+      refreshToken,
       user: serializedUser,
       permissions: authenticatedUser.permissions,
       canAccessAdmin: authenticatedUser.canAccessAdmin,
+      adminAccessPolicy: authenticatedUser.adminAccessPolicy,
       adminScopes: authenticatedUser.adminScopes,
       visibleAdminModules: authenticatedUser.visibleAdminModules,
       scopedAdminModulesByOrganization:
@@ -98,9 +47,15 @@ export const login = async (req: Request, res: Response): Promise<void> => {
  * Logout user
  */
 export const logout = async (_req: Request, res: Response): Promise<void> => {
+  const cookieOptions = getAuthCookieOptions();
   res.clearCookie('token', {
-    ...getAuthCookieOptions(),
+    ...cookieOptions,
     maxAge: undefined,
+  });
+  res.clearCookie('refresh_token', {
+    ...cookieOptions,
+    maxAge: undefined,
+    path: '/api/auth/refresh',
   });
 
   res.status(200).json({
@@ -124,6 +79,7 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       user: serializedUser,
       permissions: req.user.permissions,
       canAccessAdmin: req.user.canAccessAdmin,
+      adminAccessPolicy: req.user.adminAccessPolicy,
       adminScopes: req.user.adminScopes,
       visibleAdminModules: req.user.visibleAdminModules,
       scopedAdminModulesByOrganization: req.user.scopedAdminModulesByOrganization,
@@ -170,25 +126,12 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
 };
 
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken: token } = req.body;
+  const { refreshToken: bodyToken } = req.body;
+  const token = bodyToken ?? req.cookies?.refresh_token;
   if (!token) {throw new AppError('Refresh token is required', 400);}
 
-  const decoded = jwt.verify(token, process.env.JWT_REFRESH_SECRET!) as IJWTPayload;
-  const user = await User.findById(decoded.userId);
-  if (!user?.isActive) {throw new AppError('Invalid refresh token', 401);}
-
-  const accessToken = jwt.sign(
-    { userId: String(user._id), email: user.email, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: '7d' }
-  );
-  const newRefreshToken = jwt.sign(
-    { userId: String(user._id), email: user.email, role: user.role },
-    process.env.JWT_REFRESH_SECRET!,
-    { expiresIn: '30d' }
-  );
-
-  const authenticatedUser = await buildAuthenticatedUser(user);
+  const { accessToken, refreshToken: newRefreshToken, authenticatedUser, serializedUser } =
+    await refreshAdminSession(token);
   const cookieOptions = getAuthCookieOptions();
   res.cookie('token', accessToken, cookieOptions);
   res.cookie('refresh_token', newRefreshToken, {
@@ -201,7 +144,14 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
     data: {
       accessToken,
       refreshToken: newRefreshToken,
-      user: await serializeAuthUser(authenticatedUser),
+      user: serializedUser,
+      permissions: authenticatedUser.permissions,
+      canAccessAdmin: authenticatedUser.canAccessAdmin,
+      adminAccessPolicy: authenticatedUser.adminAccessPolicy,
+      adminScopes: authenticatedUser.adminScopes,
+      visibleAdminModules: authenticatedUser.visibleAdminModules,
+      scopedAdminModulesByOrganization:
+        authenticatedUser.scopedAdminModulesByOrganization,
     },
   });
 };
@@ -224,25 +174,7 @@ export const updatePassword = async (req: AuthRequest, res: Response): Promise<v
   }
   
   const { currentPassword, newPassword } = req.body;
-  
-  const user = await User.findById(req.user.userId).select('+password');
-  
-  if (!user) {
-    throw new AppError('User not found', 404);
-  }
-  
-  // Verify current password
-  const isPasswordValid = await user.comparePassword(currentPassword);
-  
-  if (!isPasswordValid) {
-    throw new AppError('Current password is incorrect', 401);
-  }
-  
-  // Update password
-  user.password = newPassword;
-  await user.save();
-  
-  logger.info(`Password updated for user: ${user.email}`);
+  await changeAdminPassword(req.user.userId, currentPassword, newPassword);
   
   res.status(200).json({
     success: true,

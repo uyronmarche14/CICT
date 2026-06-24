@@ -134,7 +134,7 @@ jobs:
         run: pnpm --filter @cict/web build
 
   mobile-checks:
-    name: Mobile - Lint, TypeCheck & Test
+    name: Mobile - Release Gate
     runs-on: ubuntu-latest
     needs: [contracts-checks]
 
@@ -164,14 +164,8 @@ jobs:
       - name: Build contracts
         run: pnpm --filter @cict/contracts build
 
-      - name: Lint
-        run: pnpm --filter @cict/mobile lint
-
-      - name: Type check
-        run: pnpm --filter @cict/mobile typecheck
-
-      - name: Run tests
-        run: pnpm --filter @cict/mobile test
+      - name: Mobile release gate
+        run: pnpm --filter @cict/mobile release:check
 
   security-audit:
     name: Security - Dependency Audit & CodeQL

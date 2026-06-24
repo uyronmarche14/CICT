@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
-import { authApi } from '@/services/api/auth';
+import { adminAuthApi, studentAuthApi } from '@/services/api/auth';
 import { sessionStorage } from '@/services/storage/secure-store';
 import { useAuthStore } from '@/store/auth-store';
+import { normalizeAuthProfile } from '@/utils/auth-profile';
 
 export function useAuthBootstrap() {
   const status = useAuthStore((state) => state.status);
@@ -16,9 +17,32 @@ export function useAuthBootstrap() {
     const bootstrap = async () => {
       setHydrating();
 
-      const tokens = await sessionStorage.getTokens();
+      const session = await sessionStorage.getSession();
 
-      if (!tokens) {
+      if (session) {
+        try {
+          if (session.actorType === 'admin') {
+            const profile = await adminAuthApi.me();
+            if (isMounted) {
+              await setSession({ ...session, profile: normalizeAuthProfile(profile, session.profile) });
+            }
+          } else {
+            const student = await studentAuthApi.me();
+            if (isMounted) {
+              await setSession({ ...session, student });
+            }
+          }
+        } catch {
+          if (isMounted) {
+            await clearSession();
+          }
+        }
+        return;
+      }
+
+      const legacyTokens = await sessionStorage.getTokens();
+
+      if (!legacyTokens) {
         if (isMounted) {
           await clearSession();
         }
@@ -26,9 +50,9 @@ export function useAuthBootstrap() {
       }
 
       try {
-        const student = await authApi.me();
+        const student = await studentAuthApi.me();
         if (isMounted) {
-          await setSession({ ...tokens, student });
+          await setSession({ ...legacyTokens, actorType: 'student', student });
         }
       } catch {
         if (isMounted) {

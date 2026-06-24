@@ -1,8 +1,5 @@
-import { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { AppCard } from '@/components/ui/AppCard';
-import { StatusPill } from '@/components/ui/StatusPill';
 import { useTheme } from '@/theme/ThemeContext';
 import { fontSizes, radii, spacing } from '@/theme/tokens';
 import type { AnnouncementPriority, UpdateItem } from '@/types/models';
@@ -41,7 +38,6 @@ function WidgetCard({ children, style }: { children: React.ReactNode; style?: an
 
 export function UpdateWidgets({ featured, onAnnouncementPress, onEventPress, onOrgPress }: UpdateWidgetsProps) {
   const { colors } = useTheme();
-  const [expanded, setExpanded] = useState(false);
 
   const widgets: { key: string; content: React.ReactNode }[] = [];
 
@@ -52,7 +48,7 @@ export function UpdateWidgets({ featured, onAnnouncementPress, onEventPress, onO
       key: 'announcement',
       content: (
         <Pressable onPress={() => onAnnouncementPress(a)}>
-          <WidgetCard style={expanded ? undefined : { width: 220 }}>
+          <WidgetCard style={{ width: 220 }}>
             <View style={[styles.widgetAccent, { backgroundColor: pColor }]} />
             <View style={styles.widgetContent}>
               <View style={styles.widgetHeader}>
@@ -80,7 +76,7 @@ export function UpdateWidgets({ featured, onAnnouncementPress, onEventPress, onO
       key: 'event',
       content: (
         <Pressable onPress={() => onEventPress(e)}>
-          <WidgetCard style={expanded ? undefined : { width: 220 }}>
+          <WidgetCard style={{ width: 220 }}>
             <View style={[styles.widgetAccent, { backgroundColor: colors.primary }]} />
             <View style={styles.widgetContent}>
               <View style={styles.widgetHeader}>
@@ -112,7 +108,7 @@ export function UpdateWidgets({ featured, onAnnouncementPress, onEventPress, onO
           if (l.kind === 'news') onAnnouncementPress(l);
           else onAnnouncementPress(l);
         }}>
-          <WidgetCard style={expanded ? undefined : { width: 220 }}>
+          <WidgetCard style={{ width: 220 }}>
             <View style={[styles.widgetAccent, { backgroundColor: colors.secondary }]} />
             <View style={styles.widgetContent}>
               <View style={styles.widgetHeader}>
@@ -136,7 +132,7 @@ export function UpdateWidgets({ featured, onAnnouncementPress, onEventPress, onO
     widgets.push({
       key: 'orgs',
       content: (
-        <WidgetCard style={expanded ? undefined : { width: 220 }}>
+        <WidgetCard style={{ width: 220 }}>
           <View style={[styles.widgetAccent, { backgroundColor: colors.accent }]} />
           <View style={styles.widgetContent}>
             <View style={styles.widgetHeader}>

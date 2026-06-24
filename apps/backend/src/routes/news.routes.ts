@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import * as newsController from '../controllers/news.controller';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { requireAnyAdminAction } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { handleImageUpload, upload } from '../middleware/upload';
@@ -58,7 +59,7 @@ const router: Router = Router();
 router.post(
   '/',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.CREATE_NEWS),
   upload.single('image'),
   handleImageUpload,
   validate(createNewsValidator),
@@ -157,7 +158,7 @@ router.get(
 router.put(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.EDIT_NEWS),
   upload.single('image'),
   handleImageUpload,
   validate(updateNewsValidator),
@@ -194,7 +195,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.DELETE_NEWS),
   validate(newsIdValidator),
   logActivity('delete', 'news'),
   newsController.deleteNews
@@ -229,7 +230,7 @@ router.delete(
 router.patch(
   '/:id/submit',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.SUBMIT_CONTENT_FOR_APPROVAL),
   validate([...newsIdValidator, ...contentApprovalCommentValidator]),
   logActivity('submit_for_approval', 'news'),
   newsController.submitNewsForApproval
@@ -264,7 +265,7 @@ router.patch(
 router.patch(
   '/:id/approve',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.APPROVE_CONTENT),
   validate([...newsIdValidator, ...contentApprovalCommentValidator]),
   logActivity('approve', 'news'),
   newsController.approveNews
@@ -310,7 +311,7 @@ router.patch(
 router.patch(
   '/:id/reject',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.REJECT_CONTENT),
   validate([...newsIdValidator, ...contentRejectionValidator]),
   logActivity('reject', 'news'),
   newsController.rejectNews
@@ -345,7 +346,7 @@ router.patch(
 router.patch(
   '/:id/publish',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.PUBLISH_NEWS),
   validate(newsIdValidator),
   logActivity('publish', 'news'),
   newsController.publishNews
@@ -380,7 +381,7 @@ router.patch(
 router.patch(
   '/:id/archive',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.ARCHIVE_NEWS),
   validate(newsIdValidator),
   logActivity('archive', 'news'),
   newsController.archiveNews

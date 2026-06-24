@@ -1,4 +1,3 @@
-import { Organization } from '../types';
 import { organizationService } from '../services/organizationService';
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';

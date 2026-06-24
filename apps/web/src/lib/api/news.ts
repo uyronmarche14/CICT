@@ -19,6 +19,8 @@ export const newsAPI = {
     search?: string;
     ownerType?: string;
     organizationId?: string;
+    category?: string;
+    featured?: string;
   }) => {
     const response = await api.get<NewsListResponse>('/news', { params });
     return response.data;

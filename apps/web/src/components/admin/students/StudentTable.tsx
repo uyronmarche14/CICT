@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';
+import { StudentStatus } from '@cict/contracts/enums';
 import type { Student } from '@/types';
 import { getProgramLabel, getYearLevelLabel, getSectionLabel } from '@/utils/student-helpers';
 
@@ -45,47 +46,56 @@ export function StudentTable({
               <TableCell colSpan={6} className="h-24 text-center">No students found.</TableCell>
             </TableRow>
           ) : (
-            students.map((student) => (
-              <TableRow key={student._id}>
-                <TableCell>
-                  <Link href={`/admin/students/${student._id}`} className="font-medium hover:text-primary">
-                    {student.firstName} {student.lastName}
-                  </Link>
-                  <div className="text-sm text-muted-foreground">{student.studentNumber}</div>
-                  <div className="text-xs text-muted-foreground">{student.email}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-sm">{getProgramLabel(student.programId)}</div>
-                  <div className="text-xs text-muted-foreground">{getYearLevelLabel(student.yearLevelId)}</div>
-                  <div className="text-xs text-muted-foreground">{getSectionLabel(student.sectionId)}</div>
-                </TableCell>
-                <TableCell>{student.phone || '—'}</TableCell>
-                <TableCell>
-                  <Badge variant={student.isActive ? 'default' : 'secondary'}>
-                    {student.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {student.lastLoginAt
-                    ? new Date(student.lastLoginAt).toLocaleDateString()
-                    : 'Never'}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-1">
-                    <Button variant="ghost" size="sm" onClick={() => onEdit(student)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onStatusToggle(student)}
-                    >
-                      {student.isActive ? 'Deactivate' : 'Activate'}
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))
+            students.map((student) => {
+              const statusActionLabel =
+                student.status === StudentStatus.PENDING && !student.isActive
+                  ? 'Accept'
+                  : student.isActive
+                    ? 'Deactivate'
+                    : 'Activate';
+
+              return (
+                <TableRow key={student._id}>
+                  <TableCell>
+                    <Link href={`/admin/students/${student._id}`} className="font-medium hover:text-primary">
+                      {student.firstName} {student.lastName}
+                    </Link>
+                    <div className="text-sm text-muted-foreground">{student.studentNumber}</div>
+                    <div className="text-xs text-muted-foreground">{student.email}</div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="text-sm">{getProgramLabel(student.programId)}</div>
+                    <div className="text-xs text-muted-foreground">{getYearLevelLabel(student.yearLevelId)}</div>
+                    <div className="text-xs text-muted-foreground">{getSectionLabel(student.sectionId)}</div>
+                  </TableCell>
+                  <TableCell>{student.phone || '—'}</TableCell>
+                  <TableCell>
+                    <Badge variant={student.isActive ? 'default' : 'secondary'}>
+                      {student.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {student.lastLoginAt
+                      ? new Date(student.lastLoginAt).toLocaleDateString()
+                      : 'Never'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-1">
+                      <Button variant="ghost" size="sm" onClick={() => onEdit(student)}>
+                        Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onStatusToggle(student)}
+                      >
+                        {statusActionLabel}
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })
           )}
         </TableBody>
       </Table>

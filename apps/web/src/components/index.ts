@@ -1,7 +1,6 @@
 // ─── Root-level components ───────────────────────────────────────────────
 export { default as AnnouncementsCarousel } from './announcements-carousel';
 export { ClientOnly } from './client-only';
-export { default as ComingSoonPage } from './ComingSoon';
 export { default as MeshGradientBg } from './ripplebg';
 export { default as ScrollingGallery } from './ScrollingGallery';
 export { StructuredContent } from './StructuredContent';
@@ -62,7 +61,6 @@ export { default as DetailPageCTA } from './sections/DetailPageCTA';
 export { default as DetailPageFooter } from './sections/DetailPageFooter';
 
 // ─── Landing page section components ────────────────────────────────────
-export { default as CICTSection } from './sections/landingpage/CICT-Section';
 export { default as FAQSectionContent } from './sections/landingpage/FAQSectionContent';
 export { default as FAQsSection } from './sections/landingpage/faqsSection';
 export { default as LandingHeroSection } from './sections/landingpage/heroSection';

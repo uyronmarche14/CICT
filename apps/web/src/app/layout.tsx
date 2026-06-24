@@ -8,8 +8,12 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CICT",
-  description: "College of Information and Communications Technology portal",
+  title: "TechSkolar | CICT",
+  description: "TechSkolar — the College of Information and Communication Technology portal empowering Taguig's youth through technology education.",
+  icons: {
+    icon: "/images/techskolar.png",
+    apple: "/images/techskolar.png",
+  },
 };
 
 export default function RootLayout({

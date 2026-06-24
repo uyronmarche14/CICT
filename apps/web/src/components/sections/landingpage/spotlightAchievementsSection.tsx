@@ -5,6 +5,7 @@ import { Award, Calendar, Loader2, Sparkles, Trophy } from 'lucide-react';
 import { useOrganizations } from '@/hooks/useOrganizations';
 import PublicSectionHeader from '@/components/sections/landingpage/PublicSectionHeader';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 type AchievementItem = {
   title: string;
@@ -22,7 +23,7 @@ export default function SpotlightAchievementsSection() {
   if (loading) {
     return (
       <section className="bg-background py-16 md:py-24">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
           </div>
@@ -81,7 +82,7 @@ export default function SpotlightAchievementsSection() {
 
   return (
     <section className="bg-background py-16 md:py-24">
-      <div className="mx-auto max-w-6xl space-y-12 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl space-y-12 px-4 sm:px-6 lg:px-8">
         <PublicSectionHeader
           eyebrow="Achievements"
           title="Recent Milestones"
@@ -94,60 +95,60 @@ export default function SpotlightAchievementsSection() {
             <Link
               key={`${item.organizationSlug}-${idx}`}
               href={`/organization/${item.organizationSlug}`}
-              className="group relative overflow-hidden rounded-2xl border border-border/40 bg-card p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              className="group block h-full"
             >
-              {/* Accent line */}
-              <div
-                className="absolute left-0 top-0 h-full w-1 origin-bottom scale-y-0 transition-transform duration-300 group-hover:scale-y-100"
-                style={{ backgroundColor: item.orgColor }}
-              />
+              <Card className="relative h-full overflow-hidden transition-all duration-300 group-hover:-translate-y-1 group-hover:border-primary/20 group-hover:shadow-md">
+                <div
+                  className="absolute left-0 top-0 h-full w-1 origin-bottom scale-y-0 transition-transform duration-300 group-hover:scale-y-100"
+                  style={{ backgroundColor: item.orgColor }}
+                />
 
-              {/* Icon */}
-              <div
-                className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg"
-                style={{ backgroundColor: `${item.orgColor}15` }}
-              >
-                <span style={{ color: item.orgColor }}>
-                  {item.category
-                    ? categoryIcons[item.category.toLowerCase()] || <Award className="h-5 w-5" />
-                    : <Trophy className="h-5 w-5" />
-                  }
-                </span>
-              </div>
+                <CardContent className="px-6">
+                  <div
+                    className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg"
+                    style={{ backgroundColor: `${item.orgColor}15` }}
+                  >
+                    <span style={{ color: item.orgColor }}>
+                      {item.category
+                        ? categoryIcons[item.category.toLowerCase()] || <Award className="h-5 w-5" />
+                        : <Trophy className="h-5 w-5" />
+                      }
+                    </span>
+                  </div>
 
-              {/* Content */}
-              <h3 className="font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-                {item.title}
-              </h3>
+                  <h3 className="font-bold leading-snug text-foreground transition-colors group-hover:text-primary">
+                    {item.title}
+                  </h3>
 
-              {item.description && (
-                <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-                  {item.description}
-                </p>
-              )}
+                  {item.description && (
+                    <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+                      {item.description}
+                    </p>
+                  )}
 
-              {/* Meta */}
-              <div className="mt-4 flex items-center gap-3">
-                <Badge
-                  variant="outline"
-                  className="text-[10px] font-medium"
-                  style={{
-                    borderColor: `${item.orgColor}30`,
-                    color: item.orgColor,
-                  }}
-                >
-                  {item.organizationName}
-                </Badge>
-                {item.date && (
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(item.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'short',
-                    })}
-                  </span>
-                )}
-              </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-medium"
+                      style={{
+                        borderColor: `${item.orgColor}30`,
+                        color: item.orgColor,
+                      }}
+                    >
+                      {item.organizationName}
+                    </Badge>
+                    {item.date && (
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(item.date).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </Link>
           ))}
         </div>

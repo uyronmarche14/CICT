@@ -1,7 +1,7 @@
-import axios from 'axios';
+import { isAxiosError } from 'axios';
 
 export const getErrorMessage = (error: unknown, fallback = 'Something went wrong.') => {
-  if (axios.isAxiosError(error)) {
+  if (isAxiosError(error)) {
     return (
       error.response?.data?.message ||
       error.response?.data?.error ||
@@ -18,4 +18,4 @@ export const getErrorMessage = (error: unknown, fallback = 'Something went wrong
 };
 
 export const isNetworkError = (error: unknown) =>
-  axios.isAxiosError(error) && !error.response;
+  isAxiosError(error) && !error.response;

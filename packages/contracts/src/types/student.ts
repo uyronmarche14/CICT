@@ -7,6 +7,7 @@ import type { VenueDetails } from './common';
 import type { EventScheduleItem } from './common';
 import type { StudentEventSection } from './common';
 import type { ContentOwnerType } from '../enums/content';
+import type { AuthProfile, AuthTokens } from './auth';
 
 export type StudentIdentity = {
   id?: string;
@@ -111,6 +112,8 @@ export type StudentEvent = {
   contactName?: string;
   contactEmail?: string;
   venueDetails?: VenueDetails;
+  gallery?: MediaAsset[];
+  mapUrl?: string;
   organizer?: {
     firstName: string;
     lastName: string;
@@ -143,6 +146,18 @@ export type AttendanceLog = {
 export type AuthSession = AuthTokens & {
   student: StudentProfile | null;
 };
+
+export type StudentMobileSession = AuthTokens & {
+  actorType: 'student';
+  student: StudentProfile;
+};
+
+export type AdminMobileSession = AuthTokens & {
+  actorType: 'admin';
+  profile: AuthProfile;
+};
+
+export type MobileSession = StudentMobileSession | AdminMobileSession;
 
 export type StudentLoginResponse = AuthTokens & {
   student: StudentProfile;
@@ -181,5 +196,3 @@ export type PushTokenRegistrationRequest = {
 export type PushTokenUnregistrationRequest = {
   token: string;
 };
-
-import type { AuthTokens } from './auth';

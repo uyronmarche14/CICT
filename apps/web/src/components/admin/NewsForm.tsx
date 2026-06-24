@@ -32,7 +32,6 @@ import {
   ReferenceLink,
   AttachmentItem,
 } from '@/types';
-import api from '@/lib/api/axios';
 import { Loader2 } from 'lucide-react';
 import { RichTextEditor } from '@/components/admin/DynamicRichTextEditor';
 import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
@@ -48,6 +47,7 @@ import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 import { useReferenceData } from '@/hooks/use-reference-data';
 import { LookupCombobox, LookupMultiCombobox } from '@/components/ui/lookup-combobox';
+import { adminContentAPI } from '@/features/admin-content';
 
 const newsSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -294,11 +294,7 @@ export function NewsForm({ open, onOpenChange, news, onSuccess }: NewsFormProps)
         relatedArticleIds: relatedArticleIds.length > 0 ? relatedArticleIds : undefined,
       };
 
-      if (news) {
-        await api.put(`/news/${news._id}`, payload);
-      } else {
-        await api.post('/news', payload);
-      }
+      await adminContentAPI.news.save(payload, news?._id);
 
       appToast.success('News Saved', 'The news article has been saved successfully.');
       onSuccess();

@@ -1,5 +1,47 @@
 import { MediaAsset } from '@/types';
 
+export type ContentWithMedia = {
+  title?: string;
+  coverImage?: MediaAsset;
+  imageUrl?: string;
+  imageId?: string;
+};
+
+export type NormalizedContentMedia = {
+  imageUrl?: string;
+  imageId?: string;
+  alt: string;
+  source: 'coverImage' | 'legacy' | 'none';
+};
+
+export const normalizeContentMedia = (
+  content: ContentWithMedia,
+  fallbackAlt = 'Content image'
+): NormalizedContentMedia => {
+  if (content.coverImage?.imageUrl) {
+    return {
+      imageUrl: content.coverImage.imageUrl,
+      imageId: content.coverImage.imageId,
+      alt: content.coverImage.alt || content.title || fallbackAlt,
+      source: 'coverImage',
+    };
+  }
+
+  if (content.imageUrl) {
+    return {
+      imageUrl: content.imageUrl,
+      imageId: content.imageId,
+      alt: content.title || fallbackAlt,
+      source: 'legacy',
+    };
+  }
+
+  return {
+    alt: content.title || fallbackAlt,
+    source: 'none',
+  };
+};
+
 const isSameMediaAsset = (left: MediaAsset, right: MediaAsset) => {
   if (left.imageId && right.imageId && left.imageId === right.imageId) {
     return true;

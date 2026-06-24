@@ -1,6 +1,6 @@
 import { PropsWithChildren } from 'react';
 import { ScrollView, ScrollViewProps, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '@/theme/ThemeContext';
 import { spacing } from '@/theme/tokens';
@@ -11,15 +11,23 @@ type AppScreenProps = PropsWithChildren<
   } & ScrollViewProps
 >;
 
+const TAB_BAR_HEIGHT = 72;
+
 export function AppScreen({ children, scroll = true, contentContainerStyle, ...props }: AppScreenProps) {
   const { colors } = useTheme();
+  const { bottom } = useSafeAreaInsets();
+  const bottomInset = TAB_BAR_HEIGHT + (bottom > 0 ? bottom : 16);
 
   if (scroll) {
     return (
-      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.canvas }]}>
         <ScrollView
           {...props}
-          contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: bottomInset + spacing.lg },
+            contentContainerStyle,
+          ]}
           showsVerticalScrollIndicator={false}
         >
           {children}
@@ -29,8 +37,10 @@ export function AppScreen({ children, scroll = true, contentContainerStyle, ...p
   }
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
-      <View style={styles.fixedContent}>{children}</View>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.canvas }]}>
+      <View style={[styles.fixedContent, { paddingBottom: bottomInset + spacing.lg }]}>
+        {children}
+      </View>
     </SafeAreaView>
   );
 }
@@ -41,7 +51,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     padding: spacing.lg,
-    gap: spacing.md,
+    gap: spacing.lg,
   },
   fixedContent: {
     flex: 1,

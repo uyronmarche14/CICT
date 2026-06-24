@@ -8,8 +8,27 @@ import type {
   StudentQrPayload,
   StudentRegistration,
 } from '@cict/contracts/types';
+import type { Program, Section, Student, YearLevel } from '@/types';
 
 export type { AttendanceLog, StudentEvent, StudentRegistration };
+
+export type StudentRegisterPayload = {
+  studentNumber: string;
+  email?: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  programId: string;
+  yearLevelId: string;
+  sectionId: string;
+};
+
+export type StudentAcademicOptionsResponse = {
+  programs: Program[];
+  yearLevels: YearLevel[];
+  sections: Section[];
+};
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api';
 
@@ -38,6 +57,21 @@ studentApi.interceptors.response.use(
 );
 
 export const studentAuthAPI = {
+  getAcademicOptions: async () => {
+    const { data } = await axios.get<{ success: boolean; data: StudentAcademicOptionsResponse }>(
+      `${API_URL}/student/auth/academic-options`,
+      { withCredentials: true }
+    );
+    return data.data;
+  },
+  register: async (payload: StudentRegisterPayload) => {
+    const { data } = await axios.post<{
+      success: boolean;
+      message: string;
+      data: { student: Student };
+    }>(`${API_URL}/student/auth/register`, payload, { withCredentials: true });
+    return data;
+  },
   login: async (studentNumber: string, password: string) => {
     const { data } = await axios.post(
       `${API_URL}/student/auth/login`,

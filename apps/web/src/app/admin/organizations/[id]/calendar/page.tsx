@@ -8,8 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import { CalendarSidebar } from '@/components/calendar/CalendarSidebar';
-import api from '@/lib/api/axios';
-import type { CalendarItem } from '@cict/contracts/types';
+import { calendarFeatureAPI } from '@/features/calendar/api';
 
 const ALL_TYPES = ['event', 'meeting', 'task', 'vote', 'resource'];
 
@@ -30,17 +29,16 @@ export default function OrgCalendarPage() {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['org-calendar', orgId, monthStart.toISOString(), monthEnd.toISOString()],
-    queryFn: async () => {
-      const { data: res } = await api.get(`/organizations/${orgId}/calendar`, {
-        params: { startDate: monthStart.toISOString(), endDate: monthEnd.toISOString() },
-      });
-      return (res.data.data?.items || []) as CalendarItem[];
-    },
+    queryFn: () =>
+      calendarFeatureAPI.getOrganizationFeed(orgId, {
+        startDate: monthStart.toISOString(),
+        endDate: monthEnd.toISOString(),
+      }),
     enabled: !!orgId,
     staleTime: 120_000,
   });
 
-  const items = data ?? [];
+  const items = useMemo(() => data ?? [], [data]);
 
   const selectedItems = useMemo(() => {
     if (!selectedDate) return [];

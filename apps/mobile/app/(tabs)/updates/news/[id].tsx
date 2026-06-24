@@ -81,7 +81,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     fontWeight: '700',
     textTransform: 'uppercase',
-    letterSpacing: 0.3,
   },
   title: {
     fontSize: fontSizes.xl,

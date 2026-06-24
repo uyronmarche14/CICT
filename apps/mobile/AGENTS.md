@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`apps/mobile` is the student mobile client for CICT. Its job is to give students a reliable mobile workflow for attendance, event discovery, registration, and student-facing updates while reusing the existing backend.
+`apps/mobile` is the unified mobile client for CICT. Its job is to give students a reliable workflow for attendance, event discovery, registration, and student-facing updates while also supporting permission-gated admin tools for authorized staff.
 
 Its visual identity must stay aligned with the web app brand system from `apps/web`, while adapting layouts and interaction density for mobile.
 
@@ -10,6 +10,7 @@ Its visual identity must stay aligned with the web app brand system from `apps/w
 
 In scope:
 - Student login and session restore
+- Admin login and session restore
 - Student profile
 - Home/dashboard
 - Announcements or updates feed
@@ -17,13 +18,14 @@ In scope:
 - Event registration and cancellation
 - Event QR pass
 - Attendance history
+- Permission-gated admin shell and mobile-appropriate admin workflows
+- Admin attendance scanner: event selector, camera QR scan, manual student entry, recent scans, undo
 - Settings/logout
 
 Out of scope:
-- Admin CMS flows
-- Staff scanning mode
 - Direct reuse of `apps/web` components or feature modules
 - Large backend redesigns
+- Complex desktop admin editing flows that are not mobile-appropriate
 
 ## Architecture Rules
 
@@ -71,6 +73,7 @@ Out of scope:
 - Reuse student and public endpoints first.
 - Document any backend gap before changing backend code.
 - Keep auth refresh logic centralized in the API client.
+- Admin access must come from backend RBAC payloads, not mobile-only role names.
 - Never use browser-only storage patterns for tokens.
 
 ## Token Handling

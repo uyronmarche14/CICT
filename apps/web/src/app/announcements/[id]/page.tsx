@@ -73,7 +73,7 @@ export default function AnnouncementDetailPage() {
           </Badge>
         </div>
 
-        <h1 className="mb-6 text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-bold text-transparent lg:text-5xl">
+        <h1 className="mb-6 text-balance bg-gradient-to-r from-foreground to-primary bg-clip-text text-4xl font-display font-black text-transparent lg:text-5xl">
           {announcement.title}
         </h1>
 

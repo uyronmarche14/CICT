@@ -1,4 +1,6 @@
 import { render, fireEvent } from '@testing-library/react-native';
+import { EventCard } from '@/components/events/EventCard';
+import type { StudentEvent } from '@/types/models';
 
 const mockColors = {
   text: '#000',
@@ -19,9 +21,6 @@ jest.mock('@/theme/ThemeContext', () => ({
 jest.mock('@/utils/format', () => ({
   formatDate: jest.fn((date: string) => `Formatted: ${date}`),
 }));
-
-import { EventCard } from '@/components/events/EventCard';
-import type { StudentEvent } from '@/types/models';
 
 const baseEvent: StudentEvent = {
   _id: 'evt-1',

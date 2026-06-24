@@ -124,7 +124,6 @@ function Calendar({
           return (
             <div
               data-slot="calendar"
-              // @ts-expect-error - react-day-picker @types/react version mismatch
               ref={rootRef}
               className={cn(className)}
               {...props}

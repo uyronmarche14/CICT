@@ -7,19 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, MapPin, Mail, Globe, Users, Calendar, ExternalLink, Clock, Star, Award, Target, UserPlus, BookOpen, HeartHandshake, Building2, Shield, ChevronRight } from 'lucide-react';
-import api from '@/lib/api/axios';
 import { Organization } from '@/types';
-import { format } from 'date-fns';
+import { organizationService } from '@/services/organizationService';
 
 export function PublicOrganizationPageClient({ id }: { id: string }) {
   const router = useRouter();
 
   const { data: org, isLoading } = useQuery({
     queryKey: ['organization', id],
-    queryFn: async () => {
-      const res = await api.get(`/organizations/${id}`);
-      return res.data.data as Organization;
-    },
+    queryFn: () => organizationService.getById(id) as Promise<Organization>,
     enabled: !!id,
   });
 

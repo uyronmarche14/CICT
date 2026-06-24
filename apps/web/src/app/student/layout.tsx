@@ -44,8 +44,8 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20">
-      <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b">
+    <div className="min-h-screen bg-canvas pb-20">
+      <header className="sticky top-0 z-20 border-b border-hairline bg-surface-elevated/85 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-primary" />
@@ -62,11 +62,11 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-6">
+      <main className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         {children}
       </main>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-white border-t">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 border-t border-hairline bg-surface-elevated/95 backdrop-blur-md">
         <div className="max-w-4xl mx-auto px-4 flex">
           {navItems.map((item) => {
             const active = pathname.startsWith(item.href);
@@ -74,7 +74,7 @@ function StudentLayoutInner({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex-1 flex flex-col items-center py-2 text-xs font-medium transition-colors ${
+                className={`flex-1 flex flex-col items-center py-2 text-xs font-semibold transition-colors ${
                   active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
                 }`}
               >

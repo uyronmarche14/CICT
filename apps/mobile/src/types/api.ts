@@ -1,11 +1,17 @@
 import type { Announcement, HomeUpdate, News } from '@/types/models';
 
 export type {
+  AdminLoginResponse,
+  AdminAccessPolicy,
+  AdminModuleKey,
+  AuthProfile,
   AuthSession,
   AuthTokens,
+  MobileSession,
   StudentAttendanceResponse,
   StudentEventsResponse,
   StudentLoginResponse,
+  StudentMobileSession,
   StudentProfileResponse,
   StudentQrPayload,
   StudentRegistrationResponse,

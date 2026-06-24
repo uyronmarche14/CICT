@@ -15,6 +15,7 @@ import {
 } from '@cict/contracts/enums';
 import type {
   AdminModuleKey,
+  AdminAccessPolicy,
   AdminScopes,
   ApprovalActionItem,
   ApprovalSummary,
@@ -58,6 +59,7 @@ export {
 
 export type {
   AdminModuleKey,
+  AdminAccessPolicy,
   AdminScopes,
   ApprovalActionItem,
   ApprovalSummary,
@@ -189,6 +191,24 @@ export interface FAQContent {
   questions: FAQEntry[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+export type InquiryStatus = 'new' | 'read' | 'archived';
+
+export interface Inquiry {
+  _id: string;
+  fullName: string;
+  email: string;
+  contactNumber?: string;
+  userType: string;
+  subject: string;
+  inquiryType: string;
+  message: string;
+  status: InquiryStatus;
+  source?: string;
+  archivedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrganizationMember {

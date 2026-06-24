@@ -7,6 +7,7 @@ import {
   getSystemRoleDefinition,
   getDefaultPermissions,
   deriveVisibleAdminModules,
+  deriveAdminAccessPolicy,
 } from './rbac';
 import { Permission, UserRole } from '../types';
 
@@ -82,7 +83,7 @@ describe('deriveAdminScopes', () => {
   });
 
   it('returns global: false when user lacks admin entry permissions', () => {
-    const scopes = deriveAdminScopes([Permission.DELETE_NEWS]);
+    const scopes = deriveAdminScopes([Permission.JOIN_EVENT]);
     expect(scopes.global).toBe(false);
   });
 
@@ -104,7 +105,7 @@ describe('canAccessAdminPanel', () => {
   });
 
   it('returns false with no access', () => {
-    expect(canAccessAdminPanel([Permission.CREATE_MEMBER])).toBe(false);
+    expect(canAccessAdminPanel([Permission.JOIN_EVENT])).toBe(false);
   });
 });
 
@@ -125,5 +126,37 @@ describe('deriveVisibleAdminModules', () => {
     const modules = deriveVisibleAdminModules([], assignments as any);
     expect(modules).toContain('dashboard');
     expect(modules).toContain('news');
+  });
+});
+
+describe('deriveAdminAccessPolicy', () => {
+  it('marks scanner-only admins as admin users with scanner as default module', () => {
+    const policy = deriveAdminAccessPolicy([Permission.SCAN_EVENT_ATTENDANCE]);
+
+    expect(policy.canAccessAdmin).toBe(true);
+    expect(policy.visibleAdminModules).toContain('scanner');
+    expect(policy.defaultAdminModule).toBe('scanner');
+    expect(policy.globalActions).toEqual([Permission.SCAN_EVENT_ATTENDANCE]);
+  });
+
+  it('marks approval-only admins as admin users with approvals visible', () => {
+    const policy = deriveAdminAccessPolicy([Permission.APPROVE_CONTENT]);
+
+    expect(policy.canAccessAdmin).toBe(true);
+    expect(policy.visibleAdminModules).toContain('approvals');
+    expect(policy.defaultAdminModule).toBe('approvals');
+  });
+
+  it('keeps scoped organization actions and modules scoped to the organization', () => {
+    const assignments = [
+      { organizationId: 'org-1', permissions: [Permission.SCAN_EVENT_ATTENDANCE] },
+    ];
+    const policy = deriveAdminAccessPolicy([], assignments as any);
+
+    expect(policy.canAccessAdmin).toBe(true);
+    expect(policy.scopedAdminModulesByOrganization['org-1']).toContain('scanner');
+    expect(policy.scopedActionsByOrganization['org-1']).toEqual([
+      Permission.SCAN_EVENT_ATTENDANCE,
+    ]);
   });
 });

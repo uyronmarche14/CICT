@@ -44,7 +44,6 @@ import {
   AttachmentItem,
 } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import api from '@/lib/api/axios';
 import { Loader2 } from 'lucide-react';
 import { RichTextEditor } from '@/components/admin/DynamicRichTextEditor';
 import { ContentSectionsEditor } from '@/components/admin/ContentSectionsEditor';
@@ -57,6 +56,7 @@ import { appToast } from '@/lib/app-toast';
 import { sanitizeCoverAndGallery } from '@/lib/media';
 import { LookupCombobox } from '@/components/ui/lookup-combobox';
 import { ReferenceDataSelect } from '@/components/ui/reference-data-select';
+import { adminContentAPI } from '@/features/admin-content';
 
 const announcementSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -332,11 +332,7 @@ export function AnnouncementForm({
         attachmentItems: attachmentItems.length > 0 ? attachmentItems : undefined,
       };
 
-      if (announcement) {
-        await api.put(`/announcements/${announcement._id}`, payload);
-      } else {
-        await api.post('/announcements', payload);
-      }
+      await adminContentAPI.announcements.save(payload, announcement?._id);
 
       appToast.success('Announcement Saved', 'The announcement has been saved successfully.');
       onSuccess();

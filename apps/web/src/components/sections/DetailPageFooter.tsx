@@ -12,7 +12,7 @@ export default function DetailPageFooter() {
         <div className="absolute -bottom-10 right-1/4 w-40 h-40 bg-secondary/10 rounded-full blur-2xl" />
       </div>
 
-      <div className="relative max-w-6xl w-full px-4 sm:px-6 lg:px-8">
+      <div className="relative max-w-7xl w-full px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-6 mb-8">
             <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-primary transition-all duration-500 hover:from-primary hover:to-secondary">

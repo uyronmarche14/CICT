@@ -4,7 +4,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Menu, X, Newspaper, Calendar, Users, LayoutGrid } from "lucide-react";
-import Logo from "@/lib/CICT.png";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,27 +40,26 @@ export default function Navbar() {
     >
       <div className="justify-center relative flex items-center px-3 py-2">
         <div
-          className={`relative transition-all duration-300 rounded-lg border border-border/50 ${
+          className={`relative transition-all duration-300 rounded-xl border border-hairline ${
             isScrolled
-              ? "bg-background/90 backdrop-blur-md shadow-xl"
-              : "bg-background/60 backdrop-blur-sm"
+              ? "bg-surface-elevated/92 backdrop-blur-md shadow-[var(--shadow-soft)]"
+              : "bg-surface-elevated/72 backdrop-blur-sm"
           }`}
         >
           <div className="relative flex items-center px-4 py-2 gap-8">
             
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-              <div className="relative">
-                <Image
-                  src={Logo}
-                  alt="CICT Logo"
-                  width={28}
-                  height={28}
-                  style={{ width: "auto", height: "auto" }}
-                  className="object-contain transition-transform duration-300 group-hover:scale-105"
-                  priority
-                />
-              </div>
+              <Image
+                src="/images/techskolar.png"
+                alt="TechSkolar Logo"
+                width={36}
+                height={36}
+                className="w-8 h-8 sm:w-9 sm:h-9 object-contain"
+              />
+              <span className="font-display font-black text-xl sm:text-2xl text-primary uppercase tracking-wider leading-none">
+                CICT
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -83,7 +81,7 @@ export default function Navbar() {
                         <li className="row-span-3">
                           <NavigationMenuLink asChild>
                             <a
-                              className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
+                              className="flex h-full w-full select-none flex-col justify-end rounded-xl border border-hairline bg-surface-soft p-6 no-underline outline-none focus:shadow-[var(--shadow-soft)]"
                               href="/academics"
                             >
                               <LayoutGrid className="h-6 w-6 mb-2 text-primary" />
@@ -158,7 +156,7 @@ export default function Navbar() {
               <ThemeToggle />
               <Link 
                 href="/admissions" 
-                className="text-xs font-semibold uppercase tracking-wider text-primary bg-primary/10 px-4 py-2 rounded-md hover:bg-primary/20 transition-colors"
+                className="text-xs font-semibold uppercase text-primary bg-primary/10 px-4 py-2 rounded-lg border border-primary/15 hover:bg-primary/15 transition-colors"
               >
                 Apply Now
               </Link>
@@ -180,7 +178,7 @@ export default function Navbar() {
           <div className={`md:hidden overflow-hidden transition-all duration-300 ${
             isOpen ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0'
           }`}>
-            <div className="px-4 pb-4 pt-2 border-t border-border/50">
+            <div className="px-4 pb-4 pt-2 border-t border-hairline">
               <ul className="flex flex-col gap-2">
                 <li>
                   <Link href="/about" className="block py-2 text-sm font-medium" onClick={() => setIsOpen(false)}>About Us</Link>
@@ -203,7 +201,7 @@ export default function Navbar() {
                 <li>
                   <Link href="/contact" className="block py-2 text-sm font-medium" onClick={() => setIsOpen(false)}>Contact</Link>
                 </li>
-                <li className="flex items-center justify-between pt-2 mt-2 border-t border-border/50">
+                <li className="flex items-center justify-between pt-2 mt-2 border-t border-hairline">
                   <span className="text-sm font-medium">Theme</span>
                   <ThemeToggle />
                 </li>
@@ -225,7 +223,7 @@ const ListItem = React.forwardRef<
       <NavigationMenuLink asChild>
         <a
           ref={ref}
-          className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground ${className}`}
+          className={`block select-none space-y-1 rounded-lg p-3 leading-none no-underline outline-none transition-colors hover:bg-surface-soft hover:text-primary focus:bg-surface-soft focus:text-primary ${className}`}
           {...props}
         >
           <div className="text-sm font-medium leading-none">{title}</div>

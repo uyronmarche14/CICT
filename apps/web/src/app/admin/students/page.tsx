@@ -97,6 +97,8 @@ export default function StudentsPage() {
   const loadStudents = useCallback(async () => {
     setLoading(true);
     try {
+      const effectiveStatusFilter =
+        activeTab === 'pending' ? StudentStatus.PENDING : statusFilter;
       const data = await studentsAPI.getAll({
         page: 1,
         limit: 100,
@@ -104,13 +106,13 @@ export default function StudentsPage() {
         programId: programFilter === 'all' ? undefined : programFilter,
         yearLevelId: yearFilter === 'all' ? undefined : yearFilter,
         sectionId: sectionFilter === 'all' ? undefined : sectionFilter,
-        status: statusFilter === 'all' ? undefined : statusFilter,
+        status: effectiveStatusFilter === 'all' ? undefined : effectiveStatusFilter,
       });
       setStudents(data.students);
     } finally {
       setLoading(false);
     }
-  }, [programFilter, search, sectionFilter, statusFilter, yearFilter]);
+  }, [activeTab, programFilter, search, sectionFilter, statusFilter, yearFilter]);
 
   useEffect(() => {
     void loadAcademicData();
@@ -210,6 +212,7 @@ export default function StudentsPage() {
         <TabsList>
           <TabsTrigger value="form">{editingStudent ? 'Edit Student' : 'Add Student'}</TabsTrigger>
           <TabsTrigger value="directory">Student Directory</TabsTrigger>
+          <TabsTrigger value="pending">Pending Requests</TabsTrigger>
         </TabsList>
 
         <TabsContent value="form" className="mt-6">
@@ -248,6 +251,40 @@ export default function StudentsPage() {
                 onSectionFilterChange={setSectionFilter}
                 onStatusFilterChange={setStatusFilter}
               />
+              <StudentTable
+                students={students}
+                loading={loading}
+                onEdit={handleEdit}
+                onStatusToggle={(s) => void handleStatusToggle(s)}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pending Student Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <StudentFilters
+                  search={search}
+                  programFilter={programFilter}
+                  yearFilter={yearFilter}
+                  sectionFilter={sectionFilter}
+                  statusFilter={StudentStatus.PENDING}
+                  programs={programs}
+                  yearLevels={yearLevels}
+                  sections={sections}
+                  onSearchChange={setSearch}
+                  onProgramFilterChange={setProgramFilter}
+                  onYearFilterChange={setYearFilter}
+                  onSectionFilterChange={setSectionFilter}
+                  onStatusFilterChange={() => undefined}
+                  hideStatusFilter
+                />
+              </div>
               <StudentTable
                 students={students}
                 loading={loading}

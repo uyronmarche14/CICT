@@ -1,10 +1,11 @@
-import axios from 'axios';
+import { create } from 'axios';
 
 import { env } from '@/config/env';
 import { sessionStorage } from '@/services/storage/secure-store';
 import { useAuthStore } from '@/store/auth-store';
+import { normalizeAuthProfile } from '@/utils/auth-profile';
 
-const client = axios.create({
+const client = create({
   baseURL: env.apiUrl,
   headers: {
     'Content-Type': 'application/json',
@@ -14,7 +15,7 @@ const client = axios.create({
 let refreshPromise: Promise<string | null> | null = null;
 
 const createRefreshClient = () =>
-  axios.create({
+  create({
     baseURL: env.apiUrl,
     headers: {
       'Content-Type': 'application/json',
@@ -38,8 +39,9 @@ client.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const refreshToken = useAuthStore.getState().refreshToken;
-    if (!refreshToken) {
+    const state = useAuthStore.getState();
+    const { actorType, refreshToken } = state;
+    if (!actorType || !refreshToken) {
       await useAuthStore.getState().clearSession();
       return Promise.reject(error);
     }
@@ -50,19 +52,34 @@ client.interceptors.response.use(
       refreshPromise = (async () => {
         try {
           const refreshClient = createRefreshClient();
-          const response = await refreshClient.post('/student/auth/refresh', {
+          const refreshPath =
+            useAuthStore.getState().actorType === 'admin'
+              ? '/auth/refresh'
+              : '/student/auth/refresh';
+          const response = await refreshClient.post(refreshPath, {
             refreshToken,
           });
 
-          const nextAccessToken = response.data.data.accessToken as string;
-          const nextRefreshToken = response.data.data.refreshToken as string;
-          const student = response.data.data.student ?? useAuthStore.getState().student;
+          const data = response.data.data;
+          const nextAccessToken = data.accessToken as string;
+          const nextRefreshToken = (data.refreshToken as string) ?? refreshToken;
+          const currentState = useAuthStore.getState();
 
-          await useAuthStore.getState().setSession({
-            accessToken: nextAccessToken,
-            refreshToken: nextRefreshToken,
-            student,
-          });
+          if (currentState.actorType === 'admin') {
+            await currentState.setSession({
+              actorType: 'admin',
+              accessToken: nextAccessToken,
+              refreshToken: nextRefreshToken,
+              profile: normalizeAuthProfile(data, currentState.adminProfile),
+            });
+          } else {
+            await currentState.setSession({
+              actorType: 'student',
+              accessToken: nextAccessToken,
+              refreshToken: nextRefreshToken,
+              student: data.student ?? currentState.student,
+            });
+          }
 
           return nextAccessToken;
         } catch (refreshError) {

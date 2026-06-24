@@ -1,5 +1,6 @@
 import * as Device from 'expo-device';
 import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { client } from '@/services/api/client';
@@ -8,8 +9,6 @@ export async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
     return null;
   }
-
-  const Notifications = require('expo-notifications');
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
   let finalStatus = existingStatus;

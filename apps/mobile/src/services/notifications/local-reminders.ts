@@ -1,11 +1,11 @@
+import * as Notifications from 'expo-notifications';
+
 export async function scheduleEventReminder(event: {
   _id: string;
   title: string;
   startDate: string;
   location?: string;
 }) {
-  const Notifications = require('expo-notifications');
-
   const eventStart = new Date(event.startDate).getTime();
   const now = Date.now();
   const msUntilStart = eventStart - now;
@@ -36,7 +36,6 @@ export async function scheduleEventReminder(event: {
 }
 
 export async function cancelEventReminder(eventId: string) {
-  const Notifications = require('expo-notifications');
   const scheduled = await Notifications.getAllScheduledNotificationsAsync();
   const toCancel = scheduled.filter((n: any) => {
     const data = n.content.data as Record<string, unknown> | undefined;

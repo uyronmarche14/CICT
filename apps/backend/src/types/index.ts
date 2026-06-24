@@ -31,6 +31,7 @@ export interface IUser extends Document {
   password: string;
   firstName: string;
   lastName: string;
+  studentId?: Types.ObjectId;
   role: UserRole;
   customRole?: Types.ObjectId;
   isActive: boolean;
@@ -100,6 +101,23 @@ export interface IAwardItem {
 export interface IReferenceLink {
   label: string;
   url: string;
+}
+
+export interface IInquiry extends Document {
+  fullName: string;
+  email: string;
+  contactNumber?: string;
+  userType: string;
+  subject: string;
+  inquiryType: string;
+  message: string;
+  status: 'new' | 'read' | 'archived';
+  source: string;
+  ipAddress?: string;
+  userAgent?: string;
+  archivedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface IContentSection {
@@ -350,6 +368,7 @@ export interface IAdminScopes {
 
 export type AdminModule =
   | 'dashboard'
+  | 'scanner'
   | 'organizations'
   | 'users'
   | 'students'
@@ -365,6 +384,15 @@ export type AdminModule =
 
 export type IScopedAdminModulesByOrganization = Record<string, AdminModule[]>;
 
+export interface IAdminAccessPolicy {
+  canAccessAdmin: boolean;
+  visibleAdminModules: AdminModule[];
+  scopedAdminModulesByOrganization: IScopedAdminModulesByOrganization;
+  globalActions: Permission[];
+  scopedActionsByOrganization: Record<string, Permission[]>;
+  defaultAdminModule: AdminModule;
+}
+
 export interface IPermissionMetadata {
   value: Permission;
   label: string;
@@ -377,6 +405,7 @@ export interface IAuthenticatedUser {
   email: string;
   firstName: string;
   lastName: string;
+  studentId?: string;
   role: UserRole;
   customRole?: string;
   customRoleDetails?: {
@@ -390,6 +419,7 @@ export interface IAuthenticatedUser {
   effectiveRoleLabel: string;
   effectiveRoleKind?: 'system' | 'custom';
   canAccessAdmin: boolean;
+  adminAccessPolicy?: IAdminAccessPolicy;
   adminScopes?: IAdminScopes;
   visibleAdminModules?: AdminModule[];
   scopedAdminModulesByOrganization?: IScopedAdminModulesByOrganization;

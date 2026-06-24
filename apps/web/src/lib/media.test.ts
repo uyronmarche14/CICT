@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sanitizeCoverAndGallery } from './media';
+import { normalizeContentMedia, sanitizeCoverAndGallery } from './media';
 
 describe('sanitizeCoverAndGallery', () => {
   it('removes gallery items that duplicate the cover image', () => {
@@ -62,5 +62,41 @@ describe('sanitizeCoverAndGallery', () => {
     expect(result.removedDuplicates).toBe(1);
     expect(result.gallery).toHaveLength(1);
     expect(result.gallery[0]?.imageId).toBe('gallery-unique');
+  });
+});
+
+describe('normalizeContentMedia', () => {
+  it('prefers structured coverImage over legacy imageUrl', () => {
+    const media = normalizeContentMedia({
+      title: 'News title',
+      coverImage: {
+        imageUrl: 'https://example.com/cover.jpg',
+        imageId: 'cover',
+        alt: 'Cover alt',
+      },
+      imageUrl: 'https://example.com/legacy.jpg',
+    });
+
+    expect(media).toEqual({
+      imageUrl: 'https://example.com/cover.jpg',
+      imageId: 'cover',
+      alt: 'Cover alt',
+      source: 'coverImage',
+    });
+  });
+
+  it('falls back to legacy imageUrl and title alt text', () => {
+    const media = normalizeContentMedia({
+      title: 'Legacy article',
+      imageUrl: 'https://example.com/legacy.jpg',
+      imageId: 'legacy',
+    });
+
+    expect(media).toEqual({
+      imageUrl: 'https://example.com/legacy.jpg',
+      imageId: 'legacy',
+      alt: 'Legacy article',
+      source: 'legacy',
+    });
   });
 });

@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
-import api from '@/lib/api/axios';
+import { useQueryClient } from '@tanstack/react-query';
 import { ContentOwnerType, News, NewsStatus } from '@/types';
 import { NewsForm } from '@/components/admin/NewsForm';
 import {
@@ -36,6 +35,14 @@ import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { RejectionReasonDialog } from '@/components/admin/RejectionReasonDialog';
 import { appToast } from '@/lib/app-toast';
 import { useRouter } from 'next/navigation';
+import {
+  adminContentAPI,
+  canActOnContent,
+  getVisibleWorkflowActions,
+  getWorkflowActionLabel,
+  useAdminNewsList,
+  type ContentWorkflowAction,
+} from '@/features/admin-content';
 
 export default function NewsPage() {
   const router = useRouter();
@@ -73,24 +80,15 @@ export default function NewsPage() {
   ]);
   const queryClient = useQueryClient();
 
-  const { data: newsData, isLoading } = useQuery<{ news: News[]; pagination: { pages: number } }>({
-    queryKey: ['admin', 'news', page, search, statusFilter, categoryFilter, featuredFilter, ownerTypeFilter, organizationFilter],
-    queryFn: async () => {
-      const response = await api.get('/news', {
-        params: {
-          page,
-          limit: 10,
-          search: search || undefined,
-          status: statusFilter === 'all' ? undefined : statusFilter,
-          category: categoryFilter === 'all' ? undefined : categoryFilter,
-          featured: featuredFilter === 'all' ? undefined : featuredFilter === 'featured' ? 'true' : 'false',
-          ownerType: ownerTypeFilter === 'all' ? undefined : ownerTypeFilter,
-          organizationId: organizationFilter === 'all' ? undefined : organizationFilter,
-        },
-      });
-      return response.data.data;
-    },
-    placeholderData: keepPreviousData,
+  const { data: newsData, isLoading } = useAdminNewsList({
+    page,
+    limit: 10,
+    search,
+    status: statusFilter,
+    category: categoryFilter,
+    featured: featuredFilter,
+    ownerType: ownerTypeFilter,
+    organizationId: organizationFilter,
   });
 
   const news = newsData?.news ?? [];
@@ -104,10 +102,7 @@ export default function NewsPage() {
   useEffect(() => { setPage(1); }, [categoryFilter, featuredFilter, search, statusFilter, ownerTypeFilter, organizationFilter]);
 
   const canActOnNews = (item: News, permission: Permission) =>
-    hasPermission(permission) ||
-    (item.ownerType === ContentOwnerType.ORGANIZATION &&
-      !!item.organizationId &&
-      hasScopedPermission(item.organizationId, permission));
+    canActOnContent(item, permission, { hasPermission, hasScopedPermission });
 
   useEffect(() => {
     if (canViewAllNews) {
@@ -152,7 +147,7 @@ export default function NewsPage() {
     setDeleteConfirm({
       onConfirm: async () => {
         try {
-          await api.delete(`/news/${id}`);
+          await adminContentAPI.news.delete(id);
           invalidateNews();
           appToast.success('News Deleted', 'The news article has been removed.');
         } catch {
@@ -175,7 +170,7 @@ export default function NewsPage() {
     }
 
     try {
-      await api.patch(`/news/${id}/${action}`);
+      await adminContentAPI.news.workflow(id, action);
       invalidateNews();
     } catch (error) {
       console.error(`Failed to ${action} news:`, error);
@@ -185,7 +180,7 @@ export default function NewsPage() {
   const handleRejectConfirm = async (reason: string) => {
     if (!rejectTarget) return;
     try {
-      await api.patch(`/news/${rejectTarget.id}/reject`, { reason });
+      await adminContentAPI.news.workflow(rejectTarget.id, 'reject', reason);
       invalidateNews();
       setRejectTarget(null);
     } catch (error) {
@@ -335,7 +330,12 @@ export default function NewsPage() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredNews.map((item) => (
+                  filteredNews.map((item) => {
+                    const workflowActions = getVisibleWorkflowActions('news', item, {
+                      hasPermission,
+                      hasScopedPermission,
+                    });
+                    return (
                     <TableRow key={item._id}>
                       <TableCell className="font-medium">{item.title}</TableCell>
                       <TableCell>{getStatusBadge(item.status)}</TableCell>
@@ -383,36 +383,15 @@ export default function NewsPage() {
                             >
                               <Edit className="mr-2 h-4 w-4" /> Edit
                             </DropdownMenuItem>
-                            {item.status === NewsStatus.DRAFT &&
-                              canActOnNews(item, Permission.SUBMIT_CONTENT_FOR_APPROVAL) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'submit')}>
-                                Submit for approval
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PENDING_APPROVAL &&
-                              hasPermission(Permission.APPROVE_CONTENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'approve')}>
-                                Approve
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PENDING_APPROVAL &&
-                              hasPermission(Permission.REJECT_CONTENT) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'reject')}>
-                                Reject
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.APPROVED && canActOnNews(item, Permission.PUBLISH_NEWS) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'publish')}>
-                                Publish
-                              </DropdownMenuItem>
-                            )}
-                            {item.status === NewsStatus.PUBLISHED && canActOnNews(item, Permission.ARCHIVE_NEWS) && (
-                              <DropdownMenuItem onClick={() => handleWorkflowAction(item._id, 'archive')}>
-                                Archive
-                              </DropdownMenuItem>
-                            )}
+                            {workflowActions
+                              .filter((action): action is Exclude<ContentWorkflowAction, 'delete'> => action !== 'delete')
+                              .map((action) => (
+                                <DropdownMenuItem key={action} onClick={() => handleWorkflowAction(item._id, action)}>
+                                  {getWorkflowActionLabel(action)}
+                                </DropdownMenuItem>
+                              ))}
                             <DropdownMenuItem
-                              disabled={!canActOnNews(item, Permission.DELETE_NEWS)}
+                              disabled={!workflowActions.includes('delete')}
                               className="text-red-600"
                               onClick={() => handleDelete(item._id)}
                             >
@@ -422,7 +401,8 @@ export default function NewsPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                  ))
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

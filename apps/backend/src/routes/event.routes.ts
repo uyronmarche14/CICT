@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import * as eventController from '../controllers/event.controller';
 import { authenticate, optionalAuthenticate } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { requireAnyAdminAction } from '../middleware/permissions';
+import { Permission } from '../types';
 import { validate } from '../middleware/validate';
 import { logActivity } from '../middleware/activityLogger';
 import { handleImageUpload, upload } from '../middleware/upload';
@@ -66,7 +67,7 @@ const router: Router = Router();
 router.post(
   '/',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.CREATE_EVENT),
   upload.single('image'),
   handleImageUpload,
   validate(createEventValidator),
@@ -171,7 +172,7 @@ router.get(
 router.put(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.EDIT_EVENT),
   upload.single('image'),
   handleImageUpload,
   validate(updateEventValidator),
@@ -208,7 +209,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.DELETE_EVENT),
   validate(eventIdValidator),
   logActivity('delete', 'event'),
   eventController.deleteEvent
@@ -243,7 +244,7 @@ router.delete(
 router.patch(
   '/:id/submit',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.SUBMIT_CONTENT_FOR_APPROVAL),
   validate([...eventIdValidator, ...contentApprovalCommentValidator]),
   logActivity('submit_for_approval', 'event'),
   eventController.submitEventForApproval
@@ -278,7 +279,7 @@ router.patch(
 router.patch(
   '/:id/approve',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.APPROVE_CONTENT),
   validate([...eventIdValidator, ...contentApprovalCommentValidator]),
   logActivity('approve', 'event'),
   eventController.approveEvent
@@ -324,7 +325,7 @@ router.patch(
 router.patch(
   '/:id/reject',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.REJECT_CONTENT),
   validate([...eventIdValidator, ...contentRejectionValidator]),
   logActivity('reject', 'event'),
   eventController.rejectEvent
@@ -359,7 +360,7 @@ router.patch(
 router.patch(
   '/:id/publish',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.PUBLISH_EVENT),
   validate(eventIdValidator),
   logActivity('publish', 'event'),
   eventController.publishEvent
@@ -394,7 +395,7 @@ router.patch(
 router.patch(
   '/:id/cancel',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.CANCEL_EVENT),
   validate(eventIdValidator),
   logActivity('cancel', 'event'),
   eventController.cancelEvent
@@ -429,7 +430,7 @@ router.patch(
 router.patch(
   '/:id/complete',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.COMPLETE_EVENT),
   validate(eventIdValidator),
   logActivity('complete', 'event'),
   eventController.completeEvent
@@ -462,6 +463,7 @@ router.patch(
 router.post(
     '/:id/join',
     authenticate,
+    requireAnyAdminAction(Permission.JOIN_EVENT),
     validate(eventIdValidator),
     eventController.joinEvent
 );

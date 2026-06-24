@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react-native'
+import { useStudentRegistrations } from '@/features/registrations/useStudentRegistrations'
 
 let mockGetRegistrations: jest.Mock
 jest.mock('@/services/api/student', () => {
@@ -8,8 +9,6 @@ jest.mock('@/services/api/student', () => {
     studentApi: { getRegistrations: (...args: unknown[]) => mockGetRegistrations(...args) },
   }
 })
-
-import { useStudentRegistrations } from '@/features/registrations/useStudentRegistrations'
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const queryClient = new QueryClient({

@@ -28,7 +28,7 @@ export default function AchievementsSection({ achievements, color }: Achievement
             <p className="text-sm font-medium tracking-wider uppercase" style={{ color: color.primary }}>
                Excellence
             </p>
-            <h2 className="text-6xl md:text-8xl font-bold tracking-tighter bg-clip-text text-transparent leading-tight" style={{ 
+            <h2 className="text-6xl md:text-8xl font-bold tracking-normal bg-clip-text text-transparent leading-tight" style={{ 
                 backgroundImage: `linear-gradient(to right, ${color.primary}, ${color.secondary})`
             }}>
                 Awards

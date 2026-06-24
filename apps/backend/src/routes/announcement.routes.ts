@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import * as announcementController from '../controllers/announcement.controller';
 import { authenticate } from '../middleware/auth';
-import { requireAdminAccess } from '../middleware/permissions';
+import { requireAnyAdminAction } from '../middleware/permissions';
+import { Permission } from '../types';
 import { logActivity } from '../middleware/activityLogger';
 import { handleImageUpload, upload } from '../middleware/upload';
 import { validate } from '../middleware/validate';
@@ -59,7 +60,7 @@ const router: Router = Router();
 router.post(
   '/',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.CREATE_ANNOUNCEMENT),
   upload.single('image'),
   handleImageUpload,
   validate(createAnnouncementValidator),
@@ -87,7 +88,7 @@ router.post(
 router.get(
   '/',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.VIEW_ANNOUNCEMENT),
   announcementController.getAllAnnouncements
 );
 
@@ -120,7 +121,7 @@ router.get(
 router.get(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.VIEW_ANNOUNCEMENT),
   validate(announcementIdValidator),
   announcementController.getAnnouncementById
 );
@@ -173,7 +174,7 @@ router.get(
 router.put(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.EDIT_ANNOUNCEMENT),
   upload.single('image'),
   handleImageUpload,
   validate(updateAnnouncementValidator),
@@ -210,7 +211,7 @@ router.put(
 router.delete(
   '/:id',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.DELETE_ANNOUNCEMENT),
   validate(announcementIdValidator),
   logActivity('delete', 'announcement'),
   announcementController.deleteAnnouncement
@@ -245,7 +246,7 @@ router.delete(
 router.patch(
   '/:id/submit',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.SUBMIT_CONTENT_FOR_APPROVAL),
   validate([...announcementIdValidator, ...contentApprovalCommentValidator]),
   logActivity('submit_for_approval', 'announcement'),
   announcementController.submitAnnouncementForApproval
@@ -280,7 +281,7 @@ router.patch(
 router.patch(
   '/:id/approve',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.APPROVE_CONTENT),
   validate([...announcementIdValidator, ...contentApprovalCommentValidator]),
   logActivity('approve', 'announcement'),
   announcementController.approveAnnouncement
@@ -326,7 +327,7 @@ router.patch(
 router.patch(
   '/:id/reject',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.REJECT_CONTENT),
   validate([...announcementIdValidator, ...contentRejectionValidator]),
   logActivity('reject', 'announcement'),
   announcementController.rejectAnnouncement
@@ -361,7 +362,7 @@ router.patch(
 router.patch(
   '/:id/publish',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.PUBLISH_ANNOUNCEMENT),
   validate(announcementIdValidator),
   logActivity('publish', 'announcement'),
   announcementController.publishAnnouncement
@@ -396,7 +397,7 @@ router.patch(
 router.patch(
   '/:id/archive',
   authenticate,
-  requireAdminAccess,
+  requireAnyAdminAction(Permission.ARCHIVE_ANNOUNCEMENT),
   validate(announcementIdValidator),
   logActivity('archive', 'announcement'),
   announcementController.archiveAnnouncement
