@@ -22,10 +22,14 @@ const seedDatabase = async () => {
     await mongoose.connect(mongoURI);
     logger.info('Connected to MongoDB');
 
-    // Clear existing data (optional - comment out if you want to keep existing data)
-    // await User.deleteMany({});
-    // await Role.deleteMany({});
-    // logger.info('Cleared existing data');
+    // Clear existing data
+    await User.deleteMany({});
+    await Role.deleteMany({});
+    await News.deleteMany({});
+    await Announcement.deleteMany({});
+    await Event.deleteMany({});
+    await Organization.deleteMany({});
+    logger.info('Cleared existing data');
 
     // Create default admin user
     const adminEmail = 'admin@cict.edu';
@@ -126,9 +130,7 @@ const seedDatabase = async () => {
     }
 
     // Create News and Announcements
-    const newsCount = await News.countDocuments();
-    if (newsCount === 0) {
-      const newsData = [
+    const newsData = [
         {
           title: 'CICT Hosts Annual Hackathon 2024: Code for Change',
           excerpt: 'Over 200 students participated in a 48-hour coding marathon, building innovative solutions for real-world community problems.',
@@ -262,15 +264,209 @@ const seedDatabase = async () => {
           tags: ['International', 'Exchange', 'Cultural', 'Collaboration'],
           publishedAt: new Date('2024-01-10'),
         },
+        {
+          title: 'CICT Student Clinches Gold at International Programming Olympiad',
+          excerpt: 'A CICT Computer Science student brought home the gold medal from the prestigious International Collegiate Programming Olympiad held in Singapore.',
+          content: 'Fourth-year BS Computer Science student Paolo Miguel Santos represented the Philippines at the International Collegiate Programming Olympiad in Singapore, securing the gold medal in the Algorithmic Problem Solving category. Competing against 300+ participants from 50 countries, Santos solved six complex algorithmic problems in under four hours.',
+          bodyHtml: '<p>Fourth-year BS Computer Science student Paolo Miguel Santos represented the Philippines at the International Collegiate Programming Olympiad in Singapore, securing the gold medal in the Algorithmic Problem Solving category.</p><p>Competing against 300+ participants from 50 countries, Santos solved six complex algorithmic problems in under four hours. His achievement marks the first gold medal for CICT in this international competition.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Academics_nb0eat.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Academics_nb0eat.jpg',
+            alt: 'Programming Olympiad Gold Medalist',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Achievement', 'Programming', 'International', 'Competition'],
+          publishedAt: new Date('2024-04-25'),
+        },
+        {
+          title: 'CICT Faculty Published in Top-Tier Artificial Intelligence Journal',
+          excerpt: 'Three CICT professors co-authored a groundbreaking research paper on explainable AI published in the Journal of Artificial Intelligence Research.',
+          content: 'A research team led by Dr. Maria Elena Reyes, along with Prof. Juan Carlos Torres and Prof. Patricia Ann Lim, published their paper "Explainable Deep Learning for Medical Diagnosis" in the prestigious Journal of Artificial Intelligence Research. The paper presents a novel framework for making AI diagnostic models transparent and interpretable to medical professionals.',
+          bodyHtml: '<p>A research team led by Dr. Maria Elena Reyes, along with Prof. Juan Carlos Torres and Prof. Patricia Ann Lim, published their paper "Explainable Deep Learning for Medical Diagnosis" in the prestigious Journal of Artificial Intelligence Research.</p><p>The paper presents a novel framework for making AI diagnostic models transparent and interpretable to medical professionals. This publication puts CICT on the map for cutting-edge AI research in Southeast Asia.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1756660324/ict4_qnkh2y.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1756660324/ict4_qnkh2y.jpg',
+            alt: 'CICT Faculty Research Publication',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Research', 'AI', 'Faculty', 'Publication'],
+          publishedAt: new Date('2024-05-10'),
+        },
+        {
+          title: 'CICT Launches BS Data Science Program Starting AY 2025-2026',
+          excerpt: 'The Commission on Higher Education has approved CICT\'s new Bachelor of Science in Data Science program, set to welcome its first cohort next academic year.',
+          content: 'CICT is proud to announce the approval of its newest degree program — Bachelor of Science in Data Science. The four-year program will cover data engineering, machine learning, statistical modeling, big data analytics, and data ethics. The curriculum was designed in consultation with industry partners including data science teams from leading tech companies.',
+          bodyHtml: '<p>CICT is proud to announce the approval of its newest degree program — Bachelor of Science in Data Science. The four-year program will cover data engineering, machine learning, statistical modeling, big data analytics, and data ethics.</p><p>The curriculum was designed in consultation with industry partners including data science teams from leading tech companies. Applications for the first cohort will open in November 2024.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335598/450328906_1014347616442600_380351381824664479_n_bfxjmp.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335598/450328906_1014347616442600_380351381824664479_n_bfxjmp.jpg',
+            alt: 'BS Data Science Program Launch',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Academics', 'Data Science', 'New Program', 'Curriculum'],
+          publishedAt: new Date('2024-06-01'),
+        },
+        {
+          title: 'ICT-SF Community Outreach: Tech Literacy Program for Senior Citizens',
+          excerpt: 'ICT-SF volunteers launched a free tech literacy program teaching senior citizens basic computer skills, internet safety, and mobile app usage.',
+          content: 'In partnership with the local barangay, ICT-SF launched "Tech Lola, Tech Lolo" — a community outreach program providing free technology literacy training to senior citizens. Over 50 volunteers from all five CICT organizations taught basic computer navigation, video calling with family, online safety, and essential mobile apps.',
+          bodyHtml: '<p>In partnership with the local barangay, ICT-SF launched "Tech Lola, Tech Lolo" — a community outreach program providing free technology literacy training to senior citizens.</p><p>Over 50 volunteers from all five CICT organizations taught basic computer navigation, video calling with family, online safety, and essential mobile apps. The program runs every Saturday and has already served 150+ senior citizens in the community.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335708/photo_2024-09-22_21-31-55_2_y2irl5.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335708/photo_2024-09-22_21-31-55_2_y2irl5.jpg',
+            alt: 'Tech Literacy for Seniors',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'ict-sf',
+          tags: ['Community', 'Outreach', 'Tech Literacy', 'Service'],
+          publishedAt: new Date('2024-06-15'),
+        },
+        {
+          title: 'CICT Esports Tournament: Valorant Championship Draws 500+ Viewers',
+          excerpt: 'The CICT Esports Committee hosted the semester\'s biggest gaming event with a Valorant tournament featuring 32 teams and over 500 live viewers.',
+          content: 'The CICT Esports Committee organized the Valorant Inter-Organization Championship, bringing together 32 teams from all five CICT organizations for a weekend of competitive gaming. The grand finals were streamed live on Twitch, drawing over 500 concurrent viewers. Team CSS took home the championship trophy after an intense best-of-five series.',
+          bodyHtml: '<p>The CICT Esports Committee organized the Valorant Inter-Organization Championship, bringing together 32 teams from all five CICT organizations for a weekend of competitive gaming.</p><p>The grand finals were streamed live on Twitch, drawing over 500 concurrent viewers. Team CSS took home the championship trophy after an intense best-of-five series against Team ISS in the grand finals.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939316/500122427_681028194557259_7080048757823211543_n_yeecku.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939316/500122427_681028194557259_7080048757823211543_n_yeecku.jpg',
+            alt: 'CICT Esports Tournament',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Esports', 'Gaming', 'Tournament', 'Community'],
+          publishedAt: new Date('2024-07-05'),
+        },
+        {
+          title: 'CICT Research Team Secures PHP 5M DOST Grant for Smart Agriculture Project',
+          excerpt: 'A multidisciplinary CICT research team has been awarded a PHP 5 million grant from DOST for developing IoT-based smart agriculture solutions for local farmers.',
+          content: 'The Department of Science and Technology has awarded a PHP 5 million research grant to a CICT team led by Dr. Antonio Villar for their project "AgriSense: IoT-Driven Precision Agriculture for Smallholder Farmers." The project will deploy sensor networks and machine learning models to help local farmers optimize irrigation, pest control, and crop yield prediction.',
+          bodyHtml: '<p>The Department of Science and Technology has awarded a PHP 5 million research grant to a CICT team led by Dr. Antonio Villar for their project "AgriSense: IoT-Driven Precision Agriculture for Smallholder Farmers."</p><p>The project will deploy sensor networks and machine learning models to help local farmers optimize irrigation, pest control, and crop yield prediction. Field trials will begin in three pilot municipalities across the province.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335595/371046306_338487401938051_771479620405214262_n_rpkg1f.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335595/371046306_338487401938051_771479620405214262_n_rpkg1f.jpg',
+            alt: 'DOST Smart Agriculture Grant',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Research', 'Grant', 'IoT', 'Agriculture', 'DOST'],
+          publishedAt: new Date('2024-07-20'),
+        },
+        {
+          title: 'CSS Mentorship Program Connects 200+ Students with Industry Professionals',
+          excerpt: 'The Computer Science Society launched a mentorship program pairing 200+ CS students with alumni working at top tech companies for career guidance.',
+          content: 'CSS launched the "CS Connect" mentorship program, matching over 200 computer science students with CICT alumni currently working at companies like Google, Accenture, Globe Telecom, and various tech startups. Mentors provide one-on-one career guidance, resume reviews, mock interviews, and industry insights through monthly virtual sessions.',
+          bodyHtml: '<p>CSS launched the "CS Connect" mentorship program, matching over 200 computer science students with CICT alumni currently working at companies like Google, Accenture, Globe Telecom, and various tech startups.</p><p>Mentors provide one-on-one career guidance, resume reviews, mock interviews, and industry insights through monthly virtual sessions. The program has already received overwhelming positive feedback from both mentors and mentees.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939958/Messenger_creation_1447755149890924_v5hgih.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939958/Messenger_creation_1447755149890924_v5hgih.jpg',
+            alt: 'CSS Mentorship Program',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'css',
+          tags: ['Mentorship', 'Career', 'Alumni', 'Industry'],
+          publishedAt: new Date('2024-08-01'),
+        },
+        {
+          title: 'BEST Organizes Regional Tech Conference for ASEAN Students',
+          excerpt: 'BEST CICT chapter hosted the ASEAN Student Technology Conference, bringing together 500+ students from 8 Southeast Asian countries for a week of learning and collaboration.',
+          content: 'BEST CICT successfully organized the ASEAN Student Technology Conference 2024, a week-long event featuring keynote speeches from tech leaders, hands-on workshops, hackathon challenges, and cultural exchange activities. Students from the Philippines, Indonesia, Malaysia, Thailand, Vietnam, Singapore, Cambodia, and Brunei participated.',
+          bodyHtml: '<p>BEST CICT successfully organized the ASEAN Student Technology Conference 2024, a week-long event featuring keynote speeches from tech leaders, hands-on workshops, hackathon challenges, and cultural exchange activities.</p><p>Students from the Philippines, Indonesia, Malaysia, Thailand, Vietnam, Singapore, Cambodia, and Brunei participated. The conference strengthened regional collaboration and inspired cross-border student innovation projects.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766945618/photo_45_2025-12-29_02-02-12_utofwa.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766945618/photo_45_2025-12-29_02-02-12_utofwa.jpg',
+            alt: 'ASEAN Tech Conference',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'best',
+          tags: ['International', 'Conference', 'ASEAN', 'Collaboration'],
+          publishedAt: new Date('2024-08-20'),
+        },
+        {
+          title: 'CICT Alumna Named Forbes 30 Under 30 in Technology',
+          excerpt: 'CICT alumna and tech entrepreneur Jasmine Reyes was recognized in Forbes 30 Under 30 Asia for her AI-powered edtech startup that serves millions of students.',
+          content: 'CICT is proud to celebrate Jasmine Reyes (BS Computer Science, Batch 2018), who was named to Forbes 30 Under 30 Asia in the Technology category. Her startup, EduAI, uses artificial intelligence to personalize learning experiences for K-12 students and has raised USD 3 million in Series A funding, serving over 2 million students across Southeast Asia.',
+          bodyHtml: '<p>CICT is proud to celebrate Jasmine Reyes (BS Computer Science, Batch 2018), who was named to Forbes 30 Under 30 Asia in the Technology category.</p><p>Her startup, EduAI, uses artificial intelligence to personalize learning experiences for K-12 students and has raised USD 3 million in Series A funding, serving over 2 million students across Southeast Asia.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326586/IMG_9662_hxo97w.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326586/IMG_9662_hxo97w.jpg',
+            alt: 'CICT Alumna Forbes 30 Under 30',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Alumni', 'Achievement', 'Startup', 'Forbes', 'AI'],
+          publishedAt: new Date('2024-09-01'),
+        },
+        {
+          title: 'ISS Business Analytics Consulting Program Yields 10 Industry Projects',
+          excerpt: 'The Information Systems Society consulting program completed 10 real-world business analytics projects with partner companies, generating actionable insights and student experience.',
+          content: 'The ISS Consulting Program wrapped up its most productive semester yet, completing 10 business analytics projects for partner companies in retail, logistics, healthcare, and finance. Student consultants applied skills in data visualization, predictive modeling, and business intelligence to deliver actionable recommendations. Several students received job offers directly from partner companies.',
+          bodyHtml: '<p>The ISS Consulting Program wrapped up its most productive semester yet, completing 10 business analytics projects for partner companies in retail, logistics, healthcare, and finance.</p><p>Student consultants applied skills in data visualization, predictive modeling, and business intelligence to deliver actionable recommendations. Several students received job offers directly from partner companies impressed by their work.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939519/IMG_20250517_203753_807_ljfmdc.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939519/IMG_20250517_203753_807_ljfmdc.jpg',
+            alt: 'ISS Consulting Program',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'iss',
+          tags: ['Business Analytics', 'Consulting', 'Industry', 'Career'],
+          publishedAt: new Date('2024-09-10'),
+        },
+        {
+          title: 'ROBOTCU Represents Philippines at RoboCup Asia-Pacific 2024',
+          excerpt: 'ROBOTCU was selected as the sole Philippine representative at the RoboCup Asia-Pacific competition in Bangkok, competing in the Rescue Robot category.',
+          content: 'ROBOTCU made CICT proud by representing the Philippines at the RoboCup Asia-Pacific 2024 in Bangkok, Thailand. The team competed in the Rescue Robot category with their autonomous search-and-rescue robot "Kalasag," which navigated simulated disaster environments to locate victims. The team placed 4th out of 25 teams from 12 countries.',
+          bodyHtml: '<p>ROBOTCU made CICT proud by representing the Philippines at the RoboCup Asia-Pacific 2024 in Bangkok, Thailand. The team competed in the Rescue Robot category with their autonomous search-and-rescue robot "Kalasag."</p><p>The robot navigated simulated disaster environments to locate victims using thermal imaging and AI-powered pathfinding. The team placed 4th out of 25 teams from 12 countries — the highest Philippine finish in RoboCup history.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939342/500442052_681027907890621_3151875760700323871_n_mkssn9.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939342/500442052_681027907890621_3151875760700323871_n_mkssn9.jpg',
+            alt: 'ROBOTCU at RoboCup Asia-Pacific',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'robotcu',
+          tags: ['Robotics', 'International', 'Competition', 'RoboCup', 'Achievement'],
+          publishedAt: new Date('2024-09-15'),
+        },
+        {
+          title: 'CICT Students Win Best Paper Award at International Conference on Computing',
+          excerpt: 'A team of CICT undergraduate researchers won the Best Student Paper Award at ICC 2024 for their work on federated learning for healthcare data privacy.',
+          content: 'CICT undergraduate researchers Maria Santos, Juan dela Cruz, and Angelo Reyes won the Best Student Paper Award at the International Conference on Computing 2024 held in Kuala Lumpur. Their paper "Privacy-Preserving Federated Learning for Multi-Hospital Patient Data Analysis" was selected from over 200 student submissions.',
+          bodyHtml: '<p>CICT undergraduate researchers Maria Santos, Juan dela Cruz, and Angelo Reyes won the Best Student Paper Award at the International Conference on Computing 2024 held in Kuala Lumpur.</p><p>Their paper "Privacy-Preserving Federated Learning for Multi-Hospital Patient Data Analysis" was selected from over 200 student submissions. The research addresses the critical challenge of training AI models on sensitive medical data without compromising patient privacy.</p>',
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Student_Life2_tnlblr.jpg',
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Student_Life2_tnlblr.jpg',
+            alt: 'Best Paper Award at ICC 2024',
+          },
+          status: NewsStatus.PUBLISHED,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          tags: ['Research', 'Achievement', 'Conference', 'AI', 'Federated Learning'],
+          publishedAt: new Date('2024-09-25'),
+        },
       ];
 
-      await News.insertMany(newsData);
-      logger.info('✅ News articles seeded');
-    }
+    await News.insertMany(newsData);
+    logger.info('✅ News articles seeded (20 articles)');
 
-    const announcementCount = await Announcement.countDocuments();
-    if (announcementCount === 0) {
-      const announcementData = [
+    const announcementData = [
         {
           title: 'Enrollment for Academic Year 2024-2025 Now Open',
           content: 'Online enrollment is now open for incoming freshmen and returning students. Visit the admissions portal to complete your registration. Early enrollment runs from June 1 to July 15, 2024.',
@@ -354,16 +550,125 @@ const seedDatabase = async () => {
           publishedAt: new Date('2024-05-01'),
           expiresAt: new Date('2024-05-31'),
         },
+        {
+          title: 'Scholarship Applications Now Open for Academic Year 2024-2025',
+          content: 'CICT is accepting scholarship applications for the upcoming academic year. Scholarships include Academic Excellence, Financial Assistance, Student Leadership, and Sports Development grants. Application deadline: July 30, 2024.',
+          bodyHtml: '<p>CICT is accepting scholarship applications for the upcoming academic year. Available scholarships include:</p><ul><li>Academic Excellence Scholarship (GWA 1.50 or higher)</li><li>Financial Assistance Grant</li><li>Student Leadership Scholarship</li><li>Sports Development Grant</li></ul><p>Submit your application online through the student portal by July 30, 2024. Required documents: Latest grade report, income tax return (for financial aid), and recommendation letter.</p>',
+          priority: AnnouncementPriority.HIGH,
+          type: AnnouncementType.ACADEMIC,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students'],
+          publishedAt: new Date('2024-06-01'),
+          expiresAt: new Date('2024-07-31'),
+        },
+        {
+          title: 'CICT Mental Health Awareness Week: October 7-11, 2024',
+          content: 'Join CICT for Mental Health Awareness Week featuring free counseling sessions, stress management workshops, mindfulness activities, and a mental health resource fair. Your well-being matters.',
+          bodyHtml: '<p>Join CICT for Mental Health Awareness Week from October 7-11, 2024. This year theme is "Digital Wellness: Balancing Tech and Mental Health."</p><p>Activities include: Free one-on-one counseling sessions, Art therapy workshops, Mindfulness and meditation sessions, Mental health resource fair, Peer support group orientation, and Digital detox challenge. All activities are free and confidential.</p>',
+          priority: AnnouncementPriority.MEDIUM,
+          type: AnnouncementType.GENERAL,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students', 'Faculty'],
+          publishedAt: new Date('2024-09-20'),
+          expiresAt: new Date('2024-10-12'),
+        },
+        {
+          title: 'Extended Library Hours During Midterm and Finals Period',
+          content: 'The CICT Library will extend operating hours to 10:00 PM on weekdays and will be open on Saturdays (9:00 AM - 5:00 PM) during midterm (Oct 14-18) and finals (Dec 9-13) periods.',
+          bodyHtml: '<p>The CICT Library will extend operating hours during the examination periods to support student study needs:</p><p>Midterm Period (October 14-18): Monday-Friday 7:00 AM - 10:00 PM, Saturday 9:00 AM - 5:00 PM.</p><p>Finals Period (December 9-13): Monday-Friday 7:00 AM - 10:00 PM, Saturday 9:00 AM - 5:00 PM.</p><p>Study rooms can be reserved through the library portal. Free coffee and snacks will be available after 7:00 PM.</p>',
+          priority: AnnouncementPriority.MEDIUM,
+          type: AnnouncementType.ACADEMIC,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students'],
+          publishedAt: new Date('2024-09-25'),
+          expiresAt: new Date('2024-12-14'),
+        },
+        {
+          title: 'Student Assistant Positions Available at CICT Laboratories',
+          content: 'CICT is hiring student assistants for the Computer Laboratories, Robotics Lab, and Business Analytics Lab. Positions are open to 2nd year and above students with minimum GWA of 2.0.',
+          bodyHtml: '<p>CICT is hiring student assistants for the following laboratories:</p><ul><li>Computer Laboratories (5 positions)</li><li>Robotics Laboratory (3 positions)</li><li>Business Analytics Laboratory (2 positions)</li></ul><p>Requirements: 2nd year standing or above, minimum GWA of 2.0, and willingness to work 15-20 hours per week. Compensation: PHP 60/hour. Submit your application and resume to the CICT Dean Office by October 4, 2024.</p>',
+          priority: AnnouncementPriority.MEDIUM,
+          type: AnnouncementType.GENERAL,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students'],
+          publishedAt: new Date('2024-09-15'),
+          expiresAt: new Date('2024-10-05'),
+        },
+        {
+          title: 'Scheduled Network Maintenance: October 5, 2024 (8:00 PM - 11:59 PM)',
+          content: 'CICT network services including WiFi, computer labs, and online portals will be temporarily unavailable due to scheduled infrastructure upgrade on October 5 from 8:00 PM to 11:59 PM.',
+          bodyHtml: '<p>CICT IT Services will conduct scheduled network infrastructure maintenance on Saturday, October 5, 2024 from 8:00 PM to 11:59 PM.</p><p>Services affected: Campus WiFi, Computer laboratory workstations, Student portal and LMS, Online library resources. Please save your work and plan accordingly. We apologize for any inconvenience.</p>',
+          priority: AnnouncementPriority.HIGH,
+          type: AnnouncementType.GENERAL,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Users'],
+          publishedAt: new Date('2024-09-28'),
+          expiresAt: new Date('2024-10-06'),
+        },
+        {
+          title: 'Call for Papers: CICT Research Journal Volume 5',
+          content: 'The CICT Research Journal is accepting manuscript submissions for Volume 5. Undergraduate and graduate students, faculty, and researchers are invited to submit original research papers in computing and technology.',
+          bodyHtml: '<p>The CICT Research Journal is accepting manuscript submissions for Volume 5 (Publication Date: December 2024).</p><p>Topics: Artificial Intelligence & Machine Learning, Software Engineering & Development, Data Science & Analytics, Information Systems & Business Technology, Cybersecurity & Networks, Human-Computer Interaction, Robotics & Automation.</p><p>Submission deadline: November 15, 2024. Submit manuscripts through the CICT Research Portal. Accepted papers receive PHP 5,000 publication grant.</p>',
+          priority: AnnouncementPriority.MEDIUM,
+          type: AnnouncementType.ACADEMIC,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students', 'Faculty'],
+          publishedAt: new Date('2024-09-10'),
+          expiresAt: new Date('2024-11-16'),
+        },
+        {
+          title: 'CICT Alumni Homecoming 2024: Save the Date!',
+          content: 'Mark your calendars for the CICT Alumni Homecoming on December 7, 2024. All CICT graduates are invited for a night of reunion, networking, and celebration of achievements.',
+          bodyHtml: '<p>Calling all CICT alumni! Join us for the Annual Alumni Homecoming on Saturday, December 7, 2024 from 4:00 PM to 10:00 PM at the CICT Auditorium.</p><p>Program highlights: Alumni achievement awards, Batch reunion corners, Alumni vs. Student friendly games, Networking dinner, and Live band performance.</p><p>Registration fee: PHP 500 (proceeds go to the CICT Scholarship Fund). Register at the CICT Alumni Office or online through the alumni portal.</p>',
+          priority: AnnouncementPriority.MEDIUM,
+          type: AnnouncementType.EVENT,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students', 'Faculty', 'All Users'],
+          publishedAt: new Date('2024-10-01'),
+          expiresAt: new Date('2024-12-08'),
+        },
+        {
+          title: 'New Student Portal Features: Grade Tracking and Course Enrollment Preview',
+          content: 'The CICT Student Portal has been updated with new features including real-time grade tracking, course enrollment preview for next semester, and automated curriculum audit.',
+          bodyHtml: '<p>The CICT Student Portal has been updated with exciting new features to enhance your academic experience:</p><ul><li>Real-time Grade Tracking — See your grades as soon as they are posted</li><li>Course Enrollment Preview — Plan your next semester schedule in advance</li><li>Automated Curriculum Audit — Track your progress toward graduation requirements</li><li>Notification Center — Get alerts for enrollment deadlines, grade postings, and announcements</li></ul><p>Log in to the student portal to explore these features. Feedback and suggestions are welcome through the Help Center.</p>',
+          priority: AnnouncementPriority.LOW,
+          type: AnnouncementType.GENERAL,
+          status: NewsStatus.PUBLISHED,
+          isActive: true,
+          author: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          targetAudience: ['All Students'],
+          publishedAt: new Date('2024-10-10'),
+          expiresAt: new Date('2024-12-31'),
+        },
       ];
 
-      await Announcement.insertMany(announcementData);
-      logger.info('✅ Announcements seeded');
-    }
+    await Announcement.insertMany(announcementData);
+    logger.info('✅ Announcements seeded (14 announcements)');
 
     // Create Events
-    const eventCount = await Event.countDocuments();
-    if (eventCount === 0) {
-      const eventData = [
+    const eventData = [
         {
           title: 'CICT Foundation Week 2024',
           description: 'A week-long celebration of CICT\'s founding anniversary featuring academic competitions, sports tournaments, cultural performances, and community activities.',
@@ -555,16 +860,178 @@ const seedDatabase = async () => {
           isRegistrationOpen: true,
           maxAttendees: 0,
         },
+        {
+          title: 'CSS Tech Talk Series: The Future of Quantum Computing',
+          description: 'A technical seminar exploring the principles of quantum computing, current state of the technology, and its potential impact on cryptography, drug discovery, and optimization problems.',
+          bodyHtml: '<p>A technical seminar exploring the principles of quantum computing, current state of the technology, and its potential impact on cryptography, drug discovery, and optimization problems.</p><p>Featuring guest speaker Dr. Raymond Chua from the National Institute of Physics, this talk will demystify quantum computing concepts and discuss how students can prepare for the quantum computing era. Q&A session and networking reception to follow.</p>',
+          excerpt: 'Explore the fascinating world of quantum computing with guest speaker Dr. Raymond Chua. Learn how quantum will change computing forever.',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'css',
+          startDate: new Date('2024-10-10T14:00:00'),
+          endDate: new Date('2024-10-10T17:00:00'),
+          location: 'CICT Auditorium',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-09-25'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Academics_nb0eat.jpg',
+            alt: 'Quantum Computing Tech Talk',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1782326578/Academics_nb0eat.jpg',
+          tags: ['Tech Talk', 'Quantum Computing', 'Seminar', 'CSS'],
+          isRegistrationOpen: true,
+          maxAttendees: 200,
+          registrationCloseAt: new Date('2024-10-09T23:59:59'),
+        },
+        {
+          title: 'ISS Business Analytics Workshop: Mastering Tableau and Power BI',
+          description: 'A hands-on workshop teaching students how to use Tableau and Power BI for data visualization, dashboard creation, and business intelligence reporting.',
+          bodyHtml: '<p>A hands-on workshop teaching students how to use Tableau and Power BI for data visualization, dashboard creation, and business intelligence reporting.</p><p>Participants will work with real-world datasets to create interactive dashboards, learn best practices in data storytelling, and earn a certificate of completion. Laptops with the software pre-installed will be provided.</p>',
+          excerpt: 'Hands-on workshop on Tableau and Power BI. Learn data visualization and dashboard creation with real-world datasets.',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'iss',
+          startDate: new Date('2024-11-08T09:00:00'),
+          endDate: new Date('2024-11-08T16:00:00'),
+          location: 'CICT Business Analytics Lab',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-10-25'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939519/IMG_20250517_203753_807_ljfmdc.jpg',
+            alt: 'Tableau and Power BI Workshop',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939519/IMG_20250517_203753_807_ljfmdc.jpg',
+          tags: ['Workshop', 'Data Analytics', 'Tableau', 'Power BI', 'ISS'],
+          isRegistrationOpen: true,
+          maxAttendees: 40,
+          registrationCloseAt: new Date('2024-11-07T23:59:59'),
+        },
+        {
+          title: 'ROBOTCU BattleBots Competition: Inter-Org Robotics Showdown',
+          description: 'Watch student-built combat robots battle it out in an arena! Teams from all five CICT organizations design and build 3kg combat robots for a tournament-style competition.',
+          bodyHtml: '<p>Watch student-built combat robots battle it out in an arena! Teams from all five CICT organizations will design and build 3kg combat robots for a double-elimination tournament.</p><p>Spectators welcome! Come cheer for your organization team. Prizes: PHP 5,000 for champion, PHP 3,000 for runner-up, and PHP 1,000 for Best Design Award. Robot inspections begin at 8:00 AM, battles start at 10:00 AM.</p>',
+          excerpt: 'Inter-org robot combat tournament! Watch student-built battle bots fight for supremacy. PHP 5,000 grand prize!',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'robotcu',
+          startDate: new Date('2024-11-22T09:00:00'),
+          endDate: new Date('2024-11-22T17:00:00'),
+          location: 'CICT Covered Court',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-11-01'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939342/500442052_681027907890621_3151875760700323871_n_mkssn9.jpg',
+            alt: 'BattleBots Competition',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766939342/500442052_681027907890621_3151875760700323871_n_mkssn9.jpg',
+          tags: ['Robotics', 'Competition', 'BattleBots', 'Engineering', 'Tournament'],
+          isRegistrationOpen: true,
+          maxAttendees: 300,
+          registrationCloseAt: new Date('2024-11-21T23:59:59'),
+        },
+        {
+          title: 'ICT-SF Acquaintance Party 2024: Neon Nights',
+          description: 'The biggest social event of the semester! Join the ICT-SF Acquaintance Party with a neon theme featuring DJ performances, dance competitions, games, and food stalls.',
+          bodyHtml: '<p>The biggest social event of the semester! Join the ICT-SF Acquaintance Party with this year theme: "Neon Nights."</p><p>What to expect: Live DJ performances, Inter-org dance competition, Neon face painting booth, Photobooth with props, Food stalls from local vendors, and Raffle prizes including gadgets and gift certificates.</p><p>Dress code: Wear something neon or white! Glow sticks and neon accessories will be provided at the entrance. Tickets: PHP 150 for org members, PHP 200 for non-members.</p>',
+          excerpt: 'The biggest social event of the semester! Neon theme, DJ performances, dance comp, and amazing raffle prizes. Don\'t miss it!',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'ict-sf',
+          startDate: new Date('2024-11-29T18:00:00'),
+          endDate: new Date('2024-11-29T23:00:00'),
+          location: 'CICT Student Center & Grounds',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-11-10'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1755790148/529718384_122100992648966778_7029427848362639164_n_geskab.jpg',
+            alt: 'ICT-SF Acquaintance Party',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1755790148/529718384_122100992648966778_7029427848362639164_n_geskab.jpg',
+          tags: ['Social', 'Party', 'Acquaintance', 'ICT-SF', 'Community'],
+          isRegistrationOpen: true,
+          maxAttendees: 500,
+          registrationCloseAt: new Date('2024-11-28T23:59:59'),
+        },
+        {
+          title: 'CICT Career Development Seminar: Resume Building and Interview Mastery',
+          description: 'A career development seminar featuring HR professionals from top companies who will share tips on crafting standout resumes, acing technical interviews, and building a professional online presence.',
+          bodyHtml: '<p>A career development seminar featuring HR professionals from top tech companies who will share actionable tips on:</p><ul><li>Crafting standout resumes and cover letters that get noticed</li><li>Acing technical and behavioral interviews</li><li>Building a professional LinkedIn profile</li><li>Creating an impressive portfolio and GitHub presence</li><li>Navigating job offers and salary negotiations</li></ul><p>Bring your current resume for a free one-on-one review session with HR professionals after the seminar.</p>',
+          excerpt: 'Get career-ready! HR pros share tips on resumes, interviews, LinkedIn, and portfolios. Free resume review included.',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          startDate: new Date('2024-10-18T13:00:00'),
+          endDate: new Date('2024-10-18T17:00:00'),
+          location: 'CICT Auditorium',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-10-01'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335595/371046306_338487401938051_771479620405214262_n_rpkg1f.jpg',
+            alt: 'Career Development Seminar',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335595/371046306_338487401938051_771479620405214262_n_rpkg1f.jpg',
+          tags: ['Career', 'Resume', 'Interview', 'Professional Development'],
+          isRegistrationOpen: true,
+          maxAttendees: 250,
+          registrationCloseAt: new Date('2024-10-17T23:59:59'),
+        },
+        {
+          title: 'CICT Sports Fest 2024: Inter-Organization Tournament',
+          description: 'A week-long sports tournament featuring basketball, volleyball, badminton, table tennis, and esports competitions between CICT organizations.',
+          bodyHtml: '<p>A week-long sports tournament featuring competitions between CICT organizations:</p><ul><li>Basketball (5v5) — CICT Covered Court</li><li>Volleyball (6v6 mixed) — CICT Covered Court</li><li>Badminton (Singles & Doubles) — CICT Gym</li><li>Table Tennis — CICT Student Center</li><li>Esports: Mobile Legends & Valorant — Online + CICT Labs</li></ul><p>Registration is per organization. Each org can field one team per sport. Deadline for team lineups: November 25. Opening ceremony on December 2 at 8:00 AM.</p>',
+          excerpt: 'Compete for your org! Basketball, volleyball, esports, and more. One week of sports and school spirit.',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.SYSTEM,
+          startDate: new Date('2024-12-02T08:00:00'),
+          endDate: new Date('2024-12-06T18:00:00'),
+          location: 'CICT Sports Facilities',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-11-15'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335598/450328906_1014347616442600_380351381824664479_n_bfxjmp.jpg',
+            alt: 'CICT Sports Fest 2024',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1752335598/450328906_1014347616442600_380351381824664479_n_bfxjmp.jpg',
+          tags: ['Sports', 'Tournament', 'Inter-Org', 'Competition', 'Esports'],
+          isRegistrationOpen: true,
+          maxAttendees: 0,
+          schedule: [
+            { label: 'Day 1', title: 'Opening Ceremony & Basketball Prelims', description: 'Opening parade, torch lighting, and basketball preliminary games.' },
+            { label: 'Day 2', title: 'Volleyball & Badminton', description: 'Volleyball preliminary rounds and badminton singles matches.' },
+            { label: 'Day 3', title: 'Esports Day', description: 'Mobile Legends and Valorant tournament finals.' },
+            { label: 'Day 4', title: 'Table Tennis & Semifinals', description: 'Table tennis tournament and basketball/volleyball semifinals.' },
+            { label: 'Day 5', title: 'Championship Games & Closing', description: 'Basketball and volleyball finals, awarding ceremony, and closing program.' },
+          ],
+        },
+        {
+          title: 'BEST Sustainability Hackathon: Green Tech Solutions for Campus',
+          description: 'A 24-hour hackathon focused on building tech solutions that promote sustainability and reduce the campus carbon footprint. Open to all CICT students.',
+          bodyHtml: '<p>A 24-hour hackathon focused on building technology solutions that promote environmental sustainability on campus.</p><p>Challenge tracks: Waste Management & Recycling Tech, Energy Efficiency Monitoring, Sustainable Transportation, Water Conservation Systems, and Eco-Education Platforms.</p><p>Prizes: PHP 8,000 for 1st place, PHP 5,000 for 2nd place, PHP 3,000 for 3rd place. Winning solutions may be implemented on campus. Meals and snacks provided throughout the event.</p>',
+          excerpt: 'Build tech for a greener campus! 24-hour sustainability hackathon with PHP 8,000 grand prize. All skill levels welcome.',
+          organizer: admin._id,
+          ownerType: ContentOwnerType.ORGANIZATION,
+          organizationId: 'best',
+          startDate: new Date('2024-12-14T09:00:00'),
+          endDate: new Date('2024-12-15T12:00:00'),
+          location: 'CICT Computer Laboratories & Innovation Hub',
+          status: EventStatus.PUBLISHED,
+          publishedAt: new Date('2024-11-20'),
+          coverImage: {
+            imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766945618/photo_45_2025-12-29_02-02-12_utofwa.jpg',
+            alt: 'BEST Sustainability Hackathon',
+          },
+          imageUrl: 'https://res.cloudinary.com/ddnxfpziq/image/upload/v1766945618/photo_45_2025-12-29_02-02-12_utofwa.jpg',
+          tags: ['Hackathon', 'Sustainability', 'Green Tech', 'Innovation', 'BEST'],
+          isRegistrationOpen: true,
+          maxAttendees: 120,
+          registrationCloseAt: new Date('2024-12-12T23:59:59'),
+        },
       ];
 
-      await Event.insertMany(eventData);
-      logger.info('✅ Events seeded (8 events)');
-    }
+    await Event.insertMany(eventData);
+    logger.info('✅ Events seeded (15 events)');
 
     // Create Organizations
-    const orgCount = await Organization.countDocuments();
-    if (orgCount === 0) {
-      const orgData = [
+    const orgData = [
         {
           id: 'ict-sf',
           name: 'ICT-SF',
@@ -808,9 +1275,8 @@ const seedDatabase = async () => {
         },
       ];
 
-      await Organization.insertMany(orgData);
-      logger.info('✅ Organizations seeded');
-    }
+    await Organization.insertMany(orgData);
+    logger.info('✅ Organizations seeded (5 organizations)');
 
     logger.info('🎉 Database seeding completed successfully!');
     logger.info('\n📝 Next steps:');
