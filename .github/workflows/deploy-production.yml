@@ -106,7 +106,7 @@ jobs:
         run: |
           pnpm dlx vercel link --cwd apps/web --project ${{ secrets.VERCEL_PROJECT_ID }} \
             --token ${{ secrets.VERCEL_TOKEN }} --yes
-          pnpm dlx vercel --cwd apps/web --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
+          pnpm dlx vercel --cwd apps/web --prod --prebuilt --token ${{ secrets.VERCEL_TOKEN }} --yes
 
   smoke-test:
     name: Post-deploy smoke test

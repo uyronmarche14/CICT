@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @cict/contracts build && pnpm --filter @cict/web build",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "outputDirectory": "apps/web/.next",  
+  "framework": "nextjs"
+}
